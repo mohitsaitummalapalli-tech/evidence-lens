@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { INPUT_VALIDATION } from "@/lib/constants";
+import { geminiService } from "@/lib/ai/gemini";
 import { InvestigationInputResponse } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -11,6 +12,7 @@ export async function POST(req: NextRequest) {
       filename: string;
       mimeType: string;
       sizeBytes: number;
+      buffer?: Buffer;
     } | undefined = undefined;
 
     const contentType = req.headers.get("content-type") || "";
@@ -27,7 +29,7 @@ export async function POST(req: NextRequest) {
       if (file && file.size > 0 && typeof file.name === "string") {
         const mimeType = file.type;
         const sizeBytes = file.size;
-        const filename = file.name.slice(0, 150); // limit filename length
+        const filename = file.name.slice(0, 150);
 
         const isImage = INPUT_VALIDATION.allowedImageMimeTypes.includes(mimeType);
         const isVideo = INPUT_VALIDATION.allowedVideoMimeTypes.includes(mimeType);
@@ -64,11 +66,18 @@ export async function POST(req: NextRequest) {
           );
         }
 
+        let buffer: Buffer | undefined = undefined;
+        if (isImage) {
+          const arrayBuffer = await file.arrayBuffer();
+          buffer = Buffer.from(arrayBuffer);
+        }
+
         mediaInfo = {
           type: isImage ? "image" : "video",
           filename,
           mimeType,
           sizeBytes,
+          buffer,
         };
       }
     } else if (contentType.includes("application/json")) {
@@ -116,34 +125,63 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate unique session identifier
+    // Verify Gemini API key presence
+    if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY.trim().length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "GEMINI_API_KEY is not configured on the server. Please configure your key in .env.local to enable AI Claim Extraction.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // Execute Phase 3: AI Atomic Claim Extraction
+    const extractionResult = await geminiService.extractAtomicClaims({
+      claim,
+      contextUrl,
+      media: mediaInfo,
+    });
+
     const sessionId = `inv_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
     const timestamp = new Date().toISOString();
 
+    // Echo safe media metadata without buffer
+    const safeMediaInfo = mediaInfo
+      ? {
+          type: mediaInfo.type,
+          filename: mediaInfo.filename,
+          mimeType: mediaInfo.mimeType,
+          sizeBytes: mediaInfo.sizeBytes,
+        }
+      : undefined;
+
     const responseData: InvestigationInputResponse = {
       success: true,
-      stage: "input_received",
+      stage: "claim_extracted",
       sessionId,
       timestamp,
-      message: "Investigation input received and validated successfully.",
+      message: `Decomposed target assertion into ${extractionResult.claims.length} atomic verifiable claims.`,
       input: {
         claim,
         claimReceived: true,
         contextUrlReceived: Boolean(contextUrl),
         contextUrl: contextUrl || undefined,
-        mediaReceived: Boolean(mediaInfo),
-        media: mediaInfo,
+        mediaReceived: Boolean(safeMediaInfo),
+        media: safeMediaInfo,
       },
-      nextStage: "Phase 3: Multimodal Claim Extraction & Provenance Retrieval",
+      extraction: extractionResult,
+      nextStage: "Phase 4: Multi-Source Evidence Retrieval & Provenance Mapping",
     };
 
     return NextResponse.json(responseData, { status: 200 });
   } catch (error) {
-    console.error("API /api/investigate error:", error);
+    console.error("API /api/investigate extraction error:", error);
+    const rawMessage = error instanceof Error ? error.message : "Internal server error occurred.";
     return NextResponse.json(
       {
         success: false,
-        error: "Internal server error occurred while processing investigation input.",
+        error: rawMessage.replace(/[A-Za-z0-9_-]{20,}/g, "[REDACTED]"), // ensure no accidental token leakage
       },
       { status: 500 }
     );

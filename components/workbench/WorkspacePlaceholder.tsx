@@ -6,10 +6,20 @@ import {
   Scale, 
   Inbox, 
   Layers, 
-  Compass 
+  Compass,
+  CheckCircle2
 } from "lucide-react";
+import { AtomicClaim } from "@/types";
 
-export const WorkspacePlaceholder: React.FC = () => {
+interface WorkspacePlaceholderProps {
+  claims?: AtomicClaim[];
+}
+
+export const WorkspacePlaceholder: React.FC<WorkspacePlaceholderProps> = ({
+  claims = [],
+}) => {
+  const hasClaims = claims.length > 0;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -19,43 +29,85 @@ export const WorkspacePlaceholder: React.FC = () => {
             3. Investigation Workspace
           </h2>
         </div>
-        <span className="text-xs font-mono text-slate-400 bg-slate-900 px-2.5 py-1 rounded border border-slate-800">
-          Status: Awaiting Session Initialization
+        <span
+          className={`text-xs font-mono px-2.5 py-1 rounded border ${
+            hasClaims
+              ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/40"
+              : "bg-slate-900 text-slate-400 border-slate-800"
+          }`}
+        >
+          {hasClaims
+            ? `Status: Phase 3 Active (${claims.length} Claims Indexed)`
+            : "Status: Awaiting Session Initialization"}
         </span>
       </div>
 
       {/* 3-Column Analyst Grid (Deconstructed Claims | Evidence Corpus | Synthesis & Graph) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Column 1: Atomic Claims */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 flex flex-col justify-between min-h-[280px]">
+        {/* Column 1: Atomic Claims (Panel A) */}
+        <div
+          className={`rounded-xl p-5 flex flex-col justify-between min-h-[300px] border transition-all ${
+            hasClaims
+              ? "bg-slate-900/80 border-cyan-500/40 shadow-lg shadow-cyan-950/10"
+              : "bg-slate-900/50 border-slate-800"
+          }`}
+        >
           <div className="space-y-3">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-300 font-semibold">
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-200 font-semibold">
                 <Split className="h-3.5 w-3.5 text-cyan-400" />
-                <span>Extracted Claims (0)</span>
+                <span>Extracted Claims ({claims.length})</span>
               </div>
-              <span className="text-[10px] font-mono text-slate-500 uppercase">Panel A</span>
+              <span className="text-[10px] font-mono text-cyan-400 uppercase bg-cyan-950/50 px-1.5 py-0.5 rounded border border-cyan-800/40">
+                Panel A
+              </span>
             </div>
 
-            <div className="p-6 border border-dashed border-slate-800/80 rounded-lg flex flex-col items-center justify-center text-center space-y-2">
-              <div className="p-2.5 rounded-full bg-slate-950 border border-slate-800 text-slate-600">
-                <Inbox className="h-4 w-4" />
+            {hasClaims ? (
+              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                {claims.map((c) => (
+                  <div
+                    key={c.id}
+                    className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/90 text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-cyan-400 text-[11px]">
+                        {c.id}
+                      </span>
+                      <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-slate-900 text-slate-400 border border-slate-800">
+                        {c.category}
+                      </span>
+                    </div>
+                    <p className="text-slate-200 font-sans leading-snug text-[11px] line-clamp-2">
+                      {c.text}
+                    </p>
+                  </div>
+                ))}
               </div>
-              <p className="text-xs font-medium text-slate-400">No Claims Deconstructed</p>
-              <p className="text-[11px] text-slate-500 leading-relaxed max-w-[220px]">
-                Input text or media above to extract atomic, individually verifiable claim nodes.
-              </p>
-            </div>
+            ) : (
+              <div className="p-6 border border-dashed border-slate-800/80 rounded-lg flex flex-col items-center justify-center text-center space-y-2">
+                <div className="p-2.5 rounded-full bg-slate-950 border border-slate-800 text-slate-600">
+                  <Inbox className="h-4 w-4" />
+                </div>
+                <p className="text-xs font-medium text-slate-400">No Claims Deconstructed</p>
+                <p className="text-[11px] text-slate-500 leading-relaxed max-w-[220px]">
+                  Input text or media above to extract atomic, individually verifiable claim nodes.
+                </p>
+              </div>
+            )}
           </div>
 
-          <div className="pt-3 border-t border-slate-800/60 text-[10px] font-mono text-slate-500 flex items-center justify-between">
-            <span>Entity Extraction: Ready</span>
-            <span>Taxonomy: PS3</span>
+          <div className="pt-3 border-t border-slate-800/60 text-[10px] font-mono flex items-center justify-between">
+            <span className={hasClaims ? "text-emerald-400 flex items-center gap-1" : "text-slate-500"}>
+              {hasClaims && <CheckCircle2 className="h-3 w-3" />}
+              {hasClaims ? "Deconstructed via Gemini" : "Entity Extraction: Ready"}
+            </span>
+            <span className="text-slate-500">Taxonomy: PS3</span>
           </div>
         </div>
 
-        {/* Column 2: Evidence & Provenance Corpus */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 flex flex-col justify-between min-h-[280px]">
+        {/* Column 2: Evidence & Provenance Corpus (Panel B) */}
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 flex flex-col justify-between min-h-[300px]">
           <div className="space-y-3">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2 text-xs font-mono text-slate-300 font-semibold">
@@ -71,19 +123,19 @@ export const WorkspacePlaceholder: React.FC = () => {
               </div>
               <p className="text-xs font-medium text-slate-400">Evidence Corpus Empty</p>
               <p className="text-[11px] text-slate-500 leading-relaxed max-w-[220px]">
-                Primary sources, archived URLs, and reverse image matches will be logged here with stance metrics.
+                Primary sources, archived URLs, and reverse image matches will be logged here with stance metrics in Phase 4.
               </p>
             </div>
           </div>
 
           <div className="pt-3 border-t border-slate-800/60 text-[10px] font-mono text-slate-500 flex items-center justify-between">
-            <span>Stance Scoring: Ready</span>
-            <span>Citations: Indexed</span>
+            <span>Stance Scoring: Standby</span>
+            <span>Citations: Scheduled</span>
           </div>
         </div>
 
-        {/* Column 3: Graph Topology & Verdict Matrix */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 flex flex-col justify-between min-h-[280px]">
+        {/* Column 3: Graph Topology & Verdict Matrix (Panel C) */}
+        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 flex flex-col justify-between min-h-[300px]">
           <div className="space-y-3">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2 text-xs font-mono text-slate-300 font-semibold">
@@ -99,7 +151,7 @@ export const WorkspacePlaceholder: React.FC = () => {
               </div>
               <p className="text-xs font-medium text-slate-400">Synthesis Engine Idle</p>
               <p className="text-[11px] text-slate-500 leading-relaxed max-w-[220px]">
-                Calibrated confidence ratings, relational graph edges, and human audit logs will render here.
+                Calibrated confidence ratings, relational graph edges, and human audit logs will render in Phase 5 & 6.
               </p>
             </div>
           </div>

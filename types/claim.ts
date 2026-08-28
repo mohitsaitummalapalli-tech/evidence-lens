@@ -19,6 +19,36 @@ export type ClaimVerificationStatus =
   | "inconclusive"
   | "partially_true";
 
+export type AtomicClaimCategory = 
+  | "event"
+  | "time"
+  | "location"
+  | "identity"
+  | "media_context"
+  | "causal"
+  | "other";
+
+export type ClaimCheckability = "high" | "medium" | "low";
+
+export interface AtomicClaim {
+  id: string; // e.g. "C1", "C2"
+  text: string;
+  category: AtomicClaimCategory;
+  checkability: ClaimCheckability;
+  entities: string[];
+  timeReference?: string;
+  locationReference?: string;
+  dependsOn?: string[];
+}
+
+export interface ClaimExtractionResult {
+  originalClaim: string;
+  contextUrl?: string;
+  claims: AtomicClaim[];
+  overallExtractionNotes?: string;
+  mediaContext?: string;
+}
+
 export interface Claim {
   id: string;
   text: string;

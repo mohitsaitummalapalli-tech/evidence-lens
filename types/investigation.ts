@@ -3,7 +3,7 @@
  * Shared types for workbench sessions, graph structures, and synthesis verdicts.
  */
 
-import { Claim } from "./claim";
+import { Claim, ClaimExtractionResult } from "./claim";
 import { EvidenceSnippet, MediaItem } from "./evidence";
 
 export type InvestigationStatus = 
@@ -105,7 +105,7 @@ export interface InvestigationInputPayload {
 
 export interface InvestigationInputResponse {
   success: boolean;
-  stage: "input_received";
+  stage: "input_received" | "claim_extracted";
   sessionId: string;
   timestamp: string;
   message: string;
@@ -122,5 +122,6 @@ export interface InvestigationInputResponse {
       sizeBytes: number;
     };
   };
+  extraction?: ClaimExtractionResult;
   nextStage: string;
 }
