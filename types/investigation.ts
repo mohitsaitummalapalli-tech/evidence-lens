@@ -104,6 +104,8 @@ export interface InvestigationInputPayload {
   };
 }
 
+import { ImageProvenanceResult } from "./imageProvenance";
+
 export interface InvestigationInputResponse {
   success: boolean;
   stage: "input_received" | "claim_extracted" | "evidence_retrieved" | "verified";
@@ -126,5 +128,6 @@ export interface InvestigationInputResponse {
   extraction?: ClaimExtractionResult;
   evidence?: EvidenceRetrievalResult;
   verification?: InvestigationVerificationResult;
+  imageProvenance?: ImageProvenanceResult;
   nextStage: string;
 }

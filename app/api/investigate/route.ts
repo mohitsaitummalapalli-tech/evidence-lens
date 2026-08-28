@@ -3,12 +3,14 @@ import { INPUT_VALIDATION } from "@/lib/constants";
 import { geminiService } from "@/lib/ai/gemini";
 import { evidenceRetrievalService } from "@/lib/evidence/retrieval";
 import { verificationReasoningService } from "@/lib/verification/reasoning";
+import { imageProvenanceService } from "@/lib/evidence/imageProvenance";
 import {
   AtomicClaim,
   ClaimExtractionResult,
   EvidenceRetrievalResult,
   InvestigationInputResponse,
   InvestigationVerificationResult,
+  ImageProvenanceResult,
 } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -247,6 +249,23 @@ export async function POST(req: NextRequest) {
       };
     }
 
+    // Step 4: Web Image Provenance Discovery (if media artifact provided)
+    let imageProvenanceResult: ImageProvenanceResult | undefined = undefined;
+    if (mediaInfo) {
+      try {
+        imageProvenanceResult = await imageProvenanceService.discoverProvenance({
+          hasImage: true,
+          filename: mediaInfo.filename,
+          mimeType: mediaInfo.mimeType,
+          claimText: claim,
+          atomicClaims: extractionResult.claims,
+          contextUrl,
+        });
+      } catch (err: unknown) {
+        console.warn("[API] Image provenance discovery error:", err);
+      }
+    }
+
     const sessionId = `inv_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
     const timestamp = new Date().toISOString();
 
@@ -276,6 +295,7 @@ export async function POST(req: NextRequest) {
       extraction: extractionResult,
       evidence: evidenceResult,
       verification: verificationResult,
+      imageProvenance: imageProvenanceResult,
       nextStage: "Phase 6: Multi-Dimensional Provenance & Integrity Graph",
     };
 

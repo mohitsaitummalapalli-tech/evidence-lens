@@ -12,6 +12,7 @@ import { EvidencePanel } from "./EvidencePanel";
 import { VerificationResultPanel } from "./VerificationResultPanel";
 import { EvidenceGraph } from "./EvidenceGraph";
 import { ConfidenceCometGraph } from "./ConfidenceCometGraph";
+import { ImageProvenancePanel } from "./ImageProvenancePanel";
 import { INPUT_VALIDATION } from "@/lib/constants";
 import { 
   InvestigationInputResponse, 
@@ -140,6 +141,7 @@ export const EvidenceLensWorkbench: React.FC = () => {
           extraction={apiResponse?.extraction}
           evidence={apiResponse?.evidence}
           verification={apiResponse?.verification}
+          imageProvenance={apiResponse?.imageProvenance}
           originalClaim={claimText.trim() || apiResponse?.input.claim}
           isInitializing={uiState === "SUBMITTING"}
         />
@@ -152,6 +154,14 @@ export const EvidenceLensWorkbench: React.FC = () => {
           isAnalyzing={uiState === "SUBMITTING"}
         />
       )}
+
+      {/* Web Image Provenance Discovery Panel (Phase 6B) */}
+      {(uiState === "SUBMITTING" && Boolean(selectedMedia)) || (uiState === "INPUT_RECEIVED" && apiResponse?.imageProvenance) ? (
+        <ImageProvenancePanel
+          provenance={apiResponse?.imageProvenance}
+          isLoading={uiState === "SUBMITTING" && Boolean(selectedMedia)}
+        />
+      ) : null}
 
       {/* Investigation Initialized Server Response Panel */}
       {uiState === "INPUT_RECEIVED" && apiResponse && (

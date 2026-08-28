@@ -5,6 +5,7 @@ import {
   ClaimExtractionResult,
   EvidenceRetrievalResult,
   InvestigationVerificationResult,
+  ImageProvenanceResult,
 } from "@/types";
 import { EvidenceGraphNode, GraphNodeData } from "./EvidenceGraphNode";
 import { EvidenceGraphEdge, GraphEdgeData } from "./EvidenceGraphEdge";
@@ -38,6 +39,7 @@ interface EvidenceGraphProps {
   extraction?: ClaimExtractionResult;
   evidence?: EvidenceRetrievalResult;
   verification?: InvestigationVerificationResult;
+  imageProvenance?: ImageProvenanceResult;
   originalClaim?: string;
   isInitializing?: boolean;
 }
@@ -46,6 +48,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
   extraction,
   evidence,
   verification,
+  imageProvenance,
   originalClaim,
   isInitializing = false,
 }) => {
@@ -78,6 +81,10 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
   const rawClaimText = originalClaim || extraction?.originalClaim || "Target Compound Claim Assertion";
   const claims = useMemo(() => extraction?.claims || [], [extraction?.claims]);
   const allSources = useMemo(() => evidence?.allSources || [], [evidence?.allSources]);
+  const provCandidates = useMemo(
+    () => imageProvenance?.candidates || [],
+    [imageProvenance?.candidates]
+  );
   const claimVerifications = useMemo(
     () => verification?.claimVerifications || [],
     [verification?.claimVerifications]
@@ -89,9 +96,10 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     const edgesList: GraphEdgeData[] = [];
 
     const numClaims = Math.max(claims.length, 1);
+    const hasImageProv = provCandidates.length > 0;
     const claimSpacing = 300;
-    const totalClaimsWidth = numClaims * claimSpacing;
-    const canvasWidth = Math.max(totalClaimsWidth + 400, 1000);
+    const totalClaimsWidth = numClaims * claimSpacing + (hasImageProv ? 340 : 0);
+    const canvasWidth = Math.max(totalClaimsWidth + 400, 1200);
     const centerX = canvasWidth / 2;
 
     // Root Node
@@ -116,7 +124,8 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     const claimWidth = 260;
     const claimHeight = 105;
     const claimY = 220;
-    const startClaimX = centerX - totalClaimsWidth / 2 + (claimSpacing - claimWidth) / 2;
+    const startClaimX =
+      centerX - (numClaims * claimSpacing) / 2 + (claimSpacing - claimWidth) / 2 + (hasImageProv ? 120 : 0);
 
     const claimPositions: Record<string, { x: number; y: number; width: number; height: number }> = {};
 
@@ -163,6 +172,93 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       });
     });
 
+    let maxY = 450;
+
+    // Image Provenance Branch (Phase 6B)
+    if (hasImageProv) {
+      const imgWidth = 240;
+      const imgHeight = 105;
+      const imgX = Math.max(40, startClaimX - 320);
+      const imgY = claimY;
+
+      const imgNode: GraphNodeData = {
+        id: "node-image-artifact",
+        type: "provenance",
+        x: imgX,
+        y: imgY,
+        width: imgWidth,
+        height: imgHeight,
+        label: "IMAGE ARTIFACT",
+        title: imageProvenance?.mediaFilename || "Uploaded Image Artifact",
+      };
+      nodesList.push(imgNode);
+
+      // Edge from Root -> Image Artifact
+      const startX = rootX + rootWidth / 2;
+      const startY = rootY + rootHeight;
+      const endX = imgX + imgWidth / 2;
+      const endY = imgY;
+      const midY = (startY + endY) / 2;
+
+      edgesList.push({
+        id: "edge-root-image",
+        fromId: "node-root",
+        toId: "node-image-artifact",
+        startX,
+        startY,
+        endX,
+        endY,
+        pathD: `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`,
+        type: "root_to_claim",
+      });
+
+      // Candidate Provenance Sources
+      provCandidates.slice(0, 3).forEach((cand, cIdx) => {
+        const candWidth = 220;
+        const candHeight = 90;
+        const candX = imgX + (cIdx % 2) * 230 - 20;
+        const candY = 400 + Math.floor(cIdx / 2) * 110;
+
+        maxY = Math.max(maxY, candY + candHeight + 80);
+
+        const candNode: GraphNodeData = {
+          id: `cand-${cand.id}`,
+          type: "provenance",
+          x: candX,
+          y: candY,
+          width: candWidth,
+          height: candHeight,
+          label: `PROV • ${cand.id}`,
+          title: cand.title,
+          domain: cand.domain,
+          url: cand.url,
+          matchType: cand.matchType,
+          relevanceScore: cand.relevanceScore,
+          rawProvenance: cand,
+        };
+        nodesList.push(candNode);
+
+        // Edge from Image Artifact -> Candidate (IMAGE -> WEB SOURCE)
+        const sX = imgX + imgWidth / 2;
+        const sY = imgY + imgHeight;
+        const eX = candX + candWidth / 2;
+        const eY = candY;
+        const mY = (sY + eY) / 2;
+
+        edgesList.push({
+          id: `edge-img-${cand.id}`,
+          fromId: "node-image-artifact",
+          toId: `cand-${cand.id}`,
+          startX: sX,
+          startY: sY,
+          endX: eX,
+          endY: eY,
+          pathD: `M ${sX} ${sY} C ${sX} ${mY}, ${eX} ${mY}, ${eX} ${eY}`,
+          type: "image_to_provenance",
+        });
+      });
+    }
+
     // Evidence Sources Tier (Y = 400+)
     const evidenceWidth = 220;
     const evidenceHeight = 90;
@@ -177,8 +273,6 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       evidenceByClaim[src.claimId].push(src);
     });
 
-    let maxY = 450;
-
     claims.forEach((claim) => {
       const claimPos = claimPositions[claim.id];
       if (!claimPos) return;
@@ -189,7 +283,6 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       if (sourcesCount === 0) return;
 
       sourcesForClaim.forEach((source, sIdx) => {
-        // Stagger Y slightly if many sources per claim
         const rowOffset = Math.floor(sIdx / 3) * 110;
         const colInRow = sIdx % 3;
         const sourceX =
@@ -244,11 +337,11 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       nodes: nodesList,
       edges: edgesList,
       bounds: {
-        width: Math.max(canvasWidth, 1200),
+        width: Math.max(canvasWidth, 1300),
         height: Math.max(maxY, 650),
       },
     };
-  }, [claims, allSources, claimVerifications, rawClaimText]);
+  }, [claims, allSources, provCandidates, imageProvenance?.mediaFilename, claimVerifications, rawClaimText]);
 
   // 2. Safe Container Resizing
   useEffect(() => {
@@ -269,6 +362,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
   useEffect(() => {
     let isCancelled = false;
     const timeouts: NodeJS.Timeout[] = [];
+
     // Reset initial state asynchronously
     const tInit = setTimeout(() => {
       if (isCancelled) return;
@@ -285,9 +379,8 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       };
     }
 
-    // Timing parameters (accelerated when many nodes exist for great UX)
     const claimDelay = Math.max(120, Math.min(240, 700 / (claims.length || 1)));
-    const evidenceDelay = Math.max(80, Math.min(180, 1200 / (allSources.length || 1)));
+    const evidenceDelay = Math.max(80, Math.min(180, 1200 / ((allSources.length + provCandidates.length) || 1)));
 
     // Step 1: Reveal Root Node at t = 100ms
     const t0 = setTimeout(() => {
@@ -297,7 +390,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     }, 100);
     timeouts.push(t0);
 
-    // Step 2: Sequentially reveal claims + root edges
+    // Step 2: Sequentially reveal claims, image artifact node + root edges
     let cumulativeTime = 250;
     claims.forEach((claim, idx) => {
       const claimNodeId = `claim-${claim.id}`;
@@ -312,9 +405,18 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       timeouts.push(t);
     });
 
+    if (provCandidates.length > 0) {
+      const tImg = setTimeout(() => {
+        if (isCancelled) return;
+        setVisibleNodeIds((prev) => new Set([...prev, "node-image-artifact"]));
+        setVisibleEdgeIds((prev) => new Set([...prev, "edge-root-image"]));
+      }, cumulativeTime + claims.length * claimDelay);
+      timeouts.push(tImg);
+    }
+
     cumulativeTime += claims.length * claimDelay + 100;
 
-    // Step 3: Sequentially reveal evidence nodes + claim edges
+    // Step 3: Sequentially reveal evidence nodes & provenance candidates
     allSources.forEach((source, sIdx) => {
       const evNodeId = `ev-${source.id}`;
       const edgeId = `edge-${source.claimId}-${source.id}`;
@@ -328,7 +430,19 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       timeouts.push(t);
     });
 
-    cumulativeTime += allSources.length * evidenceDelay + 150;
+    provCandidates.slice(0, 3).forEach((cand, pIdx) => {
+      const candNodeId = `cand-${cand.id}`;
+      const edgeId = `edge-img-${cand.id}`;
+
+      const t = setTimeout(() => {
+        if (isCancelled) return;
+        setVisibleNodeIds((prev) => new Set([...prev, candNodeId]));
+        setVisibleEdgeIds((prev) => new Set([...prev, edgeId]));
+      }, cumulativeTime + (allSources.length + pIdx) * evidenceDelay);
+      timeouts.push(t);
+    });
+
+    cumulativeTime += (allSources.length + provCandidates.length) * evidenceDelay + 150;
 
     // Step 4: Synthesize verdicts & complete
     const tVerdicts = setTimeout(() => {
@@ -341,7 +455,6 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     const tComplete = setTimeout(() => {
       if (isCancelled) return;
       setAnimationStage("COMPLETE");
-      // Ensure all nodes and edges are populated in the set
       setVisibleNodeIds(new Set(nodes.map((n) => n.id)));
       setVisibleEdgeIds(new Set(edges.map((e) => e.id)));
     }, cumulativeTime + 300);
@@ -351,7 +464,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       isCancelled = true;
       timeouts.forEach(clearTimeout);
     };
-  }, [claims, allSources, nodes, edges, isInitializing, replayCount]);
+  }, [claims, allSources, provCandidates, nodes, edges, isInitializing, replayCount]);
 
   // Instant Skip Animation Trigger
   const skipAnimation = useCallback(() => {
@@ -376,7 +489,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     const padding = 60;
     const scaleX = (containerWidth - padding * 2) / bounds.width;
     const scaleY = (containerHeight - padding * 2) / bounds.height;
-    const scale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.5), 1.2);
+    const scale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.45), 1.15);
 
     const x = (containerWidth - bounds.width * scale) / 2;
     const y = 20;
@@ -387,7 +500,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
   const resetView = () => {
     if (!containerRef.current) return;
     const containerWidth = containerRef.current.clientWidth;
-    const scale = 0.9;
+    const scale = 0.85;
     const x = (containerWidth - bounds.width * scale) / 2;
     const y = 20;
     setTransform({ x, y, scale });
@@ -490,6 +603,20 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       return set;
     }
 
+    if (selectedNodeId === "node-image-artifact") {
+      set.add("node-root");
+      nodes.forEach((n) => {
+        if (n.type === "provenance") set.add(n.id);
+      });
+      return set;
+    }
+
+    if (selectedNodeId.startsWith("cand-")) {
+      set.add("node-image-artifact");
+      set.add("node-root");
+      return set;
+    }
+
     if (selectedNodeId.startsWith("claim-")) {
       const claimId = selectedNodeId.replace("claim-", "");
       set.add("node-root");
@@ -515,7 +642,6 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     return nodes.find((n) => n.id === selectedNodeId) || null;
   }, [selectedNodeId, nodes]);
 
-  // Telemetry numbers based on currently visible elements
   const visibleClaimsCount = useMemo(() => {
     return claims.filter((c) => visibleNodeIds.has(`claim-${c.id}`)).length;
   }, [claims, visibleNodeIds]);
@@ -582,6 +708,14 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
               <span className="text-[#E2C15C] font-semibold">
                 EVIDENCE: {visibleEvidenceCount}/{allSources.length}
               </span>
+              {provCandidates.length > 0 && (
+                <>
+                  <span className="text-stone-700">•</span>
+                  <span className="text-cyan-400 font-semibold">
+                    PROVENANCE: {provCandidates.length}
+                  </span>
+                </>
+              )}
               <span className="text-stone-700">•</span>
               <span>RELATIONSHIPS: {visibleEdgeIds.size}/{edges.length}</span>
               <span className="text-stone-700">•</span>
@@ -717,7 +851,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
 
           {/* Zoom & Pan Main Transformation Group */}
           <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}>
-            {/* 1. Render Edges with Animated Comets (Only for revealed edges) */}
+            {/* 1. Render Edges with Animated Comets */}
             <g className="edges-layer">
               {edges.map((edge) => {
                 if (!visibleEdgeIds.has(edge.id)) return null;
@@ -741,7 +875,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
               })}
             </g>
 
-            {/* 2. Render Nodes (Only for revealed nodes) */}
+            {/* 2. Render Nodes */}
             <g className="nodes-layer">
               {nodes.map((node) => {
                 if (!visibleNodeIds.has(node.id)) return null;
@@ -750,7 +884,6 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
                 const isNodeHighlighted = highlightedNodeIds !== null && highlightedNodeIds.has(node.id);
                 const isNodeDimmed = highlightedNodeIds !== null && !isNodeHighlighted;
 
-                // Strip verdict if not yet in verdict reveal stage to ensure authentic live sequence
                 const effectiveNode =
                   !verdictsRevealed && node.type === "claim"
                     ? { ...node, verdict: undefined }
@@ -792,6 +925,11 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
                   {hoveredNode.node.stance}
                 </span>
               )}
+              {hoveredNode.node.matchType && (
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-700">
+                  {hoveredNode.node.matchType}
+                </span>
+              )}
               {hoveredNode.node.verdict && (
                 <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-700">
                   {hoveredNode.node.verdict}
@@ -806,6 +944,12 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             {hoveredNode.node.rawEvidence?.snippet && (
               <div className="p-2 rounded bg-[#050608] border border-stone-800 text-[10px] text-[#94A3B8] font-sans line-clamp-3">
                 &ldquo;{hoveredNode.node.rawEvidence.snippet}&rdquo;
+              </div>
+            )}
+
+            {hoveredNode.node.rawProvenance?.snippet && (
+              <div className="p-2 rounded bg-[#050608] border border-cyan-900/40 text-[10px] text-[#94A3B8] font-sans line-clamp-3">
+                &ldquo;{hoveredNode.node.rawProvenance.snippet}&rdquo;
               </div>
             )}
 
@@ -871,6 +1015,15 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
               </div>
             )}
 
+            {selectedNodeDetails.rawProvenance?.snippet && (
+              <div className="p-2.5 rounded-lg bg-[#050608] border border-cyan-900/40 text-[11px] text-[#C2C9D6] leading-relaxed max-h-24 overflow-y-auto">
+                <span className="text-[10px] text-cyan-400 font-bold block uppercase mb-0.5 font-mono">
+                  Provenance Snippet:
+                </span>
+                &ldquo;{selectedNodeDetails.rawProvenance.snippet}&rdquo;
+              </div>
+            )}
+
             {selectedNodeDetails.rawClaim?.entities && (
               <div className="flex flex-wrap gap-1 text-[10px] font-mono text-[#94A3B8]">
                 <span>Entities:</span>
@@ -906,6 +1059,10 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-stone-400 shadow-[0_0_6px_#A8A29E]" />
                 <span className="text-stone-300 font-semibold">INSUFFICIENT (Dim Comet)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#22D3EE]" />
+                <span className="text-cyan-300 font-semibold">IMAGE → WEB SOURCE (Cyan)</span>
               </div>
               <div className="flex items-center gap-2 pt-1 border-t border-stone-800">
                 <span className="h-2 w-2 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />

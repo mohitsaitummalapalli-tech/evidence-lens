@@ -13,7 +13,7 @@ export interface GraphEdgeData {
   endY: number;
   pathD: string;
   stance?: EvidenceStance;
-  type: "root_to_claim" | "claim_to_evidence";
+  type: "root_to_claim" | "claim_to_evidence" | "image_to_provenance";
 }
 
 interface EvidenceGraphEdgeProps {
@@ -68,7 +68,14 @@ const ROOT_EDGE_COLOR = {
   stroke: "#D4AF37", // metallic gold
   glow: "rgba(212, 175, 55, 0.45)",
   comet: "#F3E5B8",
-  speed: "3.0s",
+  speed: "3.5s",
+};
+
+const IMAGE_PROVENANCE_EDGE_COLOR = {
+  stroke: "#06B6D4", // cyan provenance
+  glow: "rgba(6, 182, 212, 0.45)",
+  comet: "#67E8F9",
+  speed: "2.9s",
 };
 
 export const EvidenceGraphEdge: React.FC<EvidenceGraphEdgeProps> = ({
@@ -77,59 +84,65 @@ export const EvidenceGraphEdge: React.FC<EvidenceGraphEdgeProps> = ({
   isDimmed = false,
 }) => {
   const isRootEdge = edge.type === "root_to_claim";
-  const edgeConfig = isRootEdge
-    ? ROOT_EDGE_COLOR
-    : STANCE_EDGE_COLORS[edge.stance || "UNCERTAIN"] || ROOT_EDGE_COLOR;
+  const isProvenanceEdge = edge.type === "image_to_provenance";
 
-  const pathId = `path-${edge.id}`;
-  const strokeWidth = isHighlighted ? 3 : isRootEdge ? 2 : 1.5;
-  const opacity = isDimmed ? 0.15 : isHighlighted ? 1 : 0.75;
+  const colorConfig = isRootEdge
+    ? ROOT_EDGE_COLOR
+    : isProvenanceEdge
+    ? IMAGE_PROVENANCE_EDGE_COLOR
+    : STANCE_EDGE_COLORS[edge.stance || "UNCERTAIN"] || STANCE_EDGE_COLORS.UNCERTAIN;
+
+  const baseStrokeWidth = isHighlighted ? 3.5 : isRootEdge || isProvenanceEdge ? 2.5 : 2;
+  const glowStrokeWidth = isHighlighted ? 9 : 6;
+  const opacity = isDimmed ? "opacity-15" : isHighlighted ? "opacity-100" : "opacity-75";
 
   return (
-    <g className="transition-opacity duration-300" opacity={opacity}>
-      {/* Background Subtle Glow Path */}
+    <g className={`transition-opacity duration-300 ${opacity}`}>
+      {/* Background Glow Layer */}
       <path
         d={edge.pathD}
         fill="none"
-        stroke={edgeConfig.glow}
-        strokeWidth={strokeWidth + (isHighlighted ? 4 : 2)}
+        stroke={colorConfig.glow}
+        strokeWidth={glowStrokeWidth}
         strokeLinecap="round"
+        strokeLinejoin="round"
       />
 
-      {/* Main Connection Path */}
+      {/* Main Core Vector Path */}
       <path
-        id={pathId}
+        id={`edge-path-${edge.id}`}
         d={edge.pathD}
         fill="none"
-        stroke={edgeConfig.stroke}
-        strokeWidth={strokeWidth}
+        stroke={colorConfig.stroke}
+        strokeWidth={baseStrokeWidth}
         strokeLinecap="round"
-        strokeDasharray={isHighlighted ? "none" : edge.stance === "INSUFFICIENT" ? "4 4" : "none"}
+        strokeLinejoin="round"
+        className="transition-all duration-200"
       />
 
-      {/* Animated Comet Particle Traveling Along the Curve */}
+      {/* Travelling Animated Comet Particle (Continuous SVG Motion) */}
       {!isDimmed && (
-        <circle r={isHighlighted ? 4 : 3} fill={edgeConfig.comet} className="filter drop-shadow-[0_0_6px_currentColor]">
-          <animateMotion
-            dur={edgeConfig.speed}
-            repeatCount="indefinite"
-            rotate="auto"
-            path={edge.pathD}
-          />
-        </circle>
-      )}
+        <g className="comet-particle">
+          {/* Outer Comet Glow */}
+          <circle r={6} fill={colorConfig.comet} opacity={0.4}>
+            <animateMotion
+              dur={colorConfig.speed}
+              repeatCount="indefinite"
+              path={edge.pathD}
+              rotate="auto"
+            />
+          </circle>
 
-      {/* Trailing Comet Secondary Particle for richer cinematic feel */}
-      {!isDimmed && isHighlighted && (
-        <circle r={2} fill={edgeConfig.comet} opacity={0.6}>
-          <animateMotion
-            dur={edgeConfig.speed}
-            begin="0.2s"
-            repeatCount="indefinite"
-            rotate="auto"
-            path={edge.pathD}
-          />
-        </circle>
+          {/* Core Luminous Comet Head */}
+          <circle r={3} fill="#FFFFFF">
+            <animateMotion
+              dur={colorConfig.speed}
+              repeatCount="indefinite"
+              path={edge.pathD}
+              rotate="auto"
+            />
+          </circle>
+        </g>
       )}
     </g>
   );
