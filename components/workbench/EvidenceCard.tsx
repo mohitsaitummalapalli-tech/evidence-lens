@@ -35,6 +35,20 @@ const STANCE_CONFIG: Record<
     border: "border-rose-500/30",
     icon: XCircle,
   },
+  MIXED: {
+    label: "MIXED EVIDENCE",
+    bg: "bg-purple-500/10",
+    text: "text-purple-400",
+    border: "border-purple-500/30",
+    icon: MinusCircle,
+  },
+  INSUFFICIENT: {
+    label: "INSUFFICIENT / INCONCLUSIVE",
+    bg: "bg-amber-500/10",
+    text: "text-amber-400",
+    border: "border-amber-500/30",
+    icon: HelpCircle,
+  },
   NEUTRAL: {
     label: "NEUTRAL / TOPICAL",
     bg: "bg-blue-500/10",
@@ -43,10 +57,10 @@ const STANCE_CONFIG: Record<
     icon: MinusCircle,
   },
   UNCERTAIN: {
-    label: "UNCERTAIN / INCONCLUSIVE",
-    bg: "bg-amber-500/10",
-    text: "text-amber-400",
-    border: "border-amber-500/30",
+    label: "UNCERTAIN / UNVERIFIED",
+    bg: "bg-slate-500/10",
+    text: "text-slate-400",
+    border: "border-slate-500/30",
     icon: HelpCircle,
   },
 };

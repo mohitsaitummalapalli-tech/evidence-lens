@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { EvidenceRetrievalResult } from "@/types";
+import { EvidenceRetrievalResult, EvidenceStance } from "@/types";
 import { EvidenceCard } from "./EvidenceCard";
 import { 
   Database, 
@@ -69,7 +69,14 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
 
   // Stance breakdown counts
   const stanceCounts = useMemo(() => {
-    const counts = { SUPPORTS: 0, CONTRADICTS: 0, NEUTRAL: 0, UNCERTAIN: 0 };
+    const counts: Record<EvidenceStance, number> = {
+      SUPPORTS: 0,
+      CONTRADICTS: 0,
+      MIXED: 0,
+      INSUFFICIENT: 0,
+      NEUTRAL: 0,
+      UNCERTAIN: 0,
+    };
     evidence.allSources.forEach((src) => {
       if (counts[src.stance] !== undefined) {
         counts[src.stance]++;

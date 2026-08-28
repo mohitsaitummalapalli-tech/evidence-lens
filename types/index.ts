@@ -5,3 +5,4 @@
 export * from "./claim";
 export * from "./evidence";
 export * from "./investigation";
+export * from "./verification";

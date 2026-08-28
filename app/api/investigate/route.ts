@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { INPUT_VALIDATION } from "@/lib/constants";
 import { geminiService } from "@/lib/ai/gemini";
 import { evidenceRetrievalService } from "@/lib/evidence/retrieval";
-import { EvidenceRetrievalResult, InvestigationInputResponse } from "@/types";
+import { verificationReasoningService } from "@/lib/verification/reasoning";
+import {
+  EvidenceRetrievalResult,
+  InvestigationInputResponse,
+  InvestigationVerificationResult,
+} from "@/types";
 
 export async function POST(req: NextRequest) {
   try {
@@ -185,6 +190,42 @@ export async function POST(req: NextRequest) {
       };
     }
 
+    // Step 3: Evidence Reasoning & Deterministic Claim Verification
+    let verificationResult: InvestigationVerificationResult;
+    try {
+      verificationResult = await verificationReasoningService.executeVerificationPipeline(
+        extractionResult.claims,
+        evidenceResult.bundles
+      );
+    } catch (err: unknown) {
+      console.warn("Verification reasoning pipeline error:", err);
+      // Fallback verification object
+      const fallbackClaims = extractionResult.claims.map((c) => ({
+        claimId: c.id,
+        claimText: c.text,
+        verdict: "UNVERIFIED" as const,
+        confidence: "LOW" as const,
+        reasoning: "Reasoning engine encountered an error; claim remains unverified.",
+        supportingEvidenceIds: [],
+        contradictingEvidenceIds: [],
+        evidenceCount: 0,
+      }));
+      verificationResult = {
+        overallVerdict: "UNVERIFIED",
+        overallConfidence: "LOW",
+        overallSummary: "Evidence reasoning service was unable to evaluate claims. Verification status is unverified.",
+        claimVerifications: fallbackClaims,
+        claimBreakdown: {
+          total: fallbackClaims.length,
+          verifiedTrue: 0,
+          refutedFalse: 0,
+          mixed: 0,
+          unverified: fallbackClaims.length,
+        },
+        verifiedAt: new Date().toISOString(),
+      };
+    }
+
     const sessionId = `inv_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
     const timestamp = new Date().toISOString();
 
@@ -199,13 +240,10 @@ export async function POST(req: NextRequest) {
 
     const responseData: InvestigationInputResponse = {
       success: true,
-      stage: "evidence_retrieved",
+      stage: "verified",
       sessionId,
       timestamp,
-      message:
-        evidenceResult.status === "error"
-          ? `Extracted ${extractionResult.claims.length} atomic claims. Web evidence retrieval encountered an issue (${evidenceResult.error}).`
-          : `Decomposed into ${extractionResult.claims.length} claims and retrieved ${evidenceResult.totalSourcesFound} corroborating web evidence records.`,
+      message: `Verified assertion: ${verificationResult.overallVerdict} (${verificationResult.overallSummary})`,
       input: {
         claim,
         claimReceived: true,
@@ -216,7 +254,8 @@ export async function POST(req: NextRequest) {
       },
       extraction: extractionResult,
       evidence: evidenceResult,
-      nextStage: "Phase 5: Evidence Graph Synthesis & Calibrated Verdicts",
+      verification: verificationResult,
+      nextStage: "Phase 6: Multi-Dimensional Provenance & Integrity Graph",
     };
 
     return NextResponse.json(responseData, { status: 200 });

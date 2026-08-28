@@ -14,7 +14,7 @@ export type EvidenceType =
 
 export type Stance = "supports" | "refutes" | "neutral" | "unrelated";
 
-export type EvidenceStance = "SUPPORTS" | "CONTRADICTS" | "NEUTRAL" | "UNCERTAIN";
+export type EvidenceStance = "SUPPORTS" | "CONTRADICTS" | "MIXED" | "INSUFFICIENT" | "NEUTRAL" | "UNCERTAIN";
 
 export interface EvidenceItem {
   id: string;

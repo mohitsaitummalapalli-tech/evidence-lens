@@ -10,6 +10,29 @@
  * Test 7: Verify real evidence links and response formatting
  */
 
+import fs from "fs";
+import path from "path";
+
+// Load .env.local without external dotenv dependency
+try {
+  const envPath = path.resolve(process.cwd(), ".env.local");
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, "utf-8");
+    for (const line of envContent.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
+        const [key, ...rest] = trimmed.split("=");
+        const value = rest.join("=").trim().replace(/^["']|["']$/g, "");
+        if (key && !process.env[key.trim()]) {
+          process.env[key.trim()] = value;
+        }
+      }
+    }
+  }
+} catch {
+  // Ignore
+}
+
 import { evidenceRetrievalService } from "../lib/evidence/retrieval";
 import { geminiService } from "../lib/ai/gemini";
 import { AtomicClaim, EvidenceRetrievalResult } from "../types";

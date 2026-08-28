@@ -8,6 +8,29 @@
  * 5. API/Network failure handling
  */
 
+import fs from "fs";
+import path from "path";
+
+// Load .env.local without external dotenv dependency
+try {
+  const envPath = path.resolve(process.cwd(), ".env.local");
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, "utf-8");
+    for (const line of envContent.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith("#") && trimmed.includes("=")) {
+        const [key, ...rest] = trimmed.split("=");
+        const value = rest.join("=").trim().replace(/^["']|["']$/g, "");
+        if (key && !process.env[key.trim()]) {
+          process.env[key.trim()] = value;
+        }
+      }
+    }
+  }
+} catch {
+  // Ignore
+}
+
 import { TavilySearchClient } from "../lib/evidence/tavily";
 
 function checkDomain(url: string): string {
