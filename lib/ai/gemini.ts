@@ -44,7 +44,7 @@ EXTRACTION RULES:
 
 export class GeminiService {
   private client: GoogleGenAI | null = null;
-  private primaryModel = "gemini-2.5-flash";
+  private primaryModel = "gemini-3.6-flash";
 
   private getClient(): GoogleGenAI {
     const apiKey = process.env.GEMINI_API_KEY;
