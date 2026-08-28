@@ -4,7 +4,7 @@
  */
 
 import { Claim, ClaimExtractionResult } from "./claim";
-import { EvidenceSnippet, MediaItem } from "./evidence";
+import { EvidenceRetrievalResult, EvidenceSnippet, MediaItem } from "./evidence";
 
 export type InvestigationStatus = 
   | "draft"
@@ -105,7 +105,7 @@ export interface InvestigationInputPayload {
 
 export interface InvestigationInputResponse {
   success: boolean;
-  stage: "input_received" | "claim_extracted";
+  stage: "input_received" | "claim_extracted" | "evidence_retrieved";
   sessionId: string;
   timestamp: string;
   message: string;
@@ -123,5 +123,6 @@ export interface InvestigationInputResponse {
     };
   };
   extraction?: ClaimExtractionResult;
+  evidence?: EvidenceRetrievalResult;
   nextStage: string;
 }

@@ -7,18 +7,23 @@ import {
   Inbox, 
   Layers, 
   Compass,
-  CheckCircle2
+  CheckCircle2,
+  Globe
 } from "lucide-react";
-import { AtomicClaim } from "@/types";
+import { AtomicClaim, EvidenceRetrievalResult } from "@/types";
 
 interface WorkspacePlaceholderProps {
   claims?: AtomicClaim[];
+  evidence?: EvidenceRetrievalResult;
 }
 
 export const WorkspacePlaceholder: React.FC<WorkspacePlaceholderProps> = ({
   claims = [],
+  evidence,
 }) => {
   const hasClaims = claims.length > 0;
+  const hasEvidence = Boolean(evidence && evidence.allSources && evidence.allSources.length > 0);
+  const totalEvidence = evidence?.allSources?.length || 0;
 
   return (
     <div className="space-y-4">
@@ -31,12 +36,16 @@ export const WorkspacePlaceholder: React.FC<WorkspacePlaceholderProps> = ({
         </div>
         <span
           className={`text-xs font-mono px-2.5 py-1 rounded border ${
-            hasClaims
+            hasEvidence
+              ? "bg-blue-950/40 text-blue-300 border-blue-800/40"
+              : hasClaims
               ? "bg-emerald-950/40 text-emerald-400 border-emerald-800/40"
               : "bg-slate-900 text-slate-400 border-slate-800"
           }`}
         >
-          {hasClaims
+          {hasEvidence
+            ? `Status: Phase 4 Active (${claims.length} Claims | ${totalEvidence} Evidence Sources)`
+            : hasClaims
             ? `Status: Phase 3 Active (${claims.length} Claims Indexed)`
             : "Status: Awaiting Session Initialization"}
         </span>
@@ -107,30 +116,70 @@ export const WorkspacePlaceholder: React.FC<WorkspacePlaceholderProps> = ({
         </div>
 
         {/* Column 2: Evidence & Provenance Corpus (Panel B) */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 flex flex-col justify-between min-h-[300px]">
+        <div
+          className={`rounded-xl p-5 flex flex-col justify-between min-h-[300px] border transition-all ${
+            hasEvidence
+              ? "bg-slate-900/80 border-blue-500/40 shadow-lg shadow-blue-950/10"
+              : "bg-slate-900/50 border-slate-800"
+          }`}
+        >
           <div className="space-y-3">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-300 font-semibold">
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-200 font-semibold">
                 <Database className="h-3.5 w-3.5 text-blue-400" />
-                <span>Evidence & Provenance (0)</span>
+                <span>Evidence & Provenance ({totalEvidence})</span>
               </div>
-              <span className="text-[10px] font-mono text-slate-500 uppercase">Panel B</span>
+              <span className="text-[10px] font-mono text-blue-400 uppercase bg-blue-950/50 px-1.5 py-0.5 rounded border border-blue-800/40">
+                Panel B
+              </span>
             </div>
 
-            <div className="p-6 border border-dashed border-slate-800/80 rounded-lg flex flex-col items-center justify-center text-center space-y-2">
-              <div className="p-2.5 rounded-full bg-slate-950 border border-slate-800 text-slate-600">
-                <Compass className="h-4 w-4" />
+            {hasEvidence && evidence ? (
+              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                {evidence.allSources.slice(0, 6).map((src) => (
+                  <div
+                    key={src.id}
+                    className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/90 text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between text-[10px] font-mono">
+                      <span className="text-cyan-400 font-semibold flex items-center gap-1">
+                        <Globe className="h-3 w-3 text-slate-500" />
+                        {src.domain}
+                      </span>
+                      <span className="text-slate-400">
+                        {src.claimId} • {src.stance}
+                      </span>
+                    </div>
+                    <p className="text-slate-200 font-sans leading-snug text-[11px] line-clamp-1">
+                      {src.title}
+                    </p>
+                  </div>
+                ))}
+                {totalEvidence > 6 && (
+                  <p className="text-[10px] font-mono text-slate-500 text-center pt-1">
+                    +{totalEvidence - 6} more sources in evidence panel below
+                  </p>
+                )}
               </div>
-              <p className="text-xs font-medium text-slate-400">Evidence Corpus Empty</p>
-              <p className="text-[11px] text-slate-500 leading-relaxed max-w-[220px]">
-                Primary sources, archived URLs, and reverse image matches will be logged here with stance metrics in Phase 4.
-              </p>
-            </div>
+            ) : (
+              <div className="p-6 border border-dashed border-slate-800/80 rounded-lg flex flex-col items-center justify-center text-center space-y-2">
+                <div className="p-2.5 rounded-full bg-slate-950 border border-slate-800 text-slate-600">
+                  <Compass className="h-4 w-4" />
+                </div>
+                <p className="text-xs font-medium text-slate-400">Evidence Corpus Empty</p>
+                <p className="text-[11px] text-slate-500 leading-relaxed max-w-[220px]">
+                  Primary sources, archived URLs, and reverse image matches will be logged here with stance metrics in Phase 4.
+                </p>
+              </div>
+            )}
           </div>
 
-          <div className="pt-3 border-t border-slate-800/60 text-[10px] font-mono text-slate-500 flex items-center justify-between">
-            <span>Stance Scoring: Standby</span>
-            <span>Citations: Scheduled</span>
+          <div className="pt-3 border-t border-slate-800/60 text-[10px] font-mono flex items-center justify-between">
+            <span className={hasEvidence ? "text-blue-400 flex items-center gap-1" : "text-slate-500"}>
+              {hasEvidence && <CheckCircle2 className="h-3 w-3" />}
+              {hasEvidence ? "Tavily Multi-Source Indexed" : "Stance Scoring: Standby"}
+            </span>
+            <span className="text-slate-500">Citations: Active</span>
           </div>
         </div>
 

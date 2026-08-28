@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { INPUT_VALIDATION } from "@/lib/constants";
 import { geminiService } from "@/lib/ai/gemini";
+import { evidenceRetrievalService } from "@/lib/evidence/retrieval";
 import { InvestigationInputResponse } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -136,17 +137,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Execute Phase 3: AI Atomic Claim Extraction
+    // Verify Tavily API key presence
+    if (!process.env.TAVILY_API_KEY || process.env.TAVILY_API_KEY.trim().length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "TAVILY_API_KEY is not configured on the server. Please configure TAVILY_API_KEY in .env.local to enable Web Evidence Retrieval.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // Step 1: AI Atomic Claim Extraction
     const extractionResult = await geminiService.extractAtomicClaims({
       claim,
       contextUrl,
       media: mediaInfo,
     });
 
+    // Step 2: Multi-Source Web Evidence Retrieval & Stance Grounding
+    const evidenceResult = await evidenceRetrievalService.retrieveEvidenceForClaims(
+      extractionResult.claims,
+      contextUrl
+    );
+
     const sessionId = `inv_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
     const timestamp = new Date().toISOString();
 
-    // Echo safe media metadata without buffer
     const safeMediaInfo = mediaInfo
       ? {
           type: mediaInfo.type,
@@ -158,10 +175,10 @@ export async function POST(req: NextRequest) {
 
     const responseData: InvestigationInputResponse = {
       success: true,
-      stage: "claim_extracted",
+      stage: "evidence_retrieved",
       sessionId,
       timestamp,
-      message: `Decomposed target assertion into ${extractionResult.claims.length} atomic verifiable claims.`,
+      message: `Decomposed into ${extractionResult.claims.length} claims and retrieved ${evidenceResult.totalSourcesFound} corroborating web evidence records.`,
       input: {
         claim,
         claimReceived: true,
@@ -171,17 +188,18 @@ export async function POST(req: NextRequest) {
         media: safeMediaInfo,
       },
       extraction: extractionResult,
-      nextStage: "Phase 4: Multi-Source Evidence Retrieval & Provenance Mapping",
+      evidence: evidenceResult,
+      nextStage: "Phase 5: Evidence Graph Synthesis & Calibrated Verdicts",
     };
 
     return NextResponse.json(responseData, { status: 200 });
   } catch (error) {
-    console.error("API /api/investigate extraction error:", error);
+    console.error("API /api/investigate error:", error);
     const rawMessage = error instanceof Error ? error.message : "Internal server error occurred.";
     return NextResponse.json(
       {
         success: false,
-        error: rawMessage.replace(/[A-Za-z0-9_-]{20,}/g, "[REDACTED]"), // ensure no accidental token leakage
+        error: rawMessage.replace(/[A-Za-z0-9_-]{20,}/g, "[REDACTED]"),
       },
       { status: 500 }
     );

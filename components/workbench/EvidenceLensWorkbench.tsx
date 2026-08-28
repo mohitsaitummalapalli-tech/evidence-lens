@@ -8,6 +8,7 @@ import { PipelineOverview } from "./PipelineOverview";
 import { WorkspacePlaceholder } from "./WorkspacePlaceholder";
 import { InvestigationResultPanel } from "./InvestigationResultPanel";
 import { ClaimExtractionPanel } from "./ClaimExtractionPanel";
+import { EvidencePanel } from "./EvidencePanel";
 import { INPUT_VALIDATION } from "@/lib/constants";
 import { 
   InvestigationInputResponse, 
@@ -137,11 +138,17 @@ export const EvidenceLensWorkbench: React.FC = () => {
           {apiResponse.extraction && (
             <ClaimExtractionPanel extraction={apiResponse.extraction} />
           )}
+          {apiResponse.evidence && (
+            <EvidencePanel evidence={apiResponse.evidence} />
+          )}
         </>
       )}
 
       {/* Investigation Workspace State */}
-      <WorkspacePlaceholder claims={apiResponse?.extraction?.claims || []} />
+      <WorkspacePlaceholder
+        claims={apiResponse?.extraction?.claims || []}
+        evidence={apiResponse?.evidence}
+      />
 
       {/* Pipeline Architecture Reference */}
       <PipelineOverview />

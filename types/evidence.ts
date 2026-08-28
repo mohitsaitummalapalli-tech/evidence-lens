@@ -14,6 +14,37 @@ export type EvidenceType =
 
 export type Stance = "supports" | "refutes" | "neutral" | "unrelated";
 
+export type EvidenceStance = "SUPPORTS" | "CONTRADICTS" | "NEUTRAL" | "UNCERTAIN";
+
+export interface EvidenceItem {
+  id: string;
+  claimId: string;
+  title: string;
+  url: string;
+  domain: string;
+  publisher?: string;
+  publishedDate?: string;
+  snippet: string;
+  relevanceScore?: number;
+  stance: EvidenceStance;
+  stanceExplanation?: string;
+  retrievedAt: string;
+}
+
+export interface ClaimEvidenceBundle {
+  claimId: string;
+  claimText: string;
+  query: string;
+  sources: EvidenceItem[];
+}
+
+export interface EvidenceRetrievalResult {
+  totalSourcesFound: number;
+  bundles: ClaimEvidenceBundle[];
+  allSources: EvidenceItem[];
+  retrievedAt: string;
+}
+
 export interface EvidenceSource {
   id: string;
   title: string;
