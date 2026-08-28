@@ -75,3 +75,68 @@
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(212, 175, 55, 0.45);
 }
+
+/* Phase 7B: 3D Forensic Floating Phases */
+@keyframes forensic-float-1 {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes forensic-float-2 {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes forensic-float-3 {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.floating-card-1 {
+  animation: forensic-float-1 7s ease-in-out infinite;
+}
+
+.floating-card-2 {
+  animation: forensic-float-2 8.5s ease-in-out infinite;
+  animation-delay: 1.2s;
+}
+
+.floating-card-3 {
+  animation: forensic-float-3 6.2s ease-in-out infinite;
+  animation-delay: 2.5s;
+}
+
+/* 3D Depth Card Specular Effects */
+.depth-surface {
+  transform-style: preserve-3d;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8),
+              0 0 1px 1px rgba(212, 175, 55, 0.15);
+}
+
+/* Accessibility: Strict Reduced Motion Overrides */
+@media (prefers-reduced-motion: reduce) {
+  .floating-card-1,
+  .floating-card-2,
+  .floating-card-3 {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .depth-surface,
+  [data-depth-card] {
+    transform: none !important;
+    transition: none !important;
+  }
+}

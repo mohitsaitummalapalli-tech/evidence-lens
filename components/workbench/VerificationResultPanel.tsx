@@ -23,6 +23,7 @@ import {
 
 interface VerificationResultPanelProps {
   verification: InvestigationVerificationResult;
+  onInspectClaim?: (claimId: string) => void;
 }
 
 const OVERALL_CONFIG: Record<
@@ -123,6 +124,7 @@ const CONFIDENCE_BADGES: Record<VerificationConfidence, { label: string; color: 
 
 export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = ({
   verification,
+  onInspectClaim,
 }) => {
   const overallConfig = OVERALL_CONFIG[verification.overallVerdict] || OVERALL_CONFIG.UNVERIFIED;
   const OverallIcon = overallConfig.icon;
@@ -260,9 +262,10 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
                   </div>
                 </div>
 
-                {/* Evidence Link Count Footer */}
-                <div className="pt-2.5 border-t border-stone-900 flex items-center justify-between text-[11px] font-mono text-[#94A3B8]">
+                {/* Evidence Link Count Footer & Inspector Trigger */}
+                <div className="pt-2.5 border-t border-stone-900 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-[#94A3B8]">
                   <span>{claimVer.evidenceCount} Sources Evaluated</span>
+
                   <div className="flex items-center gap-2">
                     {claimVer.supportingEvidenceIds.length > 0 && (
                       <span className="text-emerald-400">
@@ -273,6 +276,21 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
                       <span className="text-rose-400">
                         -{claimVer.contradictingEvidenceIds.length} Refutes
                       </span>
+                    )}
+
+                    {onInspectClaim && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onInspectClaim(claimVer.claimId);
+                        }}
+                        className="px-2 py-1 rounded bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] hover:text-[#F3E5B8] border border-[#D4AF37]/30 text-[10px] font-semibold flex items-center gap-1 transition-colors ml-1 shadow-sm"
+                        title={`Inspect why ${claimVer.claimId} was evaluated as ${claimVer.verdict}`}
+                      >
+                        <Scale className="h-3 w-3 text-[#D4AF37]" />
+                        <span>WHY THIS VERDICT?</span>
+                      </button>
                     )}
                   </div>
                 </div>

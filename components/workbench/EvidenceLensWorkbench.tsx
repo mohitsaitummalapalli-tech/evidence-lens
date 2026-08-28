@@ -13,6 +13,9 @@ import { VerificationResultPanel } from "./VerificationResultPanel";
 import { EvidenceGraph } from "./EvidenceGraph";
 import { ConfidenceCometGraph } from "./ConfidenceCometGraph";
 import { ImageProvenancePanel } from "./ImageProvenancePanel";
+import { VerdictInspector } from "./VerdictInspector";
+import { Forensic3DLayer } from "./Forensic3DLayer";
+import { DepthCard } from "./DepthCard";
 import { INPUT_VALIDATION } from "@/lib/constants";
 import { 
   InvestigationInputResponse, 
@@ -27,6 +30,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
   const [statusState, setStatusState] = useState<"SUBMITTING" | "INPUT_RECEIVED" | "ERROR" | null>(null);
   const [apiResponse, setApiResponse] = useState<InvestigationInputResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [inspectingClaimId, setInspectingClaimId] = useState<string | null>(null);
 
   // Compute validation state
   const hasValidInput = useMemo(() => {
@@ -97,97 +102,148 @@ export const EvidenceLensWorkbench: React.FC = () => {
   const isFormDisabled = uiState === "SUBMITTING";
 
   return (
-    <div className="space-y-6">
-      {/* Top Input & Media Ingestion Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ClaimInputSection
-          claimText={claimText}
-          setClaimText={(val) => {
-            setClaimText(val);
-            if (statusState === "ERROR") {
-              setStatusState(null);
-              setErrorMessage(null);
-            }
-          }}
-          contextText={contextText}
-          setContextText={setContextText}
-          disabled={isFormDisabled}
-        />
-        <MediaUploadSection
-          media={selectedMedia}
-          setMedia={(media) => {
-            setSelectedMedia(media);
-            if (statusState === "ERROR") {
-              setStatusState(null);
-              setErrorMessage(null);
-            }
-          }}
-          disabled={isFormDisabled}
-        />
-      </div>
+    <Forensic3DLayer
+      verdict={apiResponse?.verification?.overallVerdict}
+      isInvestigating={uiState === "SUBMITTING"}
+    >
+      <div className="space-y-6">
+        {/* Top Input & Media Ingestion Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <DepthCard floatingPhase={1} enableTilt={false}>
+            <ClaimInputSection
+              claimText={claimText}
+              setClaimText={(val) => {
+                setClaimText(val);
+                if (statusState === "ERROR") {
+                  setStatusState(null);
+                  setErrorMessage(null);
+                }
+              }}
+              contextText={contextText}
+              setContextText={setContextText}
+              disabled={isFormDisabled}
+            />
+          </DepthCard>
 
-      {/* Control Bar & State Indicators */}
-      <InvestigationControls
-        uiState={uiState}
-        hasValidInput={hasValidInput}
-        errorMessage={errorMessage}
-        onSubmit={handleSubmit}
-        onReset={handleReset}
-      />
+          <DepthCard floatingPhase={2} enableTilt={false}>
+            <MediaUploadSection
+              media={selectedMedia}
+              setMedia={(media) => {
+                setSelectedMedia(media);
+                if (statusState === "ERROR") {
+                  setStatusState(null);
+                  setErrorMessage(null);
+                }
+              }}
+              disabled={isFormDisabled}
+            />
+          </DepthCard>
+        </div>
 
-      {/* Live Forensic Evidence Graph (During Submitting or Result Present) */}
-      {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse && (apiResponse.extraction || apiResponse.evidence))) && (
-        <EvidenceGraph
-          extraction={apiResponse?.extraction}
+        {/* Control Bar & State Indicators */}
+        <DepthCard floatingPhase="none" enableTilt={false}>
+          <InvestigationControls
+            uiState={uiState}
+            hasValidInput={hasValidInput}
+            errorMessage={errorMessage}
+            onSubmit={handleSubmit}
+            onReset={handleReset}
+          />
+        </DepthCard>
+
+        {/* Live Forensic Evidence Graph (During Submitting or Result Present) */}
+        {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse && (apiResponse.extraction || apiResponse.evidence))) && (
+          <DepthCard floatingPhase="none" enableTilt={false}>
+            <EvidenceGraph
+              extraction={apiResponse?.extraction}
+              evidence={apiResponse?.evidence}
+              verification={apiResponse?.verification}
+              imageProvenance={apiResponse?.imageProvenance}
+              originalClaim={claimText.trim() || apiResponse?.input.claim}
+              isInitializing={uiState === "SUBMITTING"}
+            />
+          </DepthCard>
+        )}
+
+        {/* Forensic Confidence Trajectory Comet Graph */}
+        {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse?.verification)) && (
+          <DepthCard floatingPhase="none" enableTilt={false}>
+            <ConfidenceCometGraph
+              verification={apiResponse?.verification}
+              isAnalyzing={uiState === "SUBMITTING"}
+            />
+          </DepthCard>
+        )}
+
+        {/* Web Image Provenance Discovery Panel (Phase 6B) */}
+        {(uiState === "SUBMITTING" && Boolean(selectedMedia)) || (uiState === "INPUT_RECEIVED" && apiResponse?.imageProvenance) ? (
+          <DepthCard floatingPhase={3} enableTilt={false}>
+            <ImageProvenancePanel
+              provenance={apiResponse?.imageProvenance}
+              isLoading={uiState === "SUBMITTING" && Boolean(selectedMedia)}
+            />
+          </DepthCard>
+        ) : null}
+
+        {/* Investigation Initialized Server Response Panel */}
+        {uiState === "INPUT_RECEIVED" && apiResponse && (
+          <>
+            <DepthCard floatingPhase="none" enableTilt={false}>
+              <InvestigationResultPanel response={apiResponse} />
+            </DepthCard>
+
+            {apiResponse.verification && (
+              <DepthCard floatingPhase="none" enableTilt={false}>
+                <VerificationResultPanel
+                  verification={apiResponse.verification}
+                  onInspectClaim={(claimId) => setInspectingClaimId(claimId)}
+                />
+              </DepthCard>
+            )}
+
+            {apiResponse.extraction && (
+              <DepthCard floatingPhase="none" enableTilt={false}>
+                <ClaimExtractionPanel extraction={apiResponse.extraction} />
+              </DepthCard>
+            )}
+
+            {apiResponse.evidence && (
+              <DepthCard floatingPhase="none" enableTilt={false}>
+                <EvidencePanel evidence={apiResponse.evidence} />
+              </DepthCard>
+            )}
+          </>
+        )}
+
+        {/* Forensic "Why This Verdict?" Inspector Drawer (Phase 7A) */}
+        <VerdictInspector
+          claimId={inspectingClaimId}
+          verification={apiResponse?.verification}
           evidence={apiResponse?.evidence}
-          verification={apiResponse?.verification}
-          imageProvenance={apiResponse?.imageProvenance}
-          originalClaim={claimText.trim() || apiResponse?.input.claim}
-          isInitializing={uiState === "SUBMITTING"}
+          onClose={() => setInspectingClaimId(null)}
+          onViewInGraph={() => {
+            // Scroll smoothly to Evidence Graph container
+            const graphEl = document.querySelector(".edges-layer")?.closest("div");
+            if (graphEl) {
+              graphEl.scrollIntoView({ behavior: "smooth" });
+            }
+          }}
         />
-      )}
 
-      {/* Forensic Confidence Trajectory Comet Graph */}
-      {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse?.verification)) && (
-        <ConfidenceCometGraph
-          verification={apiResponse?.verification}
-          isAnalyzing={uiState === "SUBMITTING"}
-        />
-      )}
+        {/* Investigation Workspace State */}
+        <DepthCard floatingPhase="none" enableTilt={false}>
+          <WorkspacePlaceholder
+            claims={apiResponse?.extraction?.claims || []}
+            evidence={apiResponse?.evidence}
+            verification={apiResponse?.verification}
+          />
+        </DepthCard>
 
-      {/* Web Image Provenance Discovery Panel (Phase 6B) */}
-      {(uiState === "SUBMITTING" && Boolean(selectedMedia)) || (uiState === "INPUT_RECEIVED" && apiResponse?.imageProvenance) ? (
-        <ImageProvenancePanel
-          provenance={apiResponse?.imageProvenance}
-          isLoading={uiState === "SUBMITTING" && Boolean(selectedMedia)}
-        />
-      ) : null}
-
-      {/* Investigation Initialized Server Response Panel */}
-      {uiState === "INPUT_RECEIVED" && apiResponse && (
-        <>
-          <InvestigationResultPanel response={apiResponse} />
-          {apiResponse.verification && (
-            <VerificationResultPanel verification={apiResponse.verification} />
-          )}
-          {apiResponse.extraction && (
-            <ClaimExtractionPanel extraction={apiResponse.extraction} />
-          )}
-          {apiResponse.evidence && (
-            <EvidencePanel evidence={apiResponse.evidence} />
-          )}
-        </>
-      )}
-
-      {/* Investigation Workspace State */}
-      <WorkspacePlaceholder
-        claims={apiResponse?.extraction?.claims || []}
-        evidence={apiResponse?.evidence}
-        verification={apiResponse?.verification}
-      />
-
-      {/* Pipeline Architecture Reference */}
-      <PipelineOverview />
-    </div>
+        {/* Pipeline Architecture Reference */}
+        <DepthCard floatingPhase="none" enableTilt={false}>
+          <PipelineOverview />
+        </DepthCard>
+      </div>
+    </Forensic3DLayer>
   );
 };
