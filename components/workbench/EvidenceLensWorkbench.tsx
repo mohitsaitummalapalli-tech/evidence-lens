@@ -14,6 +14,7 @@ import { EvidenceGraph } from "./EvidenceGraph";
 import { ConfidenceCometGraph } from "./ConfidenceCometGraph";
 import { ImageProvenancePanel } from "./ImageProvenancePanel";
 import { VerdictInspector } from "./VerdictInspector";
+import { InvestigationTimeline } from "./InvestigationTimeline";
 import { Forensic3DLayer } from "./Forensic3DLayer";
 import { DepthCard } from "./DepthCard";
 import { INPUT_VALIDATION } from "@/lib/constants";
@@ -148,6 +149,23 @@ export const EvidenceLensWorkbench: React.FC = () => {
             errorMessage={errorMessage}
             onSubmit={handleSubmit}
             onReset={handleReset}
+          />
+        </DepthCard>
+
+        {/* Forensic Investigation Lifecycle Timeline (Phase 8) */}
+        <DepthCard floatingPhase="none" enableTilt={false}>
+          <InvestigationTimeline
+            uiState={uiState}
+            apiResponse={apiResponse}
+            claimText={claimText}
+            hasMedia={Boolean(selectedMedia)}
+            onInspectClaim={(claimId) => setInspectingClaimId(claimId)}
+            onViewInGraph={() => {
+              const graphEl = document.getElementById("evidence-graph-panel");
+              if (graphEl) {
+                graphEl.scrollIntoView({ behavior: "smooth" });
+              }
+            }}
           />
         </DepthCard>
 

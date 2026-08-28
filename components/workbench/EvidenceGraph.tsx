@@ -654,6 +654,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
 
   return (
     <div
+      id="evidence-graph-panel"
       ref={containerRef}
       className={`bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl shadow-2xl shadow-black/70 flex flex-col transition-all duration-300 relative overflow-hidden ${
         isFullscreen

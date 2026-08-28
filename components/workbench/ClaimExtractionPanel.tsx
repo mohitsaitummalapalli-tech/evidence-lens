@@ -13,7 +13,7 @@ export const ClaimExtractionPanel: React.FC<ClaimExtractionPanelProps> = ({
   extraction,
 }) => {
   return (
-    <div className="bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl p-6 shadow-2xl shadow-black/60 space-y-6 animate-in fade-in duration-300">
+    <div id="claim-extraction-panel" className="bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl p-6 shadow-2xl shadow-black/60 space-y-6 animate-in fade-in duration-300">
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#D4AF37]/15 gap-3">
         <div className="flex items-center gap-3">

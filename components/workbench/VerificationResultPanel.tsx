@@ -131,7 +131,7 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
   const confBadge = CONFIDENCE_BADGES[verification.overallConfidence] || CONFIDENCE_BADGES.LOW;
 
   return (
-    <div className="bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl p-6 shadow-2xl shadow-black/60 space-y-6 animate-in fade-in duration-300">
+    <div id="verification-result-panel" className="bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl p-6 shadow-2xl shadow-black/60 space-y-6 animate-in fade-in duration-300">
       {/* 1. Overall Verdict Banner */}
       <div className={`p-6 rounded-xl border ${overallConfig.bg} ${overallConfig.border} space-y-4 shadow-inner`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-800/80">

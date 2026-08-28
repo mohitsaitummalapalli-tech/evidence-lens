@@ -54,6 +54,7 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
 
   return (
     <section
+      id="image-provenance-panel"
       aria-label="Web Image Provenance Discovery"
       className="bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl p-5 shadow-2xl shadow-black/60 relative overflow-hidden my-6"
     >

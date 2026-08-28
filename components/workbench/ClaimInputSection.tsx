@@ -25,7 +25,7 @@ export const ClaimInputSection: React.FC<ClaimInputSectionProps> = ({
   const isTooLong = charCount > INPUT_VALIDATION.maxClaimLength;
 
   return (
-    <div className="bg-[#0D1017]/90 border border-[#D4AF37]/20 rounded-xl p-5 shadow-xl shadow-black/40 space-y-4 transition-all">
+    <div id="claim-input-section" className="bg-[#0D1017]/90 border border-[#D4AF37]/20 rounded-xl p-5 shadow-xl shadow-black/40 space-y-4 transition-all">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="p-1.5 rounded-md bg-[#131720] border border-[#D4AF37]/30 text-[#D4AF37]">
