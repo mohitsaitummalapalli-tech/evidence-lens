@@ -4,6 +4,8 @@ import { geminiService } from "@/lib/ai/gemini";
 import { evidenceRetrievalService } from "@/lib/evidence/retrieval";
 import { verificationReasoningService } from "@/lib/verification/reasoning";
 import {
+  AtomicClaim,
+  ClaimExtractionResult,
   EvidenceRetrievalResult,
   InvestigationInputResponse,
   InvestigationVerificationResult,
@@ -142,12 +144,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Step 1: AI Atomic Claim Extraction
-    const extractionResult = await geminiService.extractAtomicClaims({
-      claim,
-      contextUrl,
-      media: mediaInfo,
-    });
+    // Step 1: AI Atomic Claim Extraction (Graceful Fallback Boundary)
+    let extractionResult: ClaimExtractionResult;
+    try {
+      extractionResult = await geminiService.extractAtomicClaims({
+        claim,
+        contextUrl,
+        media: mediaInfo,
+      });
+    } catch (err: unknown) {
+      console.warn("Gemini extraction error in route, using fallback single-claim deconstruction:", err);
+      extractionResult = {
+        originalClaim: claim,
+        contextUrl,
+        claims: [
+          {
+            id: "C1",
+            text: claim,
+            category: "event",
+            checkability: "medium",
+            entities: [],
+          },
+        ],
+        overallExtractionNotes: "Claim extraction operating in resilient direct mode.",
+      };
+    }
 
     // Step 2: Multi-Source Web Evidence Retrieval & Stance Grounding (Graceful Error Boundary)
     let evidenceResult: EvidenceRetrievalResult;
@@ -157,7 +178,7 @@ export async function POST(req: NextRequest) {
           status: "error",
           error: "TAVILY_API_KEY is not configured on the server. Please configure TAVILY_API_KEY in .env.local to enable Web Evidence Retrieval.",
           totalSourcesFound: 0,
-          bundles: extractionResult.claims.map((c) => ({
+          bundles: extractionResult.claims.map((c: AtomicClaim) => ({
             claimId: c.id,
             claimText: c.text,
             query: c.text,
@@ -179,7 +200,7 @@ export async function POST(req: NextRequest) {
         status: "error",
         error: errMsg,
         totalSourcesFound: 0,
-        bundles: extractionResult.claims.map((c) => ({
+        bundles: extractionResult.claims.map((c: AtomicClaim) => ({
           claimId: c.id,
           claimText: c.text,
           query: c.text,
@@ -200,7 +221,7 @@ export async function POST(req: NextRequest) {
     } catch (err: unknown) {
       console.warn("Verification reasoning pipeline error:", err);
       // Fallback verification object
-      const fallbackClaims = extractionResult.claims.map((c) => ({
+      const fallbackClaims = extractionResult.claims.map((c: AtomicClaim) => ({
         claimId: c.id,
         claimText: c.text,
         verdict: "UNVERIFIED" as const,

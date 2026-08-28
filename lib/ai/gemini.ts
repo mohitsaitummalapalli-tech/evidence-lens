@@ -68,7 +68,7 @@ Do NOT make overall truth verdicts. Evaluate ONLY the logical relationship betwe
 
 export class GeminiService {
   private client: GoogleGenAI | null = null;
-  private primaryModel = "gemini-3.6-flash";
+  private candidateModels = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash"];
 
   private getClient(): GoogleGenAI {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -117,68 +117,81 @@ export class GeminiService {
     promptText += `\nDeconstruct the assertion into atomic verifiable claims according to the system instructions.`;
     parts.push(promptText);
 
-    try {
-      const response = await ai.models.generateContent({
-        model: this.primaryModel,
-        contents: parts,
-        config: {
-          systemInstruction: CLAIM_EXTRACTION_SYSTEM_INSTRUCTION,
-          temperature: 0.1,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              originalClaim: { type: Type.STRING },
-              claims: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    id: { type: Type.STRING },
-                    text: { type: Type.STRING },
-                    category: {
-                      type: Type.STRING,
-                      enum: [
-                        "event",
-                        "time",
-                        "location",
-                        "identity",
-                        "media_context",
-                        "causal",
-                        "other",
-                      ],
-                    },
-                    checkability: {
-                      type: Type.STRING,
-                      enum: ["high", "medium", "low"],
-                    },
-                    entities: {
-                      type: Type.ARRAY,
-                      items: { type: Type.STRING },
-                    },
-                    timeReference: { type: Type.STRING },
-                    locationReference: { type: Type.STRING },
-                    dependsOn: {
-                      type: Type.ARRAY,
-                      items: { type: Type.STRING },
-                    },
-                  },
-                  required: ["id", "text", "category", "checkability", "entities"],
+    const config = {
+      systemInstruction: CLAIM_EXTRACTION_SYSTEM_INSTRUCTION,
+      temperature: 0.1,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          originalClaim: { type: Type.STRING },
+          claims: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                id: { type: Type.STRING },
+                text: { type: Type.STRING },
+                category: {
+                  type: Type.STRING,
+                  enum: [
+                    "event",
+                    "time",
+                    "location",
+                    "identity",
+                    "media_context",
+                    "causal",
+                    "other",
+                  ],
+                },
+                checkability: {
+                  type: Type.STRING,
+                  enum: ["high", "medium", "low"],
+                },
+                entities: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                },
+                timeReference: { type: Type.STRING },
+                locationReference: { type: Type.STRING },
+                dependsOn: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
                 },
               },
-              overallExtractionNotes: { type: Type.STRING },
-              mediaContext: { type: Type.STRING },
+              required: ["id", "text", "category", "checkability", "entities"],
             },
-            required: ["originalClaim", "claims"],
           },
+          overallExtractionNotes: { type: Type.STRING },
+          mediaContext: { type: Type.STRING },
         },
-      });
+        required: ["originalClaim", "claims"],
+      },
+    };
 
-      const responseText = response.text?.trim() || "";
-      if (!responseText) {
-        throw new Error("Gemini returned an empty response during claim extraction.");
+    let responseText = "";
+    let lastError: unknown = null;
+
+    for (const model of this.candidateModels) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: parts,
+          config,
+        });
+        responseText = response.text?.trim() || "";
+        if (responseText) break;
+      } catch (err) {
+        lastError = err;
+        console.warn(`Model ${model} failed in claim extraction, attempting next model...`);
       }
+    }
 
+    if (!responseText) {
+      throw lastError || new Error("All candidate Gemini models failed during claim extraction.");
+    }
+
+    try {
       const parsed = JSON.parse(responseText);
 
       const claims: AtomicClaim[] = Array.isArray(parsed.claims)
@@ -240,39 +253,49 @@ export class GeminiService {
     const prompt = `Evaluate the stance of each evidence snippet toward its paired claim:\n\n${JSON.stringify(itemsPayload, null, 2)}`;
 
     try {
-      const response = await ai.models.generateContent({
-        model: this.primaryModel,
-        contents: [prompt],
-        config: {
-          systemInstruction: STANCE_EVALUATION_SYSTEM_INSTRUCTION,
-          temperature: 0.1,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              evaluations: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    evidenceId: { type: Type.STRING },
-                    stance: {
-                      type: Type.STRING,
-                      enum: ["SUPPORTS", "CONTRADICTS", "NEUTRAL", "UNCERTAIN"],
-                    },
-                    explanation: { type: Type.STRING },
-                  },
-                  required: ["evidenceId", "stance"],
+    const config = {
+      systemInstruction: STANCE_EVALUATION_SYSTEM_INSTRUCTION,
+      temperature: 0.1,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          evaluations: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                evidenceId: { type: Type.STRING },
+                stance: {
+                  type: Type.STRING,
+                  enum: ["SUPPORTS", "CONTRADICTS", "NEUTRAL", "UNCERTAIN"],
                 },
+                explanation: { type: Type.STRING },
               },
+              required: ["evidenceId", "stance"],
             },
-            required: ["evaluations"],
           },
         },
-      });
+        required: ["evaluations"],
+      },
+    };
 
-      const responseText = response.text?.trim() || "";
-      if (!responseText) return {};
+    let responseText = "";
+    for (const model of this.candidateModels) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: [prompt],
+          config,
+        });
+        responseText = response.text?.trim() || "";
+        if (responseText) break;
+      } catch {
+        console.warn(`Model ${model} failed in stance evaluation, attempting fallback...`);
+      }
+    }
+
+    if (!responseText) return {};
 
       const parsed = JSON.parse(responseText);
       const results: Record<string, { stance: EvidenceStance; explanation?: string }> = {};

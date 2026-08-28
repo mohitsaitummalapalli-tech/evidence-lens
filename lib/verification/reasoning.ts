@@ -37,8 +37,7 @@ CRITICAL FACTUAL GROUNDING RULES:
 4. Explanations must be concise, objective, and cite what the snippet specifically says.`;
 
 export class VerificationReasoningService {
-  private primaryModel = "gemini-3.6-flash";
-  private fallbackModel = "gemini-2.0-flash";
+  private candidateModels = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash"];
 
   private getClient(): GoogleGenAI {
 
@@ -122,25 +121,17 @@ export class VerificationReasoningService {
     };
 
     let text = "";
-    try {
-      const response = await ai.models.generateContent({
-        model: this.primaryModel,
-        contents: [prompt],
-        config,
-      });
-      text = response.text?.trim() || "";
-    } catch (primaryErr) {
-      console.warn(`Primary model (${this.primaryModel}) failed, trying fallback (${this.fallbackModel}):`, primaryErr);
+    for (const model of this.candidateModels) {
       try {
-        const fallbackRes = await ai.models.generateContent({
-          model: this.fallbackModel,
+        const response = await ai.models.generateContent({
+          model,
           contents: [prompt],
           config,
         });
-        text = fallbackRes.text?.trim() || "";
-      } catch (fallbackErr) {
-        console.warn("Both models failed for stance reasoning:", fallbackErr);
-        return {};
+        text = response.text?.trim() || "";
+        if (text) break;
+      } catch {
+        console.warn(`Model ${model} failed in stance reasoning, trying next candidate...`);
       }
     }
 
