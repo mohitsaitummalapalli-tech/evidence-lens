@@ -42,7 +42,7 @@ const OVERALL_CONFIG: Record<
     bg: "bg-emerald-950/40",
     border: "border-emerald-500/40",
     text: "text-emerald-300",
-    badgeBg: "bg-emerald-500 text-slate-950",
+    badgeBg: "bg-emerald-500 text-[#08090C]",
     icon: ShieldCheck,
     description: "All core atomic claims are corroborated by credible retrieved web evidence with zero unresolved contradictions.",
   },
@@ -57,19 +57,19 @@ const OVERALL_CONFIG: Record<
   },
   MIXED: {
     label: "MIXED VERACITY",
-    bg: "bg-purple-950/40",
-    border: "border-purple-500/40",
-    text: "text-purple-300",
-    badgeBg: "bg-purple-500 text-white",
+    bg: "bg-amber-950/40",
+    border: "border-amber-500/40",
+    text: "text-amber-300",
+    badgeBg: "bg-amber-500 text-[#08090C]",
     icon: ShieldAlert,
     description: "The assertion contains a mixture of verified true facts and refuted, contradictory, or unverified claims.",
   },
   UNVERIFIED: {
     label: "UNVERIFIED / INSUFFICIENT",
-    bg: "bg-slate-900/60",
-    border: "border-slate-700/50",
-    text: "text-slate-300",
-    badgeBg: "bg-slate-700 text-slate-200",
+    bg: "bg-stone-900/60",
+    border: "border-stone-700/50",
+    text: "text-stone-300",
+    badgeBg: "bg-stone-700 text-stone-200",
     icon: HelpCircle,
     description: "Available external evidence is insufficient or inconclusive to establish verification.",
   },
@@ -87,38 +87,38 @@ const CLAIM_VERDICT_CONFIG: Record<
 > = {
   TRUE: {
     label: "TRUE",
-    bg: "bg-emerald-500/10",
-    border: "border-emerald-500/30",
-    text: "text-emerald-400",
+    bg: "bg-emerald-950/60",
+    border: "border-emerald-700/50",
+    text: "text-emerald-300",
     icon: CheckCircle2,
   },
   FALSE: {
     label: "FALSE",
-    bg: "bg-rose-500/10",
-    border: "border-rose-500/30",
-    text: "text-rose-400",
+    bg: "bg-rose-950/60",
+    border: "border-rose-700/50",
+    text: "text-rose-300",
     icon: XCircle,
   },
   MIXED: {
     label: "MIXED",
-    bg: "bg-purple-500/10",
-    border: "border-purple-500/30",
-    text: "text-purple-400",
+    bg: "bg-amber-950/60",
+    border: "border-amber-700/50",
+    text: "text-amber-300",
     icon: MinusCircle,
   },
   UNVERIFIED: {
     label: "UNVERIFIED",
-    bg: "bg-slate-800/40",
-    border: "border-slate-700/50",
-    text: "text-slate-400",
+    bg: "bg-stone-900/80",
+    border: "border-stone-700/50",
+    text: "text-[#94A3B8]",
     icon: HelpCircle,
   },
 };
 
 const CONFIDENCE_BADGES: Record<VerificationConfidence, { label: string; color: string }> = {
-  HIGH: { label: "High Confidence", color: "text-emerald-400 border-emerald-500/30 bg-emerald-950/50" },
-  MEDIUM: { label: "Medium Confidence", color: "text-cyan-400 border-cyan-500/30 bg-cyan-950/50" },
-  LOW: { label: "Low Confidence", color: "text-amber-400 border-amber-500/30 bg-amber-950/50" },
+  HIGH: { label: "High Confidence", color: "text-emerald-300 border-emerald-500/30 bg-emerald-950/50" },
+  MEDIUM: { label: "Medium Confidence", color: "text-[#E2C15C] border-[#D4AF37]/30 bg-[#D4AF37]/10" },
+  LOW: { label: "Low Confidence", color: "text-amber-300 border-amber-500/30 bg-amber-950/50" },
 };
 
 export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = ({
@@ -129,24 +129,24 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
   const confBadge = CONFIDENCE_BADGES[verification.overallConfidence] || CONFIDENCE_BADGES.LOW;
 
   return (
-    <div className="bg-slate-900/90 border border-emerald-500/30 rounded-xl p-6 shadow-xl shadow-emerald-950/10 space-y-6 animate-in fade-in duration-300">
+    <div className="bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl p-6 shadow-2xl shadow-black/60 space-y-6 animate-in fade-in duration-300">
       {/* 1. Overall Verdict Banner */}
-      <div className={`p-6 rounded-xl border ${overallConfig.bg} ${overallConfig.border} space-y-4`}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+      <div className={`p-6 rounded-xl border ${overallConfig.bg} ${overallConfig.border} space-y-4 shadow-inner`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-800/80">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-200">
-              <OverallIcon className="h-7 w-7 text-emerald-400" />
+            <div className="p-2.5 rounded-xl bg-[#08090C] border border-[#D4AF37]/30 text-[#E2C15C] shadow-md">
+              <OverallIcon className="h-7 w-7" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono tracking-wider uppercase text-slate-400 font-bold">
+                <span className="text-xs font-mono tracking-wider uppercase text-[#94A3B8] font-bold">
                   Investigation Synthesis Verdict
                 </span>
                 <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${overallConfig.badgeBg}`}>
                   {overallConfig.label}
                 </span>
               </div>
-              <h2 className="text-lg sm:text-xl font-bold text-slate-100 mt-0.5">
+              <h2 className="text-lg sm:text-xl font-bold text-[#F8F9FA] mt-0.5">
                 {overallConfig.description}
               </h2>
             </div>
@@ -156,8 +156,8 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
             <span className={`px-2.5 py-1 rounded border font-semibold ${confBadge.color}`}>
               {confBadge.label}
             </span>
-            <span className="px-2 py-1 rounded bg-slate-950 border border-slate-800 text-slate-400 flex items-center gap-1 text-[11px]">
-              <Clock className="h-3 w-3" />
+            <span className="px-2.5 py-1 rounded bg-[#08090C] border border-stone-800 text-[#94A3B8] flex items-center gap-1 text-[11px]">
+              <Clock className="h-3 w-3 text-[#D4AF37]" />
               {new Date(verification.verifiedAt).toLocaleTimeString()}
             </span>
           </div>
@@ -166,35 +166,35 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
         {/* Synthesis Reasoning Summary & Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-1">
           <div className="lg:col-span-2 space-y-1">
-            <span className="text-[11px] font-mono uppercase text-slate-400 font-semibold flex items-center gap-1">
-              <Scale className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="text-[11px] font-mono uppercase text-[#E2C15C] font-semibold flex items-center gap-1">
+              <Scale className="h-3.5 w-3.5 text-[#D4AF37]" />
               Grounded Synthesis Summary
             </span>
-            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#F8F9FA] leading-relaxed">
               {verification.overallSummary}
             </p>
           </div>
 
           {/* Breakdown Scoreboard */}
-          <div className="p-3 rounded-lg bg-slate-950/80 border border-slate-800/80 space-y-2 font-mono text-xs">
-            <div className="flex items-center justify-between text-slate-400 text-[11px]">
+          <div className="p-3.5 rounded-xl bg-[#08090C] border border-stone-800 space-y-2 font-mono text-xs shadow-inner">
+            <div className="flex items-center justify-between text-[#94A3B8] text-[11px]">
               <span>CLAIM RESOLUTION MATRIX</span>
-              <span>{verification.claimBreakdown.total} Total</span>
+              <span className="text-[#E2C15C] font-bold">{verification.claimBreakdown.total} Total</span>
             </div>
             <div className="grid grid-cols-4 gap-1.5 text-center text-[10px]">
-              <div className="p-1 rounded bg-emerald-950/50 border border-emerald-800/50 text-emerald-300">
+              <div className="p-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/60 text-emerald-300">
                 <span className="block font-bold">{verification.claimBreakdown.verifiedTrue}</span>
                 <span className="text-[9px]">TRUE</span>
               </div>
-              <div className="p-1 rounded bg-rose-950/50 border border-rose-800/50 text-rose-300">
+              <div className="p-1.5 rounded-lg bg-rose-950/60 border border-rose-800/60 text-rose-300">
                 <span className="block font-bold">{verification.claimBreakdown.refutedFalse}</span>
                 <span className="text-[9px]">FALSE</span>
               </div>
-              <div className="p-1 rounded bg-purple-950/50 border border-purple-800/50 text-purple-300">
+              <div className="p-1.5 rounded-lg bg-amber-950/60 border border-amber-800/60 text-amber-300">
                 <span className="block font-bold">{verification.claimBreakdown.mixed}</span>
                 <span className="text-[9px]">MIXED</span>
               </div>
-              <div className="p-1 rounded bg-slate-900 border border-slate-800 text-slate-400">
+              <div className="p-1.5 rounded-lg bg-stone-900 border border-stone-800 text-[#94A3B8]">
                 <span className="block font-bold">{verification.claimBreakdown.unverified}</span>
                 <span className="text-[9px]">UNVERIFIED</span>
               </div>
@@ -205,14 +205,14 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
 
       {/* 2. Atomic Claim Verification Cards */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-2 border-b border-stone-800">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-cyan-400" />
-            <h3 className="text-sm font-bold text-slate-200 uppercase font-mono tracking-wider">
+            <Sparkles className="h-4 w-4 text-[#D4AF37]" />
+            <h3 className="text-sm font-bold text-[#E2C15C] uppercase font-mono tracking-wider">
               Atomic Claim Verifications ({verification.claimVerifications.length})
             </h3>
           </div>
-          <span className="text-xs font-mono text-slate-500">
+          <span className="text-xs font-mono text-[#64748B]">
             Phase 5 Deterministic Verification
           </span>
         </div>
@@ -226,16 +226,16 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
             return (
               <div
                 key={claimVer.claimId}
-                className="bg-slate-950/70 border border-slate-800 hover:border-slate-700 rounded-xl p-4.5 space-y-3 transition-all flex flex-col justify-between"
+                className="bg-[#08090C] border border-[#D4AF37]/20 hover:border-[#D4AF37]/45 rounded-xl p-4.5 space-y-3 transition-all flex flex-col justify-between shadow-md"
               >
                 <div className="space-y-2.5">
                   {/* Header: Claim ID + Verdict Pill */}
-                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-800/80">
+                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-stone-800">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-slate-900 border border-cyan-700/50 text-cyan-300 font-mono font-bold text-xs">
+                      <span className="px-2.5 py-0.5 rounded bg-[#131720] border border-[#D4AF37]/40 text-[#E2C15C] font-mono font-bold text-xs">
                         {claimVer.claimId}
                       </span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border flex items-center gap-1 ${claimStyle.bg} ${claimStyle.border} ${claimStyle.text}`}>
+                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase border flex items-center gap-1 ${claimStyle.bg} ${claimStyle.border} ${claimStyle.text}`}>
                         <ClaimIcon className="h-3 w-3" />
                         {claimVer.verdict}
                       </span>
@@ -247,13 +247,13 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
                   </div>
 
                   {/* Claim Text */}
-                  <p className="text-xs sm:text-sm font-semibold text-slate-100 leading-snug">
+                  <p className="text-xs sm:text-sm font-semibold text-[#F8F9FA] leading-snug">
                     {claimVer.claimText}
                   </p>
 
                   {/* Verification Reasoning */}
-                  <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs text-slate-300 font-mono leading-relaxed space-y-1">
-                    <span className="text-[10px] text-cyan-400 font-bold block uppercase">
+                  <div className="p-3 rounded-lg bg-[#050608] border border-stone-800 text-xs text-[#C2C9D6] font-mono leading-relaxed space-y-1 shadow-inner">
+                    <span className="text-[10px] text-[#E2C15C] font-bold block uppercase">
                       Evidence Grounding:
                     </span>
                     <p>{claimVer.reasoning}</p>
@@ -261,7 +261,7 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
                 </div>
 
                 {/* Evidence Link Count Footer */}
-                <div className="pt-2.5 border-t border-slate-900 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                <div className="pt-2.5 border-t border-stone-900 flex items-center justify-between text-[11px] font-mono text-[#94A3B8]">
                   <span>{claimVer.evidenceCount} Sources Evaluated</span>
                   <div className="flex items-center gap-2">
                     {claimVer.supportingEvidenceIds.length > 0 && (
@@ -283,10 +283,10 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
       </div>
 
       {/* 3. Transparency Note */}
-      <div className="p-3 rounded-lg bg-slate-950/90 border border-slate-800 text-xs text-slate-400 flex items-start gap-2.5">
-        <Info className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
+      <div className="p-3.5 rounded-xl bg-[#08090C] border border-stone-800 text-xs text-[#94A3B8] flex items-start gap-2.5 shadow-inner">
+        <Info className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" />
         <p className="font-sans leading-relaxed">
-          <strong className="text-slate-300">Forensic Transparency Note:</strong> Verdicts are generated from the retrieved evidence shown below. EvidenceLens does not treat AI knowledge alone as evidence.
+          <strong className="text-[#F8F9FA]">Forensic Transparency Note:</strong> Verdicts are generated from the retrieved evidence shown below. EvidenceLens does not treat AI knowledge alone as evidence.
         </p>
       </div>
     </div>

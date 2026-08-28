@@ -36,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark h-full">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-full flex flex-col bg-slate-950 text-slate-100 font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-200`}
+        className={`${geistSans.variable} ${geistMono.variable} min-h-full flex flex-col bg-[#08090C] text-[#F8F9FA] font-sans antialiased selection:bg-[#D4AF37]/30 selection:text-[#FBF5D8] forensic-grid`}
       >
         <Header />
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">

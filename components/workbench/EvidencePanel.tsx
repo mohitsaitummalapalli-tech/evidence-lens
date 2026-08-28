@@ -86,16 +86,16 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   }, [evidence.allSources]);
 
   return (
-    <div className="bg-slate-900/80 border border-blue-500/40 rounded-xl p-6 shadow-xl shadow-blue-950/20 space-y-6 animate-in fade-in duration-300">
+    <div className="bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl p-6 shadow-2xl shadow-black/60 space-y-6 animate-in fade-in duration-300">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#D4AF37]/15 gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400">
+          <div className="p-2.5 rounded-xl bg-[#131720] border border-[#D4AF37]/30 text-[#D4AF37] shadow-sm">
             <Database className="h-5 w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-bold text-slate-100">
+              <h3 className="text-base font-bold text-[#F8F9FA]">
                 Web Evidence & Provenance Retrieval
               </h3>
 
@@ -105,7 +105,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   evidenceStatus === "EVIDENCE FOUND"
                     ? "bg-emerald-950/60 text-emerald-300 border-emerald-700/50"
                     : evidenceStatus === "SEARCHING EVIDENCE"
-                    ? "bg-cyan-950/60 text-cyan-300 border-cyan-700/50 animate-pulse"
+                    ? "bg-[#D4AF37]/10 text-[#E2C15C] border-[#D4AF37]/40 animate-pulse"
                     : evidenceStatus === "EVIDENCE ERROR"
                     ? "bg-rose-950/60 text-rose-300 border-rose-700/50"
                     : "bg-amber-950/60 text-amber-300 border-amber-700/50"
@@ -114,7 +114,7 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 {evidenceStatus}
               </span>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[#94A3B8] mt-0.5">
               {evidence.totalSourcesFound > 0
                 ? `Retrieved ${evidence.totalSourcesFound} deduplicated primary/secondary citations linked to ${evidence.bundles.length} atomic claims.`
                 : "No external evidence citations returned for the current search parameters."}
@@ -125,32 +125,32 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         {/* Stance Quick Badges & View Switcher */}
         <div className="flex items-center gap-3">
           <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px]">
-            <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800 text-emerald-300 flex items-center gap-1">
+            <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3" />
               {stanceCounts.SUPPORTS} Supporting
             </span>
-            <span className="px-2 py-0.5 rounded bg-rose-950/60 border border-rose-800 text-rose-300 flex items-center gap-1">
+            <span className="px-2 py-0.5 rounded bg-rose-950/60 border border-rose-800/60 text-rose-300 flex items-center gap-1">
               <XCircle className="h-3 w-3" />
               {stanceCounts.CONTRADICTS} Refuting
             </span>
-            <span className="px-2 py-0.5 rounded bg-blue-950/60 border border-blue-800 text-blue-300 flex items-center gap-1">
+            <span className="px-2 py-0.5 rounded bg-stone-900/80 border border-stone-800 text-[#C2C9D6] flex items-center gap-1">
               <MinusCircle className="h-3 w-3" />
               {stanceCounts.NEUTRAL} Neutral
             </span>
-            <span className="px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800 text-amber-300 flex items-center gap-1">
+            <span className="px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800/60 text-amber-300 flex items-center gap-1">
               <HelpCircle className="h-3 w-3" />
               {stanceCounts.UNCERTAIN} Uncertain
             </span>
           </div>
 
-          <div className="hidden md:flex items-center p-0.5 rounded-lg bg-slate-950 border border-slate-800 text-xs">
+          <div className="hidden md:flex items-center p-0.5 rounded-lg bg-[#08090C] border border-[#D4AF37]/20 text-xs">
             <button
               type="button"
               onClick={() => setViewMode("HIERARCHY")}
-              className={`px-2 py-1 rounded flex items-center gap-1 transition-colors ${
+              className={`px-2.5 py-1 rounded flex items-center gap-1 transition-all ${
                 viewMode === "HIERARCHY"
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-[#D4AF37]/20 text-[#F3E5B8] border border-[#D4AF37]/40 font-semibold"
+                  : "text-[#94A3B8] hover:text-[#F8F9FA]"
               }`}
               title="Group by Atomic Claim Hierarchy"
             >
@@ -160,10 +160,10 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             <button
               type="button"
               onClick={() => setViewMode("GRID")}
-              className={`px-2 py-1 rounded flex items-center gap-1 transition-colors ${
+              className={`px-2.5 py-1 rounded flex items-center gap-1 transition-all ${
                 viewMode === "GRID"
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-[#D4AF37]/20 text-[#F3E5B8] border border-[#D4AF37]/40 font-semibold"
+                  : "text-[#94A3B8] hover:text-[#F8F9FA]"
               }`}
               title="All Evidence Grid"
             >
@@ -186,19 +186,19 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
       )}
 
       {/* Filter Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#08090C] border border-[#D4AF37]/15 shadow-inner">
         <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-          <span className="text-slate-500 flex items-center gap-1">
-            <Filter className="h-3.5 w-3.5" />
+          <span className="text-[#94A3B8] flex items-center gap-1">
+            <Filter className="h-3.5 w-3.5 text-[#D4AF37]" />
             FILTER CLAIM:
           </span>
           <button
             type="button"
             onClick={() => setSelectedClaimFilter("ALL")}
-            className={`px-2.5 py-1 rounded transition-colors ${
+            className={`px-3 py-1 rounded-lg transition-all ${
               selectedClaimFilter === "ALL"
-                ? "bg-cyan-500 text-slate-950 font-bold"
-                : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
+                ? "gold-gradient-bg text-[#08090C] font-bold shadow-sm"
+                : "bg-[#131720] text-[#94A3B8] hover:text-[#F8F9FA] border border-stone-800 hover:border-[#D4AF37]/30"
             }`}
           >
             ALL ({evidence.allSources.length})
@@ -210,10 +210,10 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
                 key={cid}
                 type="button"
                 onClick={() => setSelectedClaimFilter(cid)}
-                className={`px-2.5 py-1 rounded transition-colors ${
+                className={`px-3 py-1 rounded-lg transition-all ${
                   selectedClaimFilter === cid
-                    ? "bg-cyan-500 text-slate-950 font-bold"
-                    : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
+                    ? "gold-gradient-bg text-[#08090C] font-bold shadow-sm"
+                    : "bg-[#131720] text-[#94A3B8] hover:text-[#F8F9FA] border border-stone-800 hover:border-[#D4AF37]/30"
                 }`}
               >
                 {cid} ({count})
@@ -223,17 +223,17 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
-          <span className="text-slate-500">STANCE:</span>
+          <span className="text-[#94A3B8]">STANCE:</span>
           {(["ALL", "SUPPORTS", "CONTRADICTS", "NEUTRAL", "UNCERTAIN"] as const).map(
             (st) => (
               <button
                 key={st}
                 type="button"
                 onClick={() => setSelectedStanceFilter(st)}
-                className={`px-2 py-1 rounded text-[11px] transition-colors ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] transition-all ${
                   selectedStanceFilter === st
-                    ? "bg-blue-500 text-slate-950 font-bold"
-                    : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
+                    ? "bg-[#D4AF37]/30 text-[#F3E5B8] border border-[#D4AF37]/50 font-bold"
+                    : "bg-[#131720] text-[#94A3B8] hover:text-[#F8F9FA] border border-stone-800 hover:border-[#D4AF37]/30"
                 }`}
               >
                 {st}
@@ -250,27 +250,27 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
           {filteredBundles.map((bundle) => (
             <div
               key={bundle.claimId}
-              className="bg-slate-950/60 border border-slate-800/90 rounded-xl p-5 space-y-4 transition-all"
+              className="bg-[#08090C] border border-[#D4AF37]/20 rounded-xl p-5 space-y-4 transition-all shadow-inner"
             >
               {/* Claim Header Bar */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800 gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-stone-800 gap-2">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-600/50 text-cyan-300 font-mono font-bold text-xs tracking-wide">
+                    <span className="px-2.5 py-0.5 rounded bg-[#131720] border border-[#D4AF37]/40 text-[#E2C15C] font-mono font-bold text-xs tracking-wide">
                       CLAIM {bundle.claimId}
                     </span>
-                    <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
-                      <Search className="h-3 w-3 text-slate-500" />
-                      Targeted Query: &ldquo;<span className="text-cyan-400/90 font-sans italic">{bundle.query}</span>&rdquo;
+                    <span className="text-xs text-[#94A3B8] font-mono flex items-center gap-1">
+                      <Search className="h-3 w-3 text-[#D4AF37]" />
+                      Targeted Query: &ldquo;<span className="text-[#E2C15C] font-sans italic">{bundle.query}</span>&rdquo;
                     </span>
                   </div>
-                  <p className="text-sm font-semibold text-slate-100 pl-1 leading-snug">
+                  <p className="text-sm font-semibold text-[#F8F9FA] pl-1 leading-snug">
                     {bundle.claimText}
                   </p>
                 </div>
 
                 <div className="text-right shrink-0">
-                  <span className="text-xs font-mono px-2 py-1 rounded bg-slate-900 border border-slate-800 text-slate-400">
+                  <span className="text-xs font-mono px-2.5 py-1 rounded-lg bg-[#131720] border border-[#D4AF37]/20 text-[#E2C15C]">
                     {bundle.sources.length} {bundle.sources.length === 1 ? "Source" : "Sources"} Connected
                   </span>
                 </div>
@@ -278,14 +278,14 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
 
               {/* Connected Evidence Items */}
               {bundle.sources.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 pl-2 sm:pl-4 border-l-2 border-cyan-500/20">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 pl-2 sm:pl-4 border-l-2 border-[#D4AF37]/35">
                   {bundle.sources.map((source) => (
                     <EvidenceCard key={source.id} evidence={source} />
                   ))}
                 </div>
               ) : (
-                <div className="p-4 rounded-lg bg-slate-900/40 border border-dashed border-slate-800/80 text-xs text-slate-500 flex items-center justify-center gap-2 font-mono">
-                  <Inbox className="h-4 w-4 text-slate-600" />
+                <div className="p-4 rounded-lg bg-[#131720]/50 border border-dashed border-stone-800 text-xs text-[#64748B] flex items-center justify-center gap-2 font-mono">
+                  <Inbox className="h-4 w-4 text-[#64748B]" />
                   <span>NO EVIDENCE FOUND for Claim {bundle.claimId} matching the active filters.</span>
                 </div>
               )}
@@ -301,12 +301,12 @@ export const EvidencePanel: React.FC<EvidencePanelProps> = ({
             ))}
           </div>
         ) : (
-          <div className="p-8 border border-dashed border-slate-800 rounded-xl flex flex-col items-center justify-center text-center space-y-2">
-            <div className="p-3 rounded-full bg-slate-950 border border-slate-800 text-slate-600">
+          <div className="p-8 border border-dashed border-stone-800 rounded-xl flex flex-col items-center justify-center text-center space-y-2">
+            <div className="p-3 rounded-full bg-[#131720] border border-stone-800 text-[#64748B]">
               <Inbox className="h-5 w-5" />
             </div>
-            <p className="text-sm font-medium text-slate-300">No Evidence Matches Current Filter</p>
-            <p className="text-xs text-slate-500 max-w-sm">
+            <p className="text-sm font-medium text-[#C2C9D6]">No Evidence Matches Current Filter</p>
+            <p className="text-xs text-[#64748B] max-w-sm">
               Try adjusting the claim or stance filters above to view other retrieved citations.
             </p>
           </div>

@@ -2,13 +2,76 @@
 
 @layer base {
   :root {
-    --background: #020617;
-    --foreground: #f8fafc;
+    --background: #08090c;
+    --foreground: #f8f9fa;
+    --surface-card: #0d0f15;
+    --surface-elevated: #131720;
+    --surface-overlay: #181d28;
+
+    --gold-300: #f3e5b8;
+    --gold-400: #e2c15c;
+    --gold-500: #d4af37;
+    --gold-600: #b38f24;
+    --gold-700: #8c6d17;
+
+    --amber-400: #fbbf24;
+    --amber-500: #f59e0b;
+    --amber-600: #d97706;
+
+    --gold-border: rgba(212, 175, 55, 0.18);
+    --gold-border-active: rgba(212, 175, 55, 0.4);
+    --gold-glow: 0 0 25px rgba(212, 175, 55, 0.15);
   }
 
   body {
     background-color: var(--background);
     color: var(--foreground);
     color-scheme: dark;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212, 175, 55, 0.07), transparent 70%),
+      linear-gradient(to bottom, rgba(8, 9, 12, 0.8), rgba(8, 9, 12, 1));
+    background-attachment: fixed;
   }
+}
+
+/* Forensic Subtle Grid Background Overlay */
+.forensic-grid {
+  background-size: 32px 32px;
+  background-image:
+    linear-gradient(to right, rgba(212, 175, 55, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
+}
+
+/* Metallic Gold Accent Gradient */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #fff7d6 0%, #d4af37 50%, #c49a31 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-gradient-bg {
+  background: linear-gradient(135deg, #f5e4ab 0%, #d4af37 50%, #a47d28 100%);
+}
+
+.gold-gradient-border {
+  border-color: rgba(212, 175, 55, 0.25);
+}
+
+/* Custom Scrollbar for Forensic Telemetry & Workspace Panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(13, 15, 21, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.25);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.45);
 }

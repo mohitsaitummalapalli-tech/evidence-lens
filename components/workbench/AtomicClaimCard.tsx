@@ -45,9 +45,9 @@ const CATEGORY_STYLES: Record<
   },
   identity: {
     label: "IDENTITY / ENTITY",
-    bg: "bg-cyan-500/10",
-    text: "text-cyan-400",
-    border: "border-cyan-500/30",
+    bg: "bg-[#D4AF37]/10",
+    text: "text-[#E2C15C]",
+    border: "border-[#D4AF37]/30",
     icon: User,
   },
   media_context: {
@@ -66,9 +66,9 @@ const CATEGORY_STYLES: Record<
   },
   other: {
     label: "OTHER",
-    bg: "bg-slate-500/10",
-    text: "text-slate-400",
-    border: "border-slate-500/30",
+    bg: "bg-stone-500/10",
+    text: "text-stone-400",
+    border: "border-stone-500/30",
     icon: HelpCircle,
   },
 };
@@ -87,7 +87,7 @@ const CHECKABILITY_BADGES: Record<
   },
   low: {
     label: "LOW CHECKABILITY",
-    class: "bg-slate-500/10 text-slate-400 border-slate-500/30",
+    class: "bg-stone-500/10 text-stone-400 border-stone-500/30",
   },
 };
 
@@ -97,11 +97,11 @@ export const AtomicClaimCard: React.FC<AtomicClaimCardProps> = ({ claim }) => {
   const checkBadge = CHECKABILITY_BADGES[claim.checkability] || CHECKABILITY_BADGES.medium;
 
   return (
-    <div className="bg-slate-950/70 border border-slate-800 hover:border-slate-700 rounded-xl p-4.5 space-y-3.5 transition-all shadow-sm group">
+    <div className="bg-[#08090C] border border-[#D4AF37]/20 hover:border-[#D4AF37]/45 rounded-xl p-4.5 space-y-3.5 transition-all shadow-md group">
       {/* Card Header: Claim ID + Category Tag + Checkability */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-stone-800">
         <div className="flex items-center gap-2">
-          <span className="h-6 w-8 rounded bg-slate-900 border border-slate-700 text-cyan-400 font-mono font-bold text-xs flex items-center justify-center shadow-inner">
+          <span className="h-6 px-2.5 rounded bg-[#131720] border border-[#D4AF37]/40 text-[#E2C15C] font-mono font-bold text-xs flex items-center justify-center shadow-inner">
             {claim.id}
           </span>
           <span
@@ -120,23 +120,23 @@ export const AtomicClaimCard: React.FC<AtomicClaimCardProps> = ({ claim }) => {
       </div>
 
       {/* Main Assertion Text */}
-      <p className="text-sm font-medium text-slate-100 leading-relaxed font-sans">
+      <p className="text-sm font-medium text-[#F8F9FA] leading-relaxed font-sans">
         &ldquo;{claim.text}&rdquo;
       </p>
 
       {/* Metadata Attributes (Entities, Time, Location, Dependencies) */}
-      <div className="space-y-2 pt-1 border-t border-slate-900 text-xs text-slate-400 font-mono">
+      <div className="space-y-2 pt-1 border-t border-stone-900 text-xs text-[#94A3B8] font-mono">
         {/* Entities */}
         {claim.entities && claim.entities.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] text-slate-500 flex items-center gap-1">
+            <span className="text-[10px] text-[#64748B] flex items-center gap-1">
               <Tag className="h-3 w-3" />
               ENTITIES:
             </span>
             {claim.entities.map((entity, idx) => (
               <span
                 key={idx}
-                className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-300 text-[11px]"
+                className="px-1.5 py-0.5 rounded bg-[#131720] border border-stone-800 text-[#C2C9D6] text-[11px]"
               >
                 {entity}
               </span>
@@ -168,12 +168,12 @@ export const AtomicClaimCard: React.FC<AtomicClaimCardProps> = ({ claim }) => {
       </div>
 
       {/* Status Footer */}
-      <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 pt-2 border-t border-slate-900">
-        <span className="flex items-center gap-1 text-cyan-400/80">
+      <div className="flex items-center justify-between text-[10px] font-mono text-[#64748B] pt-2 border-t border-stone-900">
+        <span className="flex items-center gap-1 text-[#E2C15C]">
           <Sparkles className="h-3 w-3" />
           Atomic Unit Extracted
         </span>
-        <span>Awaiting Phase 4 Evidence Retrieval</span>
+        <span className="text-[#94A3B8]">Connected to Evidence Retrieval</span>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { InvestigationResultPanel } from "./InvestigationResultPanel";
 import { ClaimExtractionPanel } from "./ClaimExtractionPanel";
 import { EvidencePanel } from "./EvidencePanel";
 import { VerificationResultPanel } from "./VerificationResultPanel";
+import { EvidenceGraph } from "./EvidenceGraph";
 import { INPUT_VALIDATION } from "@/lib/constants";
 import { 
   InvestigationInputResponse, 
@@ -138,6 +139,15 @@ export const EvidenceLensWorkbench: React.FC = () => {
           <InvestigationResultPanel response={apiResponse} />
           {apiResponse.verification && (
             <VerificationResultPanel verification={apiResponse.verification} />
+          )}
+          {/* Live Forensic Evidence Graph */}
+          {(apiResponse.extraction || apiResponse.evidence) && (
+            <EvidenceGraph
+              extraction={apiResponse.extraction}
+              evidence={apiResponse.evidence}
+              verification={apiResponse.verification}
+              originalClaim={claimText || apiResponse.input.claim}
+            />
           )}
           {apiResponse.extraction && (
             <ClaimExtractionPanel extraction={apiResponse.extraction} />

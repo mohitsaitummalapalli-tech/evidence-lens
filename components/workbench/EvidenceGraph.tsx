@@ -1,0 +1,720 @@
+"use client";
+
+import React, { useState, useRef, useMemo, useEffect, useCallback } from "react";
+import {
+  ClaimExtractionResult,
+  EvidenceRetrievalResult,
+  InvestigationVerificationResult,
+} from "@/types";
+import { EvidenceGraphNode, GraphNodeData } from "./EvidenceGraphNode";
+import { EvidenceGraphEdge, GraphEdgeData } from "./EvidenceGraphEdge";
+import {
+  Network,
+  Maximize2,
+  Minimize2,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Focus,
+  ExternalLink,
+  Shield,
+  HelpCircle,
+} from "lucide-react";
+
+interface EvidenceGraphProps {
+  extraction?: ClaimExtractionResult;
+  evidence?: EvidenceRetrievalResult;
+  verification?: InvestigationVerificationResult;
+  originalClaim?: string;
+}
+
+export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
+  extraction,
+  evidence,
+  verification,
+  originalClaim,
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // Transform state: Pan (x, y) & Zoom (scale)
+  const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showLegend, setShowLegend] = useState(true);
+  const [containerSize, setContainerSize] = useState({ width: 900, height: 550 });
+
+  // Selection & Hover state
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<{
+    node: GraphNodeData;
+    screenX: number;
+    screenY: number;
+  } | null>(null);
+
+  const rawClaimText = originalClaim || extraction?.originalClaim || "Target Compound Claim Assertion";
+  const claims = useMemo(() => extraction?.claims || [], [extraction?.claims]);
+  const allSources = useMemo(() => evidence?.allSources || [], [evidence?.allSources]);
+  const claimVerifications = useMemo(
+    () => verification?.claimVerifications || [],
+    [verification?.claimVerifications]
+  );
+
+  // 1. Construct Layout: Nodes and Edges
+  const { nodes, edges, bounds } = useMemo(() => {
+    const nodesList: GraphNodeData[] = [];
+    const edgesList: GraphEdgeData[] = [];
+
+    const numClaims = Math.max(claims.length, 1);
+    const claimSpacing = 300;
+    const totalClaimsWidth = numClaims * claimSpacing;
+    const canvasWidth = Math.max(totalClaimsWidth + 400, 1000);
+    const centerX = canvasWidth / 2;
+
+    // Root Node
+    const rootWidth = 380;
+    const rootHeight = 110;
+    const rootX = centerX - rootWidth / 2;
+    const rootY = 40;
+
+    const rootNode: GraphNodeData = {
+      id: "node-root",
+      type: "root",
+      x: rootX,
+      y: rootY,
+      width: rootWidth,
+      height: rootHeight,
+      label: "ORIGINAL CLAIM",
+      title: rawClaimText,
+    };
+    nodesList.push(rootNode);
+
+    // Atomic Claims Tier (Y = 220)
+    const claimWidth = 260;
+    const claimHeight = 105;
+    const claimY = 220;
+    const startClaimX = centerX - totalClaimsWidth / 2 + (claimSpacing - claimWidth) / 2;
+
+    const claimPositions: Record<string, { x: number; y: number; width: number; height: number }> = {};
+
+    claims.forEach((claim, idx) => {
+      const claimX = startClaimX + idx * claimSpacing;
+      claimPositions[claim.id] = { x: claimX, y: claimY, width: claimWidth, height: claimHeight };
+
+      // Find verification status for this claim if available
+      const verObj = claimVerifications.find((v) => v.claimId === claim.id);
+
+      const claimNode: GraphNodeData = {
+        id: `claim-${claim.id}`,
+        type: "claim",
+        x: claimX,
+        y: claimY,
+        width: claimWidth,
+        height: claimHeight,
+        label: claim.id,
+        title: claim.text,
+        category: claim.category,
+        verdict: verObj?.verdict,
+        confidence: verObj?.confidence,
+        rawClaim: claim,
+      };
+      nodesList.push(claimNode);
+
+      // Edge from Root -> Claim
+      const startX = rootX + rootWidth / 2;
+      const startY = rootY + rootHeight;
+      const endX = claimX + claimWidth / 2;
+      const endY = claimY;
+      const midY = (startY + endY) / 2;
+
+      edgesList.push({
+        id: `edge-root-${claim.id}`,
+        fromId: "node-root",
+        toId: `claim-${claim.id}`,
+        startX,
+        startY,
+        endX,
+        endY,
+        pathD: `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`,
+        type: "root_to_claim",
+      });
+    });
+
+    // Evidence Sources Tier (Y = 400+)
+    const evidenceWidth = 220;
+    const evidenceHeight = 90;
+    const evidenceSpacing = 240;
+
+    // Group evidence by claimId
+    const evidenceByClaim: Record<string, typeof allSources> = {};
+    allSources.forEach((src) => {
+      if (!evidenceByClaim[src.claimId]) {
+        evidenceByClaim[src.claimId] = [];
+      }
+      evidenceByClaim[src.claimId].push(src);
+    });
+
+    let maxY = 450;
+
+    claims.forEach((claim) => {
+      const claimPos = claimPositions[claim.id];
+      if (!claimPos) return;
+
+      const sourcesForClaim = evidenceByClaim[claim.id] || [];
+      const sourcesCount = sourcesForClaim.length;
+
+      if (sourcesCount === 0) return;
+
+      sourcesForClaim.forEach((source, sIdx) => {
+        // Stagger Y slightly if many sources per claim
+        const rowOffset = Math.floor(sIdx / 3) * 110;
+        const colInRow = sIdx % 3;
+        const sourceX = claimPos.x + claimPos.width / 2 - (Math.min(sourcesCount, 3) * evidenceSpacing) / 2 + colInRow * evidenceSpacing + (evidenceSpacing - evidenceWidth) / 2;
+        const sourceY = 400 + rowOffset;
+
+        maxY = Math.max(maxY, sourceY + evidenceHeight + 80);
+
+        const evNode: GraphNodeData = {
+          id: `ev-${source.id}`,
+          type: "evidence",
+          x: sourceX,
+          y: sourceY,
+          width: evidenceWidth,
+          height: evidenceHeight,
+          label: `${claim.id} • ${source.id}`,
+          title: source.title,
+          domain: source.domain,
+          url: source.url,
+          stance: source.stance,
+          rawEvidence: source,
+        };
+        nodesList.push(evNode);
+
+        // Edge from Claim -> Evidence
+        const startX = claimPos.x + claimPos.width / 2;
+        const startY = claimPos.y + claimPos.height;
+        const endX = sourceX + evidenceWidth / 2;
+        const endY = sourceY;
+        const midY = (startY + endY) / 2;
+
+        edgesList.push({
+          id: `edge-${claim.id}-${source.id}`,
+          fromId: `claim-${claim.id}`,
+          toId: `ev-${source.id}`,
+          startX,
+          startY,
+          endX,
+          endY,
+          pathD: `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`,
+          stance: source.stance,
+          type: "claim_to_evidence",
+        });
+      });
+    });
+
+    return {
+      nodes: nodesList,
+      edges: edgesList,
+      bounds: {
+        width: Math.max(canvasWidth, 1200),
+        height: Math.max(maxY, 650),
+      },
+    };
+  }, [claims, allSources, claimVerifications, rawClaimText]);
+
+  // 2. Track Container Dimensions Safely
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        setContainerSize({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight || 550,
+        });
+      }
+    };
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
+  // 3. Centering / Fit View Calculation
+  const fitGraph = useCallback(() => {
+    if (!containerRef.current) return;
+    const containerWidth = containerRef.current.clientWidth;
+    const containerHeight = containerRef.current.clientHeight || 550;
+
+    const padding = 60;
+    const scaleX = (containerWidth - padding * 2) / bounds.width;
+    const scaleY = (containerHeight - padding * 2) / bounds.height;
+    const scale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.5), 1.2);
+
+    const x = (containerWidth - bounds.width * scale) / 2;
+    const y = 20;
+
+    setTransform({ x, y, scale });
+  }, [bounds.width, bounds.height]);
+
+  const resetView = () => {
+    if (!containerRef.current) return;
+    const containerWidth = containerRef.current.clientWidth;
+    const scale = 0.9;
+    const x = (containerWidth - bounds.width * scale) / 2;
+    const y = 20;
+    setTransform({ x, y, scale });
+    setSelectedNodeId(null);
+  };
+
+  useEffect(() => {
+    fitGraph();
+  }, [fitGraph]);
+
+  // 4. Pan & Zoom Event Handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("a")) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setTransform((prev) => ({
+      ...prev,
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    }));
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    const zoomFactor = 1.1;
+    const delta = e.deltaY < 0 ? zoomFactor : 1 / zoomFactor;
+
+    setTransform((prev) => {
+      const newScale = Math.min(Math.max(prev.scale * delta, 0.35), 2.5);
+      if (!containerRef.current) return { ...prev, scale: newScale };
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const newX = mouseX - (mouseX - prev.x) * (newScale / prev.scale);
+      const newY = mouseY - (mouseY - prev.y) * (newScale / prev.scale);
+
+      return { x: newX, y: newY, scale: newScale };
+    });
+  };
+
+  const handleZoom = (direction: "in" | "out") => {
+    const factor = direction === "in" ? 1.2 : 0.83;
+    setTransform((prev) => ({
+      ...prev,
+      scale: Math.min(Math.max(prev.scale * factor, 0.35), 2.5),
+    }));
+  };
+
+  // 5. Node Click & Double Click
+  const handleNodeClick = (node: GraphNodeData) => {
+    if (selectedNodeId === node.id) {
+      setSelectedNodeId(null);
+    } else {
+      setSelectedNodeId(node.id);
+    }
+  };
+
+  const handleNodeDoubleClick = (node: GraphNodeData) => {
+    if (node.url) {
+      window.open(node.url, "_blank", "noopener,noreferrer");
+    }
+  };
+
+  const handleNodeMouseEnter = (node: GraphNodeData, e: React.MouseEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setHoveredNode({
+      node,
+      screenX: e.clientX - rect.left,
+      screenY: e.clientY - rect.top,
+    });
+  };
+
+  const handleNodeMouseLeave = () => {
+    setHoveredNode(null);
+  };
+
+  // 6. Active Node Highlighting Set
+  const highlightedNodeIds = useMemo(() => {
+    if (!selectedNodeId) return null;
+
+    const set = new Set<string>();
+    set.add(selectedNodeId);
+
+    if (selectedNodeId === "node-root") {
+      // Highlight everything
+      nodes.forEach((n) => set.add(n.id));
+      return set;
+    }
+
+    if (selectedNodeId.startsWith("claim-")) {
+      const claimId = selectedNodeId.replace("claim-", "");
+      set.add("node-root");
+      // Add connected evidence
+      nodes.forEach((n) => {
+        if (n.type === "evidence" && n.rawEvidence?.claimId === claimId) {
+          set.add(n.id);
+        }
+      });
+    } else if (selectedNodeId.startsWith("ev-")) {
+      // Find parent claim
+      const evNode = nodes.find((n) => n.id === selectedNodeId);
+      if (evNode?.rawEvidence?.claimId) {
+        set.add(`claim-${evNode.rawEvidence.claimId}`);
+        set.add("node-root");
+      }
+    }
+
+    return set;
+  }, [selectedNodeId, nodes]);
+
+  // Selected node details object for inspector panel
+  const selectedNodeDetails = useMemo(() => {
+    if (!selectedNodeId) return null;
+    return nodes.find((n) => n.id === selectedNodeId) || null;
+  }, [selectedNodeId, nodes]);
+
+  return (
+    <div
+      ref={containerRef}
+      className={`bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl shadow-2xl shadow-black/70 flex flex-col transition-all duration-300 relative overflow-hidden ${
+        isFullscreen
+          ? "fixed inset-4 z-50 rounded-2xl bg-[#08090C] border-[#D4AF37]/50"
+          : "min-h-[580px] w-full"
+      }`}
+    >
+      {/* Top Header & Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-[#D4AF37]/15 bg-[#08090C]/80 backdrop-blur-sm z-10">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-[#131720] border border-[#D4AF37]/30 text-[#D4AF37] shadow-sm">
+            <Network className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-[#F8F9FA] tracking-wide">
+                Live Forensic Evidence Graph
+              </h3>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#D4AF37]/10 text-[#E2C15C] border border-[#D4AF37]/30 font-semibold uppercase">
+                Interactive Lineage
+              </span>
+            </div>
+            <p className="text-[11px] text-[#94A3B8] font-mono mt-0.5">
+              {nodes.length} Nodes ({claims.length} Claims • {allSources.length} Citations) • Live Comets
+            </p>
+          </div>
+        </div>
+
+        {/* Toolbar Controls */}
+        <div className="flex items-center gap-2">
+          {/* Zoom Controls */}
+          <div className="flex items-center p-0.5 rounded-lg bg-[#131720] border border-[#D4AF37]/20">
+            <button
+              type="button"
+              onClick={() => handleZoom("out")}
+              title="Zoom Out"
+              className="p-1.5 rounded hover:bg-[#1C2230] text-[#94A3B8] hover:text-[#F8F9FA] transition-colors"
+            >
+              <ZoomOut className="h-3.5 w-3.5" />
+            </button>
+            <span className="px-2 text-[10px] font-mono text-[#E2C15C]">
+              {Math.round(transform.scale * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={() => handleZoom("in")}
+              title="Zoom In"
+              className="p-1.5 rounded hover:bg-[#1C2230] text-[#94A3B8] hover:text-[#F8F9FA] transition-colors"
+            >
+              <ZoomIn className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {/* Fit & Reset */}
+          <button
+            type="button"
+            onClick={fitGraph}
+            title="Fit Graph to View"
+            className="px-2.5 py-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] border border-[#D4AF37]/20 text-xs font-mono flex items-center gap-1 transition-colors shadow-sm"
+          >
+            <Focus className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Fit</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={resetView}
+            title="Reset View"
+            className="p-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#94A3B8] hover:text-[#F8F9FA] border border-stone-800 transition-colors"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+          </button>
+
+          {/* Legend Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowLegend(!showLegend)}
+            title="Toggle Relationship Legend"
+            className={`px-2.5 py-1.5 rounded-lg border text-xs font-mono flex items-center gap-1 transition-colors ${
+              showLegend
+                ? "bg-[#D4AF37]/20 text-[#F3E5B8] border-[#D4AF37]/40 font-semibold"
+                : "bg-[#131720] text-[#94A3B8] border-stone-800"
+            }`}
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Legend</span>
+          </button>
+
+          {/* Fullscreen Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            title={isFullscreen ? "Exit Fullscreen" : "Fullscreen View"}
+            className="p-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#D4AF37] border border-[#D4AF37]/30 transition-colors"
+          >
+            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Interactive Canvas Area */}
+      <div
+        className="flex-1 w-full h-full relative cursor-grab active:cursor-grabbing select-none"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onWheel={handleWheel}
+      >
+        <svg
+          ref={svgRef}
+          className="w-full h-full min-h-[480px]"
+          style={{
+            backgroundImage: "radial-gradient(circle at 1px 1px, rgba(212, 175, 55, 0.08) 1px, transparent 0)",
+            backgroundSize: "24px 24px",
+          }}
+        >
+          {/* Defs for Glow Filters */}
+          <defs>
+            <filter id="gold-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          {/* Zoom & Pan Main Transformation Group */}
+          <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}>
+            {/* 1. Render Edges with Animated Comets */}
+            <g className="edges-layer">
+              {edges.map((edge) => {
+                const isEdgeHighlighted =
+                  highlightedNodeIds !== null &&
+                  highlightedNodeIds.has(edge.fromId) &&
+                  highlightedNodeIds.has(edge.toId);
+
+                const isEdgeDimmed =
+                  highlightedNodeIds !== null && !isEdgeHighlighted;
+
+                return (
+                  <EvidenceGraphEdge
+                    key={edge.id}
+                    edge={edge}
+                    isHighlighted={isEdgeHighlighted}
+                    isDimmed={isEdgeDimmed}
+                  />
+                );
+              })}
+            </g>
+
+            {/* 2. Render Nodes */}
+            <g className="nodes-layer">
+              {nodes.map((node) => {
+                const isSelected = selectedNodeId === node.id;
+                const isNodeHighlighted = highlightedNodeIds !== null && highlightedNodeIds.has(node.id);
+                const isNodeDimmed = highlightedNodeIds !== null && !isNodeHighlighted;
+
+                return (
+                  <EvidenceGraphNode
+                    key={node.id}
+                    node={node}
+                    isSelected={isSelected}
+                    isHighlighted={isNodeHighlighted}
+                    isDimmed={isNodeDimmed}
+                    onClick={handleNodeClick}
+                    onDoubleClick={handleNodeDoubleClick}
+                    onMouseEnter={handleNodeMouseEnter}
+                    onMouseLeave={handleNodeMouseLeave}
+                  />
+                );
+              })}
+            </g>
+          </g>
+        </svg>
+
+        {/* Floating Compact Tooltip on Hover */}
+        {hoveredNode && !selectedNodeId && (
+          <div
+            className="absolute z-30 pointer-events-none p-3 rounded-xl bg-[#08090C]/95 border border-[#D4AF37]/35 shadow-2xl shadow-black max-w-xs text-xs space-y-1.5 animate-in fade-in zoom-in-95 duration-150"
+            style={{
+              left: `${Math.min(hoveredNode.screenX + 15, containerSize.width - 280)}px`,
+              top: `${Math.min(hoveredNode.screenY + 15, containerSize.height - 180)}px`,
+            }}
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-stone-800 pb-1">
+              <span className="font-mono font-bold text-[#E2C15C] text-[11px]">
+                {hoveredNode.node.label}
+              </span>
+              {hoveredNode.node.stance && (
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/30">
+                  {hoveredNode.node.stance}
+                </span>
+              )}
+              {hoveredNode.node.verdict && (
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-700">
+                  {hoveredNode.node.verdict}
+                </span>
+              )}
+            </div>
+
+            <p className="text-[#F8F9FA] text-[11px] leading-snug line-clamp-3">
+              {hoveredNode.node.title}
+            </p>
+
+            {hoveredNode.node.rawEvidence?.snippet && (
+              <div className="p-2 rounded bg-[#050608] border border-stone-800 text-[10px] text-[#94A3B8] font-sans line-clamp-3">
+                &ldquo;{hoveredNode.node.rawEvidence.snippet}&rdquo;
+              </div>
+            )}
+
+            {hoveredNode.node.rawEvidence?.stanceExplanation && (
+              <p className="text-[10px] text-[#E2C15C] font-mono italic">
+                AI: {hoveredNode.node.rawEvidence.stanceExplanation}
+              </p>
+            )}
+
+            {hoveredNode.node.url && (
+              <p className="text-[10px] text-[#94A3B8] font-mono truncate">
+                Double-click to open source
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Selected Node Forensic Inspector Drawer */}
+        {selectedNodeDetails && (
+          <div className="absolute bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-md z-20 p-4 rounded-xl bg-[#08090C]/95 border border-[#D4AF37]/40 shadow-2xl shadow-black space-y-2.5 backdrop-blur-md animate-in slide-in-from-bottom-3 duration-200">
+            <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-stone-800">
+              <div className="flex items-center gap-2 font-mono text-xs">
+                <span className="px-2 py-0.5 rounded bg-[#131720] border border-[#D4AF37]/40 text-[#E2C15C] font-bold">
+                  {selectedNodeDetails.label}
+                </span>
+                <span className="text-[#94A3B8] uppercase text-[10px]">
+                  {selectedNodeDetails.type} Node
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {selectedNodeDetails.url && (
+                  <a
+                    href={selectedNodeDetails.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1 rounded hover:bg-[#131720] text-[#E2C15C] hover:text-white border border-[#D4AF37]/20 transition-colors"
+                    title="Open Source Link"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setSelectedNodeId(null)}
+                  className="text-xs font-mono text-[#94A3B8] hover:text-white px-1.5 py-0.5 rounded bg-[#131720]"
+                >
+                  ✕ Clear
+                </button>
+              </div>
+            </div>
+
+            <p className="text-xs font-medium text-[#F8F9FA] leading-snug">
+              {selectedNodeDetails.title}
+            </p>
+
+            {selectedNodeDetails.rawEvidence?.snippet && (
+              <div className="p-2.5 rounded-lg bg-[#050608] border border-stone-800 text-[11px] text-[#C2C9D6] leading-relaxed max-h-24 overflow-y-auto">
+                <span className="text-[10px] text-[#D4AF37] font-bold block uppercase mb-0.5 font-mono">
+                  Raw Snippet:
+                </span>
+                &ldquo;{selectedNodeDetails.rawEvidence.snippet}&rdquo;
+              </div>
+            )}
+
+            {selectedNodeDetails.rawClaim?.entities && (
+              <div className="flex flex-wrap gap-1 text-[10px] font-mono text-[#94A3B8]">
+                <span>Entities:</span>
+                {selectedNodeDetails.rawClaim.entities.map((e, idx) => (
+                  <span key={idx} className="px-1.5 py-0.2 rounded bg-[#131720] text-[#E2C15C]">
+                    {e}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Interactive Relationship Legend */}
+        {showLegend && (
+          <div className="absolute top-4 left-4 z-20 p-3 rounded-xl bg-[#08090C]/90 border border-[#D4AF37]/20 shadow-xl backdrop-blur-sm text-[10px] font-mono space-y-2 hidden sm:block">
+            <span className="text-[#94A3B8] font-bold block pb-1 border-b border-stone-800">
+              RELATIONSHIP COMET LEGEND
+            </span>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34D399]" />
+                <span className="text-emerald-300 font-semibold">SUPPORTS (Green Comet)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_6px_#F87171]" />
+                <span className="text-rose-300 font-semibold">CONTRADICTS (Red Comet)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_6px_#FCD34D]" />
+                <span className="text-amber-300 font-semibold">MIXED (Amber Comet)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-stone-400 shadow-[0_0_6px_#A8A29E]" />
+                <span className="text-stone-300 font-semibold">INSUFFICIENT (Dim Comet)</span>
+              </div>
+              <div className="flex items-center gap-2 pt-1 border-t border-stone-800">
+                <span className="h-2 w-2 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
+                <span className="text-[#E2C15C] font-semibold">CLAIM DECOMPOSITION</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Forensic Bar */}
+      <div className="p-3 border-t border-stone-800/80 bg-[#08090C]/90 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono text-[#94A3B8] z-10">
+        <div className="flex items-center gap-2 text-[#E2C15C]">
+          <Shield className="h-3.5 w-3.5 text-[#D4AF37]" />
+          <span>Interactive Forensic Evidence Topology</span>
+        </div>
+        <div className="flex items-center gap-4 text-[11px]">
+          <span>Drag to Pan • Scroll to Zoom</span>
+          <span className="text-stone-700">|</span>
+          <span className="text-[#D4AF37]">Click node to inspect lineage</span>
+        </div>
+      </div>
+    </div>
+  );
+};
