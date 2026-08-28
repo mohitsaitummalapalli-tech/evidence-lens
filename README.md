@@ -1,36 +1,140 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EvidenceLens
 
-## Getting Started
+**Multimodal Claim Verification & Provenance Workbench**  
+*Built for Problem Statement 3 (PS3)*
 
-First, run the development server:
+EvidenceLens is a precision workbench for investigative journalists, fact-checkers, and intelligence analysts. It decomposes multimodal inputs (text, image, audio, video, documents) into atomic claims, retrieves cross-domain evidence with source credibility scoring, maps digital provenance, and synthesizes structured evidence graphs with human-in-the-loop auditability.
+
+---
+
+## 🎯 Phase 1: Project Foundation (Current Scope)
+
+Phase 1 provides the production-ready Next.js foundation, architectural contracts, and baseline workbench interface:
+
+- ✅ **Framework**: Next.js (App Router) + React + TypeScript + Tailwind CSS
+- ✅ **Component Hierarchy**: Modular layouts, input sections, media ingestion placeholders, and investigation workspace grid
+- ✅ **Type Definitions (`types/`)**: Strongly-typed schemas for Claims, Evidence Sources, Stance, Provenance Records, and Investigation Sessions
+- ✅ **Backend Stubs (`lib/` & `app/api/`)**: AI client, evidence retrieval, verification engine contracts, and `/api/health` + `/api/investigate` routes
+- ✅ **Deployment Ready**: Zero extraneous dependencies, strict TypeScript adherence, Vercel-deployable out of the box
+- ✅ **Error & Fallback Handling**: Dedicated `error.tsx`, `loading.tsx`, and `not-found.tsx` handlers
+
+---
+
+## 🏗️ Architecture & Directory Structure
+
+```
+├── app/
+│   ├── api/
+│   │   ├── health/route.ts        # Healthcheck endpoint (v0.1.0 telemetry)
+│   │   └── investigate/route.ts   # Pipeline endpoint (Phase 2 stub)
+│   ├── error.tsx                  # Global error boundary
+│   ├── globals.css                # Tailwind base styles & dark theme
+│   ├── layout.tsx                 # Root layout with Header & Footer
+│   ├── loading.tsx                # Loading skeleton state
+│   ├── not-found.tsx              # 404 handler
+│   └── page.tsx                   # Main EvidenceLens Workbench UI
+├── components/
+│   ├── layout/
+│   │   ├── Header.tsx             # App navigation, telemetry badges, brand
+│   │   └── Footer.tsx             # Status bar, architecture metadata
+│   └── workbench/
+│       ├── ClaimInputSection.tsx  # Text claim & context input
+│       ├── MediaUploadSection.tsx # Multimodal artifact dropzone (Phase 2 ready)
+│       ├── InvestigationControls.tsx # Action bar & session controls
+│       ├── PipelineOverview.tsx   # Visual 6-stage architecture breakdown
+│       ├── WorkspacePlaceholder.tsx # 3-column empty workspace state
+│       └── EvidenceLensWorkbench.tsx # Workbench container
+├── lib/
+│   ├── ai/client.ts               # AI pipeline client wrapper
+│   ├── evidence/retrieval.ts      # Evidence retrieval service stub
+│   ├── verification/engine.ts     # Verdict & graph synthesis stub
+│   └── constants.ts               # Core metadata, verdict maps, pipeline stages
+├── types/
+│   ├── claim.ts                   # Claim & extraction types
+│   ├── evidence.ts                # Evidence sources, snippets & provenance types
+│   ├── investigation.ts           # Session, verdict, graph & review types
+│   └── index.ts                   # Barrel export
+├── .env.local.example             # Environment configuration template
+└── README.md                      # Project documentation
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js** >= 18.18.0
+- **npm** (or pnpm / yarn / bun)
+
+### 1. Installation
+
+Clone the repository and install dependencies:
+
+```bash
+git clone <repository-url>
+cd evidencelens
+npm install
+```
+
+### 2. Environment Configuration
+
+Copy the sample environment file:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Configure your API keys as needed for future phases:
+- `GEMINI_API_KEY` (For multimodal reasoning & claim deconstruction)
+- `TAVILY_API_KEY` / `SERPER_API_KEY` (For evidence retrieval)
+- `NEXT_PUBLIC_APP_URL` (`http://localhost:3000`)
+
+### 3. Local Development
+
+Start the local development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🧪 Verification & Build
 
-## Learn More
+To verify type safety, linting, and production builds:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Typecheck and linting
+npm run lint
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Production compilation test
+npm run build
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Start production server locally
+npm run start
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🌐 Vercel Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+EvidenceLens is architected to deploy directly to Vercel with zero custom server dependencies:
+
+1. Push your repository to GitHub.
+2. Import the repository into your [Vercel Dashboard](https://vercel.com/new).
+3. The framework preset will automatically detect **Next.js**.
+4. Configure environment variables in the Vercel project settings (from `.env.local.example`).
+5. Click **Deploy**.
+
+---
+
+## 🗺️ Roadmap (Upcoming Phases)
+
+- **Phase 2: Multimodal Claim Extraction** — Gemini multimodal extraction for text, images, video transcripts, and PDFs.
+- **Phase 3: Evidence Retrieval & Provenance** — Web search integration, fact-checking database queries, and reverse image matching.
+- **Phase 4: Evidence Graphing & Visual Topology** — Relational graph visualization linking claims to supporting/refuting proof.
+- **Phase 5: Verdict Engine & Synthesis** — Calibrated confidence scoring, stance analysis, and executive report generation.
+- **Phase 6: Human Review & Audit Trail** — Analyst overrides, immutable review logs, and exportable PDF/JSON dossiers.
