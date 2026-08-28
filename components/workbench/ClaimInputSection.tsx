@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { FileText, HelpCircle, AlignLeft } from "lucide-react";
+import { FileText, HelpCircle, AlignLeft, AlertCircle } from "lucide-react";
+import { INPUT_VALIDATION } from "@/lib/constants";
 
 interface ClaimInputSectionProps {
   claimText: string;
   setClaimText: (val: string) => void;
   contextText: string;
   setContextText: (val: string) => void;
+  disabled?: boolean;
 }
 
 export const ClaimInputSection: React.FC<ClaimInputSectionProps> = ({
@@ -15,8 +17,12 @@ export const ClaimInputSection: React.FC<ClaimInputSectionProps> = ({
   setClaimText,
   contextText,
   setContextText,
+  disabled = false,
 }) => {
-  const [showContext, setShowContext] = useState(false);
+  const [showContext, setShowContext] = useState(Boolean(contextText));
+  const charCount = claimText.length;
+  const isTooShort = charCount > 0 && charCount < INPUT_VALIDATION.minClaimLength;
+  const isTooLong = charCount > INPUT_VALIDATION.maxClaimLength;
 
   return (
     <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
@@ -24,11 +30,21 @@ export const ClaimInputSection: React.FC<ClaimInputSectionProps> = ({
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4 text-cyan-400" />
           <h2 className="text-sm font-semibold text-slate-200 tracking-wide uppercase font-mono">
-            1. Target Claim or Query
+            1. Target Claim or Assertion <span className="text-rose-400">*</span>
           </h2>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <span className="font-mono">{claimText.length} chars</span>
+        <div className="flex items-center gap-2 text-xs font-mono">
+          <span
+            className={`${
+              isTooLong
+                ? "text-rose-400 font-bold"
+                : isTooShort
+                ? "text-amber-400"
+                : "text-slate-400"
+            }`}
+          >
+            {charCount}/{INPUT_VALIDATION.maxClaimLength}
+          </span>
         </div>
       </div>
 
@@ -40,18 +56,38 @@ export const ClaimInputSection: React.FC<ClaimInputSectionProps> = ({
           id="claim-input"
           value={claimText}
           onChange={(e) => setClaimText(e.target.value)}
-          placeholder="Enter a statement, social media post, article excerpt, or factual assertion to verify..."
+          disabled={disabled}
+          placeholder="Enter a statement, social media post, breaking report assertion, or factual claim to verify..."
           rows={4}
-          className="w-full bg-slate-950/70 border border-slate-800 rounded-lg p-3.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all font-sans leading-relaxed resize-none"
+          className={`w-full bg-slate-950/70 border rounded-lg p-3.5 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none transition-all font-sans leading-relaxed resize-none disabled:opacity-60 disabled:cursor-not-allowed ${
+            isTooLong
+              ? "border-rose-500/80 focus:ring-1 focus:ring-rose-500"
+              : isTooShort
+              ? "border-amber-500/50 focus:ring-1 focus:ring-amber-500"
+              : "border-slate-800 focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+          }`}
         />
+        {isTooShort && (
+          <p className="text-xs text-amber-400/90 font-mono mt-1.5 flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Minimum {INPUT_VALIDATION.minClaimLength} characters required ({INPUT_VALIDATION.minClaimLength - charCount} more needed)
+          </p>
+        )}
+        {isTooLong && (
+          <p className="text-xs text-rose-400 font-mono mt-1.5 flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Claim exceeds maximum limit of {INPUT_VALIDATION.maxClaimLength} characters by {charCount - INPUT_VALIDATION.maxClaimLength}.
+          </p>
+        )}
       </div>
 
       {/* Context Toggle */}
       <div className="pt-1">
         <button
           type="button"
+          disabled={disabled}
           onClick={() => setShowContext(!showContext)}
-          className="text-xs font-mono text-cyan-400/80 hover:text-cyan-300 flex items-center gap-1.5 transition-colors"
+          className="text-xs font-mono text-cyan-400/80 hover:text-cyan-300 flex items-center gap-1.5 transition-colors disabled:opacity-50"
         >
           <AlignLeft className="h-3.5 w-3.5" />
           <span>{showContext ? "Hide Additional Context" : "+ Add Context / Source URL (Optional)"}</span>
@@ -67,8 +103,9 @@ export const ClaimInputSection: React.FC<ClaimInputSectionProps> = ({
               type="text"
               value={contextText}
               onChange={(e) => setContextText(e.target.value)}
-              placeholder="e.g. https://example.com/news/123, broadcast aired Aug 2026..."
-              className="w-full bg-slate-950/70 border border-slate-800 rounded-lg px-3.5 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all font-mono"
+              disabled={disabled}
+              placeholder="e.g. https://twitter.com/example/status/..., televised briefing Aug 2026..."
+              className="w-full bg-slate-950/70 border border-slate-800 rounded-lg px-3.5 py-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all font-mono disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
         )}
@@ -76,7 +113,7 @@ export const ClaimInputSection: React.FC<ClaimInputSectionProps> = ({
 
       <div className="flex items-center gap-1.5 text-xs text-slate-500 pt-1">
         <HelpCircle className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-        <span>Claims can be raw text or narrative transcripts. Multi-claim deconstruction will run during Phase 2.</span>
+        <span>Claims can be single assertions or multi-sentence narrative statements.</span>
       </div>
     </div>
   );

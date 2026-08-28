@@ -75,3 +75,52 @@ export interface InvestigationSession {
   overallSummary?: string;
   humanReview?: HumanReviewAudit;
 }
+
+export type InvestigationUIState = 
+  | "IDLE"
+  | "READY"
+  | "SUBMITTING"
+  | "INPUT_RECEIVED"
+  | "ERROR";
+
+export interface UploadedMediaPreview {
+  file: File;
+  previewUrl: string;
+  type: "image" | "video";
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
+export interface InvestigationInputPayload {
+  claim: string;
+  contextUrl?: string;
+  media?: {
+    type: "image" | "video";
+    filename: string;
+    mimeType: string;
+    sizeBytes: number;
+  };
+}
+
+export interface InvestigationInputResponse {
+  success: boolean;
+  stage: "input_received";
+  sessionId: string;
+  timestamp: string;
+  message: string;
+  input: {
+    claim: string;
+    claimReceived: boolean;
+    contextUrlReceived: boolean;
+    contextUrl?: string;
+    mediaReceived: boolean;
+    media?: {
+      type: "image" | "video";
+      filename: string;
+      mimeType: string;
+      sizeBytes: number;
+    };
+  };
+  nextStage: string;
+}

@@ -20,10 +20,28 @@ export const PIPELINE_STAGES = [
 ] as const;
 
 export const SUPPORTED_MEDIA_TYPES = {
-  images: [".png", ".jpg", ".jpeg", ".webp"],
-  documents: [".pdf", ".txt", ".docx"],
+  images: [".png", ".jpg", ".jpeg", ".webp", ".gif"],
   video: [".mp4", ".mov", ".webm"],
+  documents: [".pdf", ".txt", ".docx"],
   audio: [".mp3", ".wav", ".m4a"],
+};
+
+export const INPUT_VALIDATION = {
+  minClaimLength: 5,
+  maxClaimLength: 2000,
+  maxImageSizeBytes: 15 * 1024 * 1024, // 15MB
+  maxVideoSizeBytes: 50 * 1024 * 1024, // 50MB
+  allowedImageMimeTypes: [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+  ],
+  allowedVideoMimeTypes: [
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+  ],
 };
 
 export const VERDICT_CONFIG = {
