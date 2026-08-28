@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { INPUT_VALIDATION } from "@/lib/constants";
 import { geminiService } from "@/lib/ai/gemini";
 import { evidenceRetrievalService } from "@/lib/evidence/retrieval";
-import { InvestigationInputResponse } from "@/types";
+import { EvidenceRetrievalResult, InvestigationInputResponse } from "@/types";
 
 export async function POST(req: NextRequest) {
   try {
@@ -137,17 +137,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify Tavily API key presence
-    if (!process.env.TAVILY_API_KEY || process.env.TAVILY_API_KEY.trim().length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "TAVILY_API_KEY is not configured on the server. Please configure TAVILY_API_KEY in .env.local to enable Web Evidence Retrieval.",
-        },
-        { status: 500 }
-      );
-    }
-
     // Step 1: AI Atomic Claim Extraction
     const extractionResult = await geminiService.extractAtomicClaims({
       claim,
@@ -155,11 +144,46 @@ export async function POST(req: NextRequest) {
       media: mediaInfo,
     });
 
-    // Step 2: Multi-Source Web Evidence Retrieval & Stance Grounding
-    const evidenceResult = await evidenceRetrievalService.retrieveEvidenceForClaims(
-      extractionResult.claims,
-      contextUrl
-    );
+    // Step 2: Multi-Source Web Evidence Retrieval & Stance Grounding (Graceful Error Boundary)
+    let evidenceResult: EvidenceRetrievalResult;
+    try {
+      if (!process.env.TAVILY_API_KEY || process.env.TAVILY_API_KEY.trim().length === 0) {
+        evidenceResult = {
+          status: "error",
+          error: "TAVILY_API_KEY is not configured on the server. Please configure TAVILY_API_KEY in .env.local to enable Web Evidence Retrieval.",
+          totalSourcesFound: 0,
+          bundles: extractionResult.claims.map((c) => ({
+            claimId: c.id,
+            claimText: c.text,
+            query: c.text,
+            sources: [],
+          })),
+          allSources: [],
+          retrievedAt: new Date().toISOString(),
+        };
+      } else {
+        evidenceResult = await evidenceRetrievalService.retrieveEvidenceForClaims(
+          extractionResult.claims,
+          contextUrl
+        );
+      }
+    } catch (err: unknown) {
+      console.warn("Evidence retrieval error in route:", err);
+      const errMsg = err instanceof Error ? err.message : "Evidence retrieval service encountered an error.";
+      evidenceResult = {
+        status: "error",
+        error: errMsg,
+        totalSourcesFound: 0,
+        bundles: extractionResult.claims.map((c) => ({
+          claimId: c.id,
+          claimText: c.text,
+          query: c.text,
+          sources: [],
+        })),
+        allSources: [],
+        retrievedAt: new Date().toISOString(),
+      };
+    }
 
     const sessionId = `inv_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
     const timestamp = new Date().toISOString();
@@ -178,7 +202,10 @@ export async function POST(req: NextRequest) {
       stage: "evidence_retrieved",
       sessionId,
       timestamp,
-      message: `Decomposed into ${extractionResult.claims.length} claims and retrieved ${evidenceResult.totalSourcesFound} corroborating web evidence records.`,
+      message:
+        evidenceResult.status === "error"
+          ? `Extracted ${extractionResult.claims.length} atomic claims. Web evidence retrieval encountered an issue (${evidenceResult.error}).`
+          : `Decomposed into ${extractionResult.claims.length} claims and retrieved ${evidenceResult.totalSourcesFound} corroborating web evidence records.`,
       input: {
         claim,
         claimReceived: true,

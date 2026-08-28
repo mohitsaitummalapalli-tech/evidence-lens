@@ -1,6 +1,6 @@
 /**
  * EvidenceLens - Evidence Retrieval Engine
- * Phase 4: Web Evidence Search & Stance Grounding
+ * Phase 4B: Connect Atomic Claims → Real Web Evidence
  */
 
 import { AtomicClaim, ClaimEvidenceBundle, EvidenceItem, EvidenceRetrievalResult } from "@/types";
@@ -9,26 +9,45 @@ import { geminiService, StanceEvaluationItem } from "../ai/gemini";
 
 export class EvidenceRetrievalService {
   /**
-   * Constructs an optimized search query for an atomic claim.
+   * Constructs an optimized, focused search query for an atomic claim.
+   * Avoids searching the entire compound claim; focuses on entities, temporal, and location anchors.
    */
-  private buildQuery(claim: AtomicClaim): string {
+  public buildQuery(claim: AtomicClaim): string {
     const parts: string[] = [];
 
-    // Prioritize entities and location/time anchors
+    // 1. Prioritize named entities
     if (claim.entities && claim.entities.length > 0) {
-      parts.push(claim.entities.join(" "));
+      const cleanEntities = claim.entities
+        .map((e) => e.replace(/["'\n\r]/g, "").trim())
+        .filter((e) => e.length > 0);
+      if (cleanEntities.length > 0) {
+        parts.push(cleanEntities.join(" "));
+      }
     }
-    if (claim.locationReference && !parts.some(p => p.includes(claim.locationReference!))) {
-      parts.push(claim.locationReference);
+
+    // 2. Add location reference if distinct
+    if (claim.locationReference && claim.locationReference.trim().length > 0) {
+      const loc = claim.locationReference.trim();
+      if (!parts.some((p) => p.toLowerCase().includes(loc.toLowerCase()))) {
+        parts.push(loc);
+      }
     }
-    if (claim.timeReference && !parts.some(p => p.includes(claim.timeReference!))) {
-      parts.push(claim.timeReference);
+
+    // 3. Add temporal reference if distinct
+    if (claim.timeReference && claim.timeReference.trim().length > 0) {
+      const time = claim.timeReference.trim();
+      if (!parts.some((p) => p.toLowerCase().includes(time.toLowerCase()))) {
+        parts.push(time);
+      }
     }
 
     const constructed = parts.join(" ").trim();
-    // If constructed query is too short or empty, use the clean claim text
-    if (constructed.length < 10) {
-      return claim.text.replace(/["'\n\r]/g, " ").trim();
+    // If constructed query is too brief (less than 8 chars) or empty, fall back to cleaned claim text
+    if (constructed.length < 8) {
+      return claim.text
+        .replace(/["'\n\r]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
     }
     return constructed;
   }
@@ -36,7 +55,7 @@ export class EvidenceRetrievalService {
   /**
    * Extracts clean domain name from URL.
    */
-  private extractDomain(url: string): string {
+  public extractDomain(url: string): string {
     try {
       const parsed = new URL(url);
       return parsed.hostname.replace(/^www\./, "");
@@ -46,7 +65,8 @@ export class EvidenceRetrievalService {
   }
 
   /**
-   * Retrieves web evidence for a set of atomic claims, deduplicates sources, and assigns stances.
+   * Retrieves web evidence for a set of atomic claims concurrently using Tavily.
+   * Deduplicates URLs, keeps top 3 results per claim, and links each result strictly to its claimId.
    */
   public async retrieveEvidenceForClaims(
     claims: AtomicClaim[],
@@ -59,53 +79,69 @@ export class EvidenceRetrievalService {
 
     const retrievedAt = new Date().toISOString();
 
-    // Iterate through claims in parallel with safe error boundaries
+    if (!claims || claims.length === 0) {
+      return {
+        status: "empty",
+        totalSourcesFound: 0,
+        bundles: [],
+        allSources: [],
+        retrievedAt,
+      };
+    }
+
+    let hasAnySearchFailure = false;
+    let lastErrorMessage = "";
+
+    // 1. Concurrently fetch web evidence for each atomic claim via Promise.all
     await Promise.all(
       claims.map(async (claim) => {
         const query = this.buildQuery(claim);
-        const rawResults = await tavilyClient.search(query, 5).catch((err) => {
-          console.warn(`Evidence search failed for claim ${claim.id}:`, err);
-          return [];
-        });
-
-        // Deduplicate URLs for this claim
-        const seenUrls = new Set<string>();
         const claimSources: EvidenceItem[] = [];
+        const seenUrls = new Set<string>();
 
-        rawResults.forEach((res, resIdx) => {
-          const cleanUrl = res.url.trim();
-          if (seenUrls.has(cleanUrl)) return;
-          seenUrls.add(cleanUrl);
+        try {
+          // Keep best 3 results per claim as specified in Phase 4B
+          const rawResults = await tavilyClient.search(query, 3);
 
-          const evidenceId = `ev_${claim.id}_${resIdx + 1}`;
-          const domain = this.extractDomain(cleanUrl);
+          rawResults.forEach((res, resIdx) => {
+            const cleanUrl = res.url.trim();
+            if (!cleanUrl || seenUrls.has(cleanUrl.toLowerCase())) return;
+            seenUrls.add(cleanUrl.toLowerCase());
 
-          const item: EvidenceItem = {
-            id: evidenceId,
-            claimId: claim.id,
-            title: res.title || domain,
-            url: cleanUrl,
-            domain,
-            publishedDate: res.published_date || undefined,
-            snippet: res.content || "",
-            relevanceScore: typeof res.score === "number" ? res.score : undefined,
-            stance: "UNCERTAIN", // default before classification
-            retrievedAt,
-          };
+            const evidenceId = `ev_${claim.id}_${resIdx + 1}`;
+            const domain = this.extractDomain(cleanUrl);
 
-          claimSources.push(item);
-          allEvidenceItems.push(item);
-
-          if (item.snippet) {
-            stanceEvalItems.push({
-              evidenceId,
+            const item: EvidenceItem = {
+              id: evidenceId,
               claimId: claim.id,
-              claimText: claim.text,
-              sourceTitle: item.title,
-              snippetText: item.snippet,
-            });
-          }
-        });
+              title: res.title || domain,
+              url: cleanUrl,
+              domain,
+              publishedDate: res.published_date || undefined,
+              snippet: res.content || "",
+              relevanceScore: typeof res.score === "number" ? res.score : undefined,
+              stance: "UNCERTAIN", // Initial stance is UNCERTAIN as required
+              retrievedAt,
+            };
+
+            claimSources.push(item);
+            allEvidenceItems.push(item);
+
+            if (item.snippet) {
+              stanceEvalItems.push({
+                evidenceId,
+                claimId: claim.id,
+                claimText: claim.text,
+                sourceTitle: item.title,
+                snippetText: item.snippet,
+              });
+            }
+          });
+        } catch (err: unknown) {
+          hasAnySearchFailure = true;
+          lastErrorMessage = err instanceof Error ? err.message : String(err);
+          console.warn(`Search retrieval failed for claim ${claim.id} ("${query}"):`, lastErrorMessage);
+        }
 
         bundles.push({
           claimId: claim.id,
@@ -116,14 +152,14 @@ export class EvidenceRetrievalService {
       })
     );
 
-    // Sort bundles in original claim order (C1, C2, C3...)
+    // 2. Sort bundles in original claim order (C1, C2, C3...)
     bundles.sort((a, b) => {
       const numA = parseInt(a.claimId.replace(/\D/g, ""), 10) || 0;
       const numB = parseInt(b.claimId.replace(/\D/g, ""), 10) || 0;
       return numA - numB;
     });
 
-    // Evaluate stances across all retrieved evidence snippets in batch
+    // 3. Perform AI Stance Grounding in batch if evidence snippets were retrieved
     if (stanceEvalItems.length > 0) {
       try {
         const stances = await geminiService.evaluateEvidenceStances(stanceEvalItems);
@@ -134,12 +170,20 @@ export class EvidenceRetrievalService {
           }
         }
       } catch (err) {
-        console.warn("Batch stance evaluation error:", err);
+        console.warn("Batch stance evaluation skipped or failed (maintaining default UNCERTAIN):", err);
       }
     }
 
+    const totalSources = allEvidenceItems.length;
+    let status: EvidenceRetrievalResult["status"] = "found";
+    if (totalSources === 0) {
+      status = hasAnySearchFailure ? "error" : "empty";
+    }
+
     return {
-      totalSourcesFound: allEvidenceItems.length,
+      status,
+      error: hasAnySearchFailure && totalSources === 0 ? lastErrorMessage : undefined,
+      totalSourcesFound: totalSources,
       bundles,
       allSources: allEvidenceItems,
       retrievedAt,

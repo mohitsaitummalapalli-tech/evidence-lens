@@ -38,7 +38,11 @@ export interface ClaimEvidenceBundle {
   sources: EvidenceItem[];
 }
 
+export type EvidenceRetrievalStatus = "searching" | "found" | "empty" | "error";
+
 export interface EvidenceRetrievalResult {
+  status?: EvidenceRetrievalStatus;
+  error?: string;
   totalSourcesFound: number;
   bundles: ClaimEvidenceBundle[];
   allSources: EvidenceItem[];
