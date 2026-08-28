@@ -11,6 +11,7 @@ import { ClaimExtractionPanel } from "./ClaimExtractionPanel";
 import { EvidencePanel } from "./EvidencePanel";
 import { VerificationResultPanel } from "./VerificationResultPanel";
 import { EvidenceGraph } from "./EvidenceGraph";
+import { ConfidenceCometGraph } from "./ConfidenceCometGraph";
 import { INPUT_VALIDATION } from "@/lib/constants";
 import { 
   InvestigationInputResponse, 
@@ -133,21 +134,31 @@ export const EvidenceLensWorkbench: React.FC = () => {
         onReset={handleReset}
       />
 
+      {/* Live Forensic Evidence Graph (During Submitting or Result Present) */}
+      {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse && (apiResponse.extraction || apiResponse.evidence))) && (
+        <EvidenceGraph
+          extraction={apiResponse?.extraction}
+          evidence={apiResponse?.evidence}
+          verification={apiResponse?.verification}
+          originalClaim={claimText.trim() || apiResponse?.input.claim}
+          isInitializing={uiState === "SUBMITTING"}
+        />
+      )}
+
+      {/* Forensic Confidence Trajectory Comet Graph */}
+      {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse?.verification)) && (
+        <ConfidenceCometGraph
+          verification={apiResponse?.verification}
+          isAnalyzing={uiState === "SUBMITTING"}
+        />
+      )}
+
       {/* Investigation Initialized Server Response Panel */}
       {uiState === "INPUT_RECEIVED" && apiResponse && (
         <>
           <InvestigationResultPanel response={apiResponse} />
           {apiResponse.verification && (
             <VerificationResultPanel verification={apiResponse.verification} />
-          )}
-          {/* Live Forensic Evidence Graph */}
-          {(apiResponse.extraction || apiResponse.evidence) && (
-            <EvidenceGraph
-              extraction={apiResponse.extraction}
-              evidence={apiResponse.evidence}
-              verification={apiResponse.verification}
-              originalClaim={claimText || apiResponse.input.claim}
-            />
           )}
           {apiResponse.extraction && (
             <ClaimExtractionPanel extraction={apiResponse.extraction} />

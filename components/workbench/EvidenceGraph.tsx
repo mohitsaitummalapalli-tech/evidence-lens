@@ -19,13 +19,27 @@ import {
   ExternalLink,
   Shield,
   HelpCircle,
+  Play,
+  FastForward,
+  Activity,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
+
+export type GraphAnimationStage =
+  | "INITIALIZING"
+  | "ROOT_REVEALED"
+  | "BUILDING_CLAIMS"
+  | "CONNECTING_EVIDENCE"
+  | "SYNTHESIZING_VERDICTS"
+  | "COMPLETE";
 
 interface EvidenceGraphProps {
   extraction?: ClaimExtractionResult;
   evidence?: EvidenceRetrievalResult;
   verification?: InvestigationVerificationResult;
   originalClaim?: string;
+  isInitializing?: boolean;
 }
 
 export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
@@ -33,6 +47,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
   evidence,
   verification,
   originalClaim,
+  isInitializing = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -44,6 +59,13 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
   const [containerSize, setContainerSize] = useState({ width: 900, height: 550 });
+
+  // Progressive Live Animation State
+  const [animationStage, setAnimationStage] = useState<GraphAnimationStage>("INITIALIZING");
+  const [visibleNodeIds, setVisibleNodeIds] = useState<Set<string>>(new Set());
+  const [visibleEdgeIds, setVisibleEdgeIds] = useState<Set<string>>(new Set());
+  const [verdictsRevealed, setVerdictsRevealed] = useState(false);
+  const [replayCount, setReplayCount] = useState(0);
 
   // Selection & Hover state
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -61,7 +83,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     [verification?.claimVerifications]
   );
 
-  // 1. Construct Layout: Nodes and Edges
+  // 1. Construct Complete Layout Geometry (Nodes and Edges)
   const { nodes, edges, bounds } = useMemo(() => {
     const nodesList: GraphNodeData[] = [];
     const edgesList: GraphEdgeData[] = [];
@@ -170,7 +192,12 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
         // Stagger Y slightly if many sources per claim
         const rowOffset = Math.floor(sIdx / 3) * 110;
         const colInRow = sIdx % 3;
-        const sourceX = claimPos.x + claimPos.width / 2 - (Math.min(sourcesCount, 3) * evidenceSpacing) / 2 + colInRow * evidenceSpacing + (evidenceSpacing - evidenceWidth) / 2;
+        const sourceX =
+          claimPos.x +
+          claimPos.width / 2 -
+          (Math.min(sourcesCount, 3) * evidenceSpacing) / 2 +
+          colInRow * evidenceSpacing +
+          (evidenceSpacing - evidenceWidth) / 2;
         const sourceY = 400 + rowOffset;
 
         maxY = Math.max(maxY, sourceY + evidenceHeight + 80);
@@ -223,7 +250,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     };
   }, [claims, allSources, claimVerifications, rawClaimText]);
 
-  // 2. Track Container Dimensions Safely
+  // 2. Safe Container Resizing
   useEffect(() => {
     const updateSize = () => {
       if (containerRef.current) {
@@ -238,7 +265,109 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  // 3. Centering / Fit View Calculation
+  // 3. Progressive Animation Sequence Chain
+  useEffect(() => {
+    let isCancelled = false;
+    const timeouts: NodeJS.Timeout[] = [];
+    // Reset initial state asynchronously
+    const tInit = setTimeout(() => {
+      if (isCancelled) return;
+      setVisibleNodeIds(new Set());
+      setVisibleEdgeIds(new Set());
+      setVerdictsRevealed(false);
+      setAnimationStage("INITIALIZING");
+    }, 0);
+    timeouts.push(tInit);
+
+    if (isInitializing) {
+      return () => {
+        timeouts.forEach(clearTimeout);
+      };
+    }
+
+    // Timing parameters (accelerated when many nodes exist for great UX)
+    const claimDelay = Math.max(120, Math.min(240, 700 / (claims.length || 1)));
+    const evidenceDelay = Math.max(80, Math.min(180, 1200 / (allSources.length || 1)));
+
+    // Step 1: Reveal Root Node at t = 100ms
+    const t0 = setTimeout(() => {
+      if (isCancelled) return;
+      setVisibleNodeIds(new Set(["node-root"]));
+      setAnimationStage("ROOT_REVEALED");
+    }, 100);
+    timeouts.push(t0);
+
+    // Step 2: Sequentially reveal claims + root edges
+    let cumulativeTime = 250;
+    claims.forEach((claim, idx) => {
+      const claimNodeId = `claim-${claim.id}`;
+      const rootEdgeId = `edge-root-${claim.id}`;
+
+      const t = setTimeout(() => {
+        if (isCancelled) return;
+        setAnimationStage("BUILDING_CLAIMS");
+        setVisibleNodeIds((prev) => new Set([...prev, claimNodeId]));
+        setVisibleEdgeIds((prev) => new Set([...prev, rootEdgeId]));
+      }, cumulativeTime + idx * claimDelay);
+      timeouts.push(t);
+    });
+
+    cumulativeTime += claims.length * claimDelay + 100;
+
+    // Step 3: Sequentially reveal evidence nodes + claim edges
+    allSources.forEach((source, sIdx) => {
+      const evNodeId = `ev-${source.id}`;
+      const edgeId = `edge-${source.claimId}-${source.id}`;
+
+      const t = setTimeout(() => {
+        if (isCancelled) return;
+        setAnimationStage("CONNECTING_EVIDENCE");
+        setVisibleNodeIds((prev) => new Set([...prev, evNodeId]));
+        setVisibleEdgeIds((prev) => new Set([...prev, edgeId]));
+      }, cumulativeTime + sIdx * evidenceDelay);
+      timeouts.push(t);
+    });
+
+    cumulativeTime += allSources.length * evidenceDelay + 150;
+
+    // Step 4: Synthesize verdicts & complete
+    const tVerdicts = setTimeout(() => {
+      if (isCancelled) return;
+      setAnimationStage("SYNTHESIZING_VERDICTS");
+      setVerdictsRevealed(true);
+    }, cumulativeTime);
+    timeouts.push(tVerdicts);
+
+    const tComplete = setTimeout(() => {
+      if (isCancelled) return;
+      setAnimationStage("COMPLETE");
+      // Ensure all nodes and edges are populated in the set
+      setVisibleNodeIds(new Set(nodes.map((n) => n.id)));
+      setVisibleEdgeIds(new Set(edges.map((e) => e.id)));
+    }, cumulativeTime + 300);
+    timeouts.push(tComplete);
+
+    return () => {
+      isCancelled = true;
+      timeouts.forEach(clearTimeout);
+    };
+  }, [claims, allSources, nodes, edges, isInitializing, replayCount]);
+
+  // Instant Skip Animation Trigger
+  const skipAnimation = useCallback(() => {
+    setVisibleNodeIds(new Set(nodes.map((n) => n.id)));
+    setVisibleEdgeIds(new Set(edges.map((e) => e.id)));
+    setVerdictsRevealed(true);
+    setAnimationStage("COMPLETE");
+  }, [nodes, edges]);
+
+  // Replay Animation Trigger
+  const replayAnimation = () => {
+    setSelectedNodeId(null);
+    setReplayCount((c) => c + 1);
+  };
+
+  // 4. Centering / Fit View Calculation
   const fitGraph = useCallback(() => {
     if (!containerRef.current) return;
     const containerWidth = containerRef.current.clientWidth;
@@ -269,7 +398,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     fitGraph();
   }, [fitGraph]);
 
-  // 4. Pan & Zoom Event Handlers
+  // 5. Pan & Zoom Event Handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button") || (e.target as HTMLElement).closest("a")) return;
     setIsDragging(true);
@@ -317,8 +446,11 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     }));
   };
 
-  // 5. Node Click & Double Click
+  // 6. Node Click & Double Click
   const handleNodeClick = (node: GraphNodeData) => {
+    if (animationStage !== "COMPLETE") {
+      skipAnimation();
+    }
     if (selectedNodeId === node.id) {
       setSelectedNodeId(null);
     } else {
@@ -346,7 +478,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     setHoveredNode(null);
   };
 
-  // 6. Active Node Highlighting Set
+  // 7. Active Node Highlighting Set
   const highlightedNodeIds = useMemo(() => {
     if (!selectedNodeId) return null;
 
@@ -354,7 +486,6 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     set.add(selectedNodeId);
 
     if (selectedNodeId === "node-root") {
-      // Highlight everything
       nodes.forEach((n) => set.add(n.id));
       return set;
     }
@@ -362,14 +493,12 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     if (selectedNodeId.startsWith("claim-")) {
       const claimId = selectedNodeId.replace("claim-", "");
       set.add("node-root");
-      // Add connected evidence
       nodes.forEach((n) => {
         if (n.type === "evidence" && n.rawEvidence?.claimId === claimId) {
           set.add(n.id);
         }
       });
     } else if (selectedNodeId.startsWith("ev-")) {
-      // Find parent claim
       const evNode = nodes.find((n) => n.id === selectedNodeId);
       if (evNode?.rawEvidence?.claimId) {
         set.add(`claim-${evNode.rawEvidence.claimId}`);
@@ -386,6 +515,17 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     return nodes.find((n) => n.id === selectedNodeId) || null;
   }, [selectedNodeId, nodes]);
 
+  // Telemetry numbers based on currently visible elements
+  const visibleClaimsCount = useMemo(() => {
+    return claims.filter((c) => visibleNodeIds.has(`claim-${c.id}`)).length;
+  }, [claims, visibleNodeIds]);
+
+  const visibleEvidenceCount = useMemo(() => {
+    return allSources.filter((s) => visibleNodeIds.has(`ev-${s.id}`)).length;
+  }, [allSources, visibleNodeIds]);
+
+  const isBuilding = animationStage !== "COMPLETE" && animationStage !== "INITIALIZING";
+
   return (
     <div
       ref={containerRef}
@@ -396,7 +536,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       }`}
     >
       {/* Top Header & Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-[#D4AF37]/15 bg-[#08090C]/80 backdrop-blur-sm z-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-[#D4AF37]/15 bg-[#08090C]/80 backdrop-blur-sm z-10">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-[#131720] border border-[#D4AF37]/30 text-[#D4AF37] shadow-sm">
             <Network className="h-5 w-5" />
@@ -406,18 +546,81 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
               <h3 className="text-sm font-bold text-[#F8F9FA] tracking-wide">
                 Live Forensic Evidence Graph
               </h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#D4AF37]/10 text-[#E2C15C] border border-[#D4AF37]/30 font-semibold uppercase">
-                Interactive Lineage
+
+              {/* Real-time Status Badge */}
+              <span
+                className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-semibold uppercase border flex items-center gap-1.5 ${
+                  animationStage === "COMPLETE"
+                    ? "bg-emerald-950/60 text-emerald-300 border-emerald-700/50"
+                    : isBuilding
+                    ? "bg-[#D4AF37]/15 text-[#E2C15C] border-[#D4AF37]/40 animate-pulse"
+                    : "bg-[#131720] text-[#94A3B8] border-stone-800"
+                }`}
+              >
+                {isBuilding && <Loader2 className="h-3 w-3 animate-spin text-[#D4AF37]" />}
+                {animationStage === "COMPLETE" && <CheckCircle2 className="h-3 w-3 text-emerald-400" />}
+                <span>
+                  {animationStage === "COMPLETE"
+                    ? "STATUS: ANALYSIS COMPLETE"
+                    : animationStage === "BUILDING_CLAIMS"
+                    ? "POPULATING ATOMIC CLAIMS..."
+                    : animationStage === "CONNECTING_EVIDENCE"
+                    ? "CONNECTING EVIDENCE CITATIONS..."
+                    : animationStage === "SYNTHESIZING_VERDICTS"
+                    ? "CALCULATING VERDICTS..."
+                    : "INITIALIZING FORENSIC GRAPH..."}
+                </span>
               </span>
             </div>
-            <p className="text-[11px] text-[#94A3B8] font-mono mt-0.5">
-              {nodes.length} Nodes ({claims.length} Claims • {allSources.length} Citations) • Live Comets
-            </p>
+
+            {/* Live Progress Telemetry Line */}
+            <div className="flex items-center gap-3 text-[11px] text-[#94A3B8] font-mono mt-1">
+              <span className="text-[#E2C15C] font-semibold">
+                CLAIMS: {visibleClaimsCount}/{claims.length}
+              </span>
+              <span className="text-stone-700">•</span>
+              <span className="text-[#E2C15C] font-semibold">
+                EVIDENCE: {visibleEvidenceCount}/{allSources.length}
+              </span>
+              <span className="text-stone-700">•</span>
+              <span>RELATIONSHIPS: {visibleEdgeIds.size}/{edges.length}</span>
+              <span className="text-stone-700">•</span>
+              <span className="text-emerald-400 flex items-center gap-1">
+                <Activity className="h-3 w-3" />
+                Live Comet Streams
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Toolbar Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          {/* Skip Animation (when active) */}
+          {isBuilding && (
+            <button
+              type="button"
+              onClick={skipAnimation}
+              title="Fast Forward to Complete Graph"
+              className="px-2.5 py-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] border border-[#D4AF37]/30 text-xs font-mono flex items-center gap-1.5 transition-colors shadow-sm"
+            >
+              <FastForward className="h-3.5 w-3.5" />
+              <span>Skip</span>
+            </button>
+          )}
+
+          {/* Replay Graph Animation */}
+          {animationStage === "COMPLETE" && (
+            <button
+              type="button"
+              onClick={replayAnimation}
+              title="Replay Progressive Graph Ingestion"
+              className="px-2.5 py-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] border border-[#D4AF37]/20 text-xs font-mono flex items-center gap-1.5 transition-colors shadow-sm"
+            >
+              <Play className="h-3.5 w-3.5 fill-current" />
+              <span>Replay</span>
+            </button>
+          )}
+
           {/* Zoom Controls */}
           <div className="flex items-center p-0.5 rounded-lg bg-[#131720] border border-[#D4AF37]/20">
             <button
@@ -514,9 +717,11 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
 
           {/* Zoom & Pan Main Transformation Group */}
           <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}>
-            {/* 1. Render Edges with Animated Comets */}
+            {/* 1. Render Edges with Animated Comets (Only for revealed edges) */}
             <g className="edges-layer">
               {edges.map((edge) => {
+                if (!visibleEdgeIds.has(edge.id)) return null;
+
                 const isEdgeHighlighted =
                   highlightedNodeIds !== null &&
                   highlightedNodeIds.has(edge.fromId) &&
@@ -536,17 +741,25 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
               })}
             </g>
 
-            {/* 2. Render Nodes */}
+            {/* 2. Render Nodes (Only for revealed nodes) */}
             <g className="nodes-layer">
               {nodes.map((node) => {
+                if (!visibleNodeIds.has(node.id)) return null;
+
                 const isSelected = selectedNodeId === node.id;
                 const isNodeHighlighted = highlightedNodeIds !== null && highlightedNodeIds.has(node.id);
                 const isNodeDimmed = highlightedNodeIds !== null && !isNodeHighlighted;
 
+                // Strip verdict if not yet in verdict reveal stage to ensure authentic live sequence
+                const effectiveNode =
+                  !verdictsRevealed && node.type === "claim"
+                    ? { ...node, verdict: undefined }
+                    : node;
+
                 return (
                   <EvidenceGraphNode
                     key={node.id}
-                    node={node}
+                    node={effectiveNode}
                     isSelected={isSelected}
                     isHighlighted={isNodeHighlighted}
                     isDimmed={isNodeDimmed}
