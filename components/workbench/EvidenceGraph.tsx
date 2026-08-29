@@ -623,28 +623,28 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       }`}
     >
       {/* Top Header & Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-stone-800 bg-[#0B0D11]/80 backdrop-blur-sm z-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-[#2A3038] bg-[#080A0D]/90 backdrop-blur-sm z-10 font-mono">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-[#161B24] border border-stone-800 text-red-400 shadow-sm">
-            <Network className="h-5 w-5" />
+          <div className="p-2 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5]">
+            <Network className="h-4 w-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-[#F8F9FA] tracking-wide">
+              <h3 className="text-xs font-bold text-[#F3F5F7] tracking-wider uppercase">
                 Interactive Evidence Map
               </h3>
 
               {/* Status Badge */}
               <span
-                className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-semibold uppercase border flex items-center gap-1.5 ${
+                className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold uppercase border flex items-center gap-1.5 ${
                   animationStage === "COMPLETE"
-                    ? "bg-emerald-950/60 text-emerald-300 border-emerald-700/50"
+                    ? "bg-emerald-950/30 text-emerald-300 border-emerald-800/40"
                     : isBuilding
-                    ? "bg-red-950/40 text-red-300 border-red-500/40 animate-pulse"
-                    : "bg-[#161B24] text-[#94A3B8] border-stone-800"
+                    ? "bg-[#161B21] text-[#D9DEE5] border-[#343B45] animate-pulse"
+                    : "bg-[#161B21] text-[#707984] border-[#2A3038]"
                 }`}
               >
-                {isBuilding && <Loader2 className="h-3 w-3 animate-spin text-red-400" />}
+                {isBuilding && <Loader2 className="h-3 w-3 animate-spin text-[#D9DEE5]" />}
                 {animationStage === "COMPLETE" && <CheckCircle2 className="h-3 w-3 text-emerald-400" />}
                 <span>
                   {animationStage === "COMPLETE"
@@ -661,23 +661,23 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             </div>
 
             {/* Counts Line */}
-            <div className="flex items-center gap-3 text-[11px] text-[#94A3B8] font-mono mt-1">
-              <span className="text-[#F8F9FA] font-semibold">
+            <div className="flex items-center gap-3 text-[11px] text-[#707984] font-mono mt-1">
+              <span className="text-[#F3F5F7] font-semibold">
                 CLAIMS: {visibleClaimsCount}/{claims.length}
               </span>
-              <span className="text-stone-700">•</span>
-              <span className="text-[#F8F9FA] font-semibold">
+              <span className="text-[#2A3038]">•</span>
+              <span className="text-[#F3F5F7] font-semibold">
                 SOURCES: {visibleEvidenceCount}/{allSources.length}
               </span>
               {provCandidates.length > 0 && (
                 <>
-                  <span className="text-stone-700">•</span>
-                  <span className="text-red-400 font-semibold">
+                  <span className="text-[#2A3038]">•</span>
+                  <span className="text-[#38BDF8] font-semibold">
                     MEDIA: {provCandidates.length}
                   </span>
                 </>
               )}
-              <span className="text-stone-700">•</span>
+              <span className="text-[#2A3038]">•</span>
               <span>RELATIONS: {visibleEdgeIds.size}/{edges.length}</span>
             </div>
           </div>
@@ -691,7 +691,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
               type="button"
               onClick={skipAnimation}
               title="Skip Animation"
-              className="px-2.5 py-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-red-400 border border-stone-800 text-xs font-mono flex items-center gap-1.5 transition-colors shadow-sm"
+              className="px-2.5 py-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#D9DEE5] border border-[#2A3038] text-xs font-mono flex items-center gap-1.5 transition-colors"
             >
               <FastForward className="h-3.5 w-3.5" />
               <span>Skip</span>
@@ -704,31 +704,31 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
               type="button"
               onClick={replayAnimation}
               title="Replay Map Ingestion"
-              className="px-2.5 py-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-[#CBD5E1] hover:text-white border border-stone-800 text-xs font-sans flex items-center gap-1.5 transition-colors shadow-sm"
+              className="px-2.5 py-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#A7AFB8] hover:text-[#F3F5F7] border border-[#2A3038] text-xs flex items-center gap-1.5 transition-colors"
             >
-              <Play className="h-3.5 w-3.5 fill-current text-red-400" />
+              <Play className="h-3.5 w-3.5 fill-current text-[#D9DEE5]" />
               <span>Replay</span>
             </button>
           )}
 
           {/* Zoom Controls */}
-          <div className="flex items-center p-0.5 rounded-lg bg-[#161B24] border border-stone-800">
+          <div className="flex items-center p-0.5 rounded bg-[#161B21] border border-[#2A3038]">
             <button
               type="button"
               onClick={() => handleZoom("out")}
               title="Zoom Out"
-              className="p-1.5 rounded hover:bg-[#1E2430] text-[#94A3B8] hover:text-[#F8F9FA] transition-colors"
+              className="p-1.5 rounded hover:bg-[#1B2027] text-[#A7AFB8] hover:text-[#F3F5F7] transition-colors"
             >
               <ZoomOut className="h-3.5 w-3.5" />
             </button>
-            <span className="px-2 text-[10px] font-mono text-[#CBD5E1]">
+            <span className="px-2 text-[10px] font-mono text-[#D9DEE5]">
               {Math.round(transform.scale * 100)}%
             </span>
             <button
               type="button"
               onClick={() => handleZoom("in")}
               title="Zoom In"
-              className="p-1.5 rounded hover:bg-[#1E2430] text-[#94A3B8] hover:text-[#F8F9FA] transition-colors"
+              className="p-1.5 rounded hover:bg-[#1B2027] text-[#A7AFB8] hover:text-[#F3F5F7] transition-colors"
             >
               <ZoomIn className="h-3.5 w-3.5" />
             </button>
@@ -739,9 +739,9 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             type="button"
             onClick={fitGraph}
             title="Fit Map to View"
-            className="px-2.5 py-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-[#CBD5E1] hover:text-white border border-stone-800 text-xs font-sans flex items-center gap-1 transition-colors shadow-sm"
+            className="px-2.5 py-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#A7AFB8] hover:text-[#F3F5F7] border border-[#2A3038] text-xs flex items-center gap-1 transition-colors"
           >
-            <Focus className="h-3.5 w-3.5 text-red-400" />
+            <Focus className="h-3.5 w-3.5 text-[#D9DEE5]" />
             <span className="hidden sm:inline">Fit</span>
           </button>
 
@@ -749,7 +749,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             type="button"
             onClick={resetView}
             title="Reset View"
-            className="p-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-[#94A3B8] hover:text-[#F8F9FA] border border-stone-800 transition-colors"
+            className="p-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#A7AFB8] hover:text-[#F3F5F7] border border-[#2A3038] transition-colors"
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
@@ -759,10 +759,10 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             type="button"
             onClick={() => setShowLegend(!showLegend)}
             title="Toggle Legend"
-            className={`px-2.5 py-1.5 rounded-lg border text-xs font-sans flex items-center gap-1 transition-colors ${
+            className={`px-2.5 py-1.5 rounded border text-xs flex items-center gap-1 transition-colors ${
               showLegend
-                ? "bg-red-950/40 text-red-300 border-red-500/40 font-semibold"
-                : "bg-[#161B24] text-[#94A3B8] border-stone-800"
+                ? "bg-[#1B2027] text-[#F3F5F7] border-[#D9DEE5] font-semibold"
+                : "bg-[#161B21] text-[#707984] border-[#2A3038]"
             }`}
           >
             <HelpCircle className="h-3.5 w-3.5" />
@@ -774,7 +774,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             type="button"
             onClick={() => setIsFullscreen(!isFullscreen)}
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen View"}
-            className="p-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-[#CBD5E1] hover:text-white border border-stone-800 transition-colors"
+            className="p-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#A7AFB8] hover:text-white border border-[#2A3038] transition-colors"
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
@@ -858,51 +858,51 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
         {/* Floating Compact Tooltip on Hover */}
         {hoveredNode && !selectedNodeId && (
           <div
-            className="absolute z-30 pointer-events-none p-3 rounded-xl bg-[#0B0D11]/95 border border-stone-800 shadow-2xl max-w-xs text-xs space-y-1.5 animate-in fade-in zoom-in-95 duration-150"
+            className="absolute z-30 pointer-events-none p-3 rounded bg-[#080A0D]/95 border border-[#2A3038] shadow-2xl max-w-xs text-xs space-y-1.5 animate-in fade-in zoom-in-95 duration-150"
             style={{
               left: `${Math.min(hoveredNode.screenX + 15, containerSize.width - 280)}px`,
               top: `${Math.min(hoveredNode.screenY + 15, containerSize.height - 180)}px`,
             }}
           >
-            <div className="flex items-center justify-between gap-2 border-b border-stone-800 pb-1">
-              <span className="font-mono font-bold text-[#F8F9FA] text-[11px]">
+            <div className="flex items-center justify-between gap-2 border-b border-[#2A3038] pb-1">
+              <span className="font-mono font-bold text-[#F3F5F7] text-[11px]">
                 {hoveredNode.node.label}
               </span>
               {hoveredNode.node.stance && (
-                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#161B24] text-[#CBD5E1] border border-stone-800">
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#161B21] text-[#D9DEE5] border border-[#2A3038]">
                   {hoveredNode.node.stance}
                 </span>
               )}
               {hoveredNode.node.matchType && (
-                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-700">
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-sky-950/60 text-sky-300 border border-sky-800/40">
                   {hoveredNode.node.matchType}
                 </span>
               )}
               {hoveredNode.node.verdict && (
-                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-700">
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-800/40">
                   {hoveredNode.node.verdict}
                 </span>
               )}
             </div>
 
-            <p className="text-[#F8F9FA] text-[11px] leading-snug line-clamp-3">
+            <p className="text-[#F3F5F7] text-[11px] leading-snug line-clamp-3 font-sans">
               {hoveredNode.node.title}
             </p>
 
             {hoveredNode.node.rawEvidence?.snippet && (
-              <div className="p-2 rounded bg-[#050608] border border-stone-800 text-[10px] text-[#94A3B8] font-sans line-clamp-3">
+              <div className="p-2 rounded bg-[#11151A] border border-[#2A3038] text-[10px] text-[#A7AFB8] font-sans line-clamp-3">
                 &ldquo;{hoveredNode.node.rawEvidence.snippet}&rdquo;
               </div>
             )}
 
             {hoveredNode.node.rawProvenance?.snippet && (
-              <div className="p-2 rounded bg-[#050608] border border-stone-800 text-[10px] text-[#94A3B8] font-sans line-clamp-3">
+              <div className="p-2 rounded bg-[#11151A] border border-[#2A3038] text-[10px] text-[#A7AFB8] font-sans line-clamp-3">
                 &ldquo;{hoveredNode.node.rawProvenance.snippet}&rdquo;
               </div>
             )}
 
             {hoveredNode.node.url && (
-              <p className="text-[10px] text-red-400 font-sans truncate">
+              <p className="text-[10px] text-[#38BDF8] font-mono truncate">
                 Double-click to open link ↗
               </p>
             )}
@@ -911,13 +911,13 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
 
         {/* Selected Node Details Drawer */}
         {selectedNodeDetails && (
-          <div className="absolute bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-md z-20 p-4 rounded-xl bg-[#0B0D11]/95 border border-stone-700 shadow-2xl space-y-2.5 backdrop-blur-md animate-in slide-in-from-bottom-3 duration-200">
-            <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-stone-800">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="px-2 py-0.5 rounded bg-[#161B24] border border-stone-800 text-[#F8F9FA] font-bold font-mono">
+          <div className="absolute bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-md z-20 p-4 rounded-lg bg-[#080A0D]/95 border border-[#343B45] shadow-2xl space-y-2.5 backdrop-blur-md animate-in slide-in-from-bottom-3 duration-200">
+            <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-[#2A3038]">
+              <div className="flex items-center gap-2 text-xs font-mono">
+                <span className="px-2 py-0.5 rounded bg-[#161B21] border border-[#2A3038] text-[#F3F5F7] font-bold">
                   {selectedNodeDetails.label}
                 </span>
-                <span className="text-[#94A3B8] uppercase text-[10px]">
+                <span className="text-[#707984] uppercase text-[10px]">
                   {selectedNodeDetails.type}
                 </span>
               </div>
@@ -928,7 +928,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
                     href={selectedNodeDetails.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1 rounded hover:bg-[#161B24] text-red-400 hover:text-white border border-stone-800 transition-colors"
+                    className="p-1 rounded hover:bg-[#161B21] text-[#D9DEE5] hover:text-white border border-[#2A3038] transition-colors"
                     title="Open Source Link"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -937,20 +937,20 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedNodeId(null)}
-                  className="text-xs font-sans text-[#94A3B8] hover:text-white px-1.5 py-0.5 rounded bg-[#161B24]"
+                  className="text-xs font-mono text-[#707984] hover:text-white px-1.5 py-0.5 rounded bg-[#161B21]"
                 >
                   ✕ Close
                 </button>
               </div>
             </div>
 
-            <p className="text-xs font-medium text-[#F8F9FA] leading-snug">
+            <p className="text-xs font-medium text-[#F3F5F7] leading-snug font-sans">
               {selectedNodeDetails.title}
             </p>
 
             {selectedNodeDetails.rawEvidence?.snippet && (
-              <div className="p-2.5 rounded-lg bg-[#11141A] border border-stone-800 text-[11px] text-[#CBD5E1] leading-relaxed max-h-24 overflow-y-auto">
-                <span className="text-[10px] text-red-400 font-bold block uppercase mb-0.5">
+              <div className="p-2.5 rounded bg-[#11151A] border border-[#2A3038] text-[11px] text-[#A7AFB8] leading-relaxed max-h-24 overflow-y-auto font-sans">
+                <span className="text-[10px] font-mono text-[#D9DEE5] font-bold block uppercase mb-0.5">
                   Source Excerpt:
                 </span>
                 &ldquo;{selectedNodeDetails.rawEvidence.snippet}&rdquo;
@@ -958,8 +958,8 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             )}
 
             {selectedNodeDetails.rawProvenance?.snippet && (
-              <div className="p-2.5 rounded-lg bg-[#11141A] border border-stone-800 text-[11px] text-[#CBD5E1] leading-relaxed max-h-24 overflow-y-auto">
-                <span className="text-[10px] text-red-400 font-bold block uppercase mb-0.5">
+              <div className="p-2.5 rounded bg-[#11151A] border border-[#2A3038] text-[11px] text-[#A7AFB8] leading-relaxed max-h-24 overflow-y-auto font-sans">
+                <span className="text-[10px] font-mono text-[#38BDF8] font-bold block uppercase mb-0.5">
                   Match Excerpt:
                 </span>
                 &ldquo;{selectedNodeDetails.rawProvenance.snippet}&rdquo;
@@ -967,10 +967,10 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             )}
 
             {selectedNodeDetails.rawClaim?.entities && (
-              <div className="flex flex-wrap gap-1 text-[10px] text-[#94A3B8]">
+              <div className="flex flex-wrap gap-1 text-[10px] font-mono text-[#707984]">
                 <span>Entities:</span>
                 {selectedNodeDetails.rawClaim.entities.map((e, idx) => (
-                  <span key={idx} className="px-1.5 py-0.2 rounded bg-[#161B24] text-[#CBD5E1]">
+                  <span key={idx} className="px-1.5 py-0.2 rounded bg-[#161B21] text-[#D9DEE5]">
                     {e}
                   </span>
                 ))}
@@ -981,30 +981,30 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
 
         {/* Relationship Legend */}
         {showLegend && (
-          <div className="absolute top-4 left-4 z-20 p-3 rounded-xl bg-[#0B0D11]/90 border border-stone-800 shadow-xl backdrop-blur-sm text-[10px] space-y-2 hidden sm:block">
-            <span className="text-[#94A3B8] font-bold block pb-1 border-b border-stone-800">
+          <div className="absolute top-4 left-4 z-20 p-3 rounded-lg bg-[#080A0D]/90 border border-[#2A3038] shadow-xl backdrop-blur-sm text-[10px] font-mono space-y-2 hidden sm:block">
+            <span className="text-[#707984] font-bold block pb-1 border-b border-[#2A3038]">
               MAP LEGEND
             </span>
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                <span className="text-emerald-300 font-medium">Supports Claim (Green)</span>
+                <span className="text-emerald-300 font-medium">Supports Claim</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-red-400" />
-                <span className="text-red-300 font-medium">Contradicts / Refutes (Red)</span>
+                <span className="h-2 w-2 rounded-full bg-rose-400" />
+                <span className="text-rose-300 font-medium">Contradicts / Refutes</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-amber-400" />
-                <span className="text-amber-300 font-medium">Mixed / Partial (Amber)</span>
+                <span className="text-amber-300 font-medium">Mixed / Partial</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-stone-400" />
-                <span className="text-stone-300 font-medium">Insufficient / Neutral (Slate)</span>
+                <span className="h-2 w-2 rounded-full bg-slate-400" />
+                <span className="text-slate-300 font-medium">Insufficient / Neutral</span>
               </div>
-              <div className="flex items-center gap-2 pt-1 border-t border-stone-800">
-                <span className="h-2 w-2 rounded-full bg-red-500" />
-                <span className="text-[#CBD5E1] font-medium">Claim Relationship</span>
+              <div className="flex items-center gap-2 pt-1 border-t border-[#2A3038]">
+                <span className="h-2 w-2 rounded-full bg-[#D9DEE5]" />
+                <span className="text-[#D9DEE5] font-medium">Claim Relationship</span>
               </div>
             </div>
           </div>
@@ -1012,14 +1012,14 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       </div>
 
       {/* Bottom Bar */}
-      <div className="p-3 border-t border-stone-800 bg-[#0B0D11]/90 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#94A3B8] z-10">
-        <div className="flex items-center gap-2 text-[#CBD5E1]">
-          <Shield className="h-3.5 w-3.5 text-red-400" />
+      <div className="p-3 border-t border-[#2A3038] bg-[#080A0D]/90 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono text-[#707984] z-10">
+        <div className="flex items-center gap-2 text-[#D9DEE5]">
+          <Shield className="h-3.5 w-3.5 text-[#B8C0C9]" />
           <span>Interactive Multimodal Evidence Map</span>
         </div>
         <div className="flex items-center gap-4 text-[11px]">
           <span>Drag to Pan • Scroll to Zoom</span>
-          <span className="text-stone-700">|</span>
+          <span className="text-[#2A3038]">|</span>
           <span>Click node to inspect details</span>
         </div>
       </div>

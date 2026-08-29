@@ -200,7 +200,7 @@ export const EvidenceLensWorkbench: React.FC = () => {
           />
         </DepthCard>
 
-        {/* 1. PRIMARY RESULT & VERDICT (Immediate Plain-English Presentation) */}
+        {/* 1. PRIMARY RESULT & VERDICT (Immediate Presentation) */}
         {uiState === "INPUT_RECEIVED" && apiResponse?.verification && (
           <DepthCard floatingPhase="none" enableTilt={false}>
             <VerificationResultPanel
@@ -212,15 +212,15 @@ export const EvidenceLensWorkbench: React.FC = () => {
 
         {/* Progressive Disclosure Section Navigation (Visible once results are ready) */}
         {uiState === "INPUT_RECEIVED" && apiResponse && (
-          <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-[#11141A] border border-stone-800 shadow-lg">
-            <div className="flex flex-wrap items-center gap-1 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-[#11151A] border border-[#2A3038] shadow-sm font-mono">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <button
                 type="button"
                 onClick={() => setActiveViewTab("ALL")}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1.5 rounded transition-all ${
                   activeViewTab === "ALL"
-                    ? "bg-[#161B24] text-white border border-stone-700 font-semibold shadow-sm"
-                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
+                    ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
+                    : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
                 }`}
               >
                 All Sections
@@ -228,21 +228,21 @@ export const EvidenceLensWorkbench: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveViewTab("WHY_RESULT")}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1.5 rounded transition-all ${
                   activeViewTab === "WHY_RESULT"
-                    ? "bg-red-600 text-white font-semibold shadow-sm"
-                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
+                    ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
+                    : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
                 }`}
               >
-                Why this result?
+                Audit Breakdown
               </button>
               <button
                 type="button"
                 onClick={() => setActiveViewTab("SOURCES")}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1.5 rounded transition-all ${
                   activeViewTab === "SOURCES"
-                    ? "bg-red-600 text-white font-semibold shadow-sm"
-                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
+                    ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
+                    : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
                 }`}
               >
                 Sources ({apiResponse.evidence?.totalSourcesFound || 0})
@@ -251,10 +251,10 @@ export const EvidenceLensWorkbench: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveViewTab("MEDIA")}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded transition-all ${
                     activeViewTab === "MEDIA"
-                      ? "bg-red-600 text-white font-semibold shadow-sm"
-                      : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
+                      ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
+                      : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
                   }`}
                 >
                   Media Matches ({apiResponse.imageProvenance.totalCandidatesFound})
@@ -264,10 +264,10 @@ export const EvidenceLensWorkbench: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveViewTab("CONSENSUS")}
-                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  className={`px-3 py-1.5 rounded transition-all ${
                     activeViewTab === "CONSENSUS"
-                      ? "bg-red-600 text-white font-semibold shadow-sm"
-                      : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
+                      ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
+                      : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
                   }`}
                 >
                   AI Jury ({apiResponse.consensus.overallAgreementRate}%)
@@ -276,10 +276,10 @@ export const EvidenceLensWorkbench: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveViewTab("MAP")}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1.5 rounded transition-all ${
                   activeViewTab === "MAP"
-                    ? "bg-red-600 text-white font-semibold shadow-sm"
-                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
+                    ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
+                    : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
                 }`}
               >
                 Evidence Map
@@ -287,17 +287,17 @@ export const EvidenceLensWorkbench: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveViewTab("TIMELINE")}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                className={`px-3 py-1.5 rounded transition-all ${
                   activeViewTab === "TIMELINE"
-                    ? "bg-[#161B24] text-white border border-stone-700 font-semibold shadow-sm"
-                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
+                    ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
+                    : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
                 }`}
               >
-                Timeline
+                Audit Trail
               </button>
             </div>
-            <span className="text-[11px] text-[#94A3B8] pr-2 hidden sm:inline">
-              Progressive Analysis View
+            <span className="text-[11px] text-[#707984] pr-2 hidden sm:inline">
+              Progressive Workbench View
             </span>
           </div>
         )}

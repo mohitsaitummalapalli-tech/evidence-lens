@@ -63,7 +63,7 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
       return;
     }
 
-    // Clean up previous preview URL to prevent memory leaks
+    // Clean up previous preview URL
     if (media?.previewUrl) {
       URL.revokeObjectURL(media.previewUrl);
     }
@@ -124,62 +124,83 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
   };
 
   return (
-    <div className="bg-[#11141A] border border-stone-800 rounded-xl p-5 shadow-xl space-y-3.5 transition-all">
+    <div className="bg-[#11151A] border border-[#2A3038] rounded-lg p-5 space-y-4 transition-all">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-lg bg-[#161B24] border border-stone-800 text-red-400">
+          <div className="p-1.5 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5]">
             <UploadCloud className="h-4 w-4" />
           </div>
-          <h2 className="text-sm font-semibold text-[#F8F9FA] tracking-normal font-sans">
-            2. Add Photo or Video <span className="text-[#94A3B8] font-normal">(Optional)</span>
-          </h2>
+          <div>
+            <h2 className="text-xs font-mono font-bold text-[#F3F5F7] tracking-wider uppercase">
+              Multimodal Media <span className="text-[#707984] font-normal">(Optional)</span>
+            </h2>
+            <p className="text-[11px] text-[#A7AFB8]">
+              Attach photo or video for provenance & visual verification
+            </p>
+          </div>
         </div>
-        <span className="text-[11px] font-sans px-2.5 py-0.5 rounded-full bg-[#161B24] text-[#CBD5E1] border border-stone-800">
-          Media Match Search
+        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161B21] text-[#38BDF8] border border-[#2A3038]">
+          Exact Match Engine
         </span>
       </div>
 
       <input
         ref={fileInputRef}
         type="file"
-        accept={[
-          ...INPUT_VALIDATION.allowedImageMimeTypes,
-          ...INPUT_VALIDATION.allowedVideoMimeTypes,
-        ].join(",")}
+        accept={[...SUPPORTED_MEDIA_TYPES.images, ...SUPPORTED_MEDIA_TYPES.video].join(",")}
         onChange={handleFileChange}
         disabled={disabled}
         className="hidden"
+        id="media-file-input"
       />
 
-      {/* Media Present: Render Interactive Preview */}
-      {media ? (
-        <div className="border border-stone-800 bg-[#0B0D11] rounded-xl p-4 space-y-3 shadow-inner">
-          <div className="flex items-center justify-between gap-2 pb-2 border-b border-stone-800">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="p-1.5 rounded-lg bg-[#161B24] border border-stone-800 text-red-400 shrink-0">
-                {media.type === "image" ? (
-                  <ImageIcon className="h-4 w-4" />
-                ) : (
-                  <Video className="h-4 w-4" />
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#F8F9FA] truncate font-mono">
-                  {media.filename}
-                </p>
-                <p className="text-[10px] text-[#94A3B8] font-mono">
-                  {media.mimeType} • {formatFileSize(media.sizeBytes)}
-                </p>
-              </div>
+      {!media ? (
+        <div
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+          onClick={() => !disabled && fileInputRef.current?.click()}
+          className={`border border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all bg-[#080A0D] ${
+            dragActive
+              ? "border-[#38BDF8] bg-[#161B21]"
+              : "border-[#2A3038] hover:border-[#B8C0C9] hover:bg-[#161B21]/50"
+          } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        >
+          <div className="p-2.5 rounded-full bg-[#161B21] text-[#B8C0C9] border border-[#2A3038]">
+            <UploadCloud className="h-5 w-5" />
+          </div>
+          <div className="text-center space-y-1">
+            <p className="text-xs font-medium text-[#F3F5F7]">
+              Drop photo or video here, or <span className="text-[#38BDF8] underline">browse files</span>
+            </p>
+            <p className="text-[11px] font-mono text-[#707984]">
+              JPG, PNG, WEBP, GIF (10MB) • MP4, WEBM, MOV (50MB)
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-[#161B21] border border-[#2A3038] rounded-md p-3.5 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-mono text-[#A7AFB8]">
+              {media.type === "image" ? (
+                <ImageIcon className="h-4 w-4 text-[#38BDF8]" />
+              ) : (
+                <Video className="h-4 w-4 text-[#38BDF8]" />
+              )}
+              <span className="font-semibold text-[#F3F5F7] truncate max-w-[200px]">
+                {media.filename}
+              </span>
+              <span className="text-[#707984]">({formatFileSize(media.sizeBytes)})</span>
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handleReplaceClick}
                 disabled={disabled}
+                className="p-1.5 rounded hover:bg-[#1B2027] text-[#A7AFB8] hover:text-[#F3F5F7] transition-colors"
                 title="Replace Media"
-                className="p-1.5 rounded-lg bg-[#161B24] hover:bg-[#1C222E] text-[#CBD5E1] hover:text-[#F8F9FA] border border-stone-800 transition-colors disabled:opacity-50"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
               </button>
@@ -187,79 +208,44 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
                 type="button"
                 onClick={handleRemove}
                 disabled={disabled}
+                className="p-1.5 rounded hover:bg-[#1B2027] text-rose-400 hover:text-rose-300 transition-colors"
                 title="Remove Media"
-                className="p-1.5 rounded-lg bg-[#161B24] hover:bg-rose-950/50 text-[#94A3B8] hover:text-rose-400 border border-stone-800 transition-colors disabled:opacity-50"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
 
-          {/* Visual Display Container */}
-          <div className="flex items-center justify-center bg-[#050608] rounded-lg border border-stone-900 overflow-hidden max-h-[220px]">
+          {/* Media Preview Frame */}
+          <div className="relative rounded overflow-hidden bg-[#080A0D] border border-[#2A3038] max-h-48 flex items-center justify-center">
             {media.type === "image" ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={media.previewUrl}
-                alt="Selected claim media artifact"
-                className="max-h-[220px] w-auto object-contain rounded"
+                alt="Upload preview"
+                className="max-h-44 object-contain w-auto mx-auto"
               />
             ) : (
               <video
                 src={media.previewUrl}
                 controls
-                className="max-h-[220px] w-full rounded"
-              >
-                Your browser does not support the video tag.
-              </video>
+                className="max-h-44 w-full object-contain"
+              />
             )}
           </div>
 
-          <div className="flex items-center justify-between text-[11px] font-sans text-[#94A3B8] pt-1">
-            <span className="flex items-center gap-1 text-emerald-400 font-medium">
-              <FileCheck className="h-3.5 w-3.5" />
-              Media attached
-            </span>
-            <span className="text-[#CBD5E1]">Will check online matches & provenance</span>
-          </div>
-        </div>
-      ) : (
-        /* Empty Dropzone */
-        <div
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-          onClick={handleReplaceClick}
-          className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
-            dragActive
-              ? "border-red-500 bg-red-950/10 shadow-[0_0_15px_rgba(239,68,68,0.15)]"
-              : "border-stone-800 bg-[#0B0D11]/60 hover:border-red-500/40 hover:bg-[#11141A]"
-          } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
-        >
-          <div className="flex items-center gap-3 mb-3 text-[#94A3B8]">
-            <div className="p-2 rounded-lg bg-[#161B24] border border-stone-800 text-red-400">
-              <ImageIcon className="h-5 w-5" />
-            </div>
-            <div className="p-2 rounded-lg bg-[#161B24] border border-stone-800 text-[#CBD5E1]">
-              <Video className="h-5 w-5" />
+          <div className="flex items-center justify-between text-[11px] font-mono text-[#707984] pt-1">
+            <div className="flex items-center gap-1.5 text-[#A7AFB8]">
+              <FileCheck className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Multimodal asset registered for cross-domain matching</span>
             </div>
           </div>
-
-          <p className="text-sm font-medium text-[#F8F9FA]">
-            Click to upload or drag & drop image or video
-          </p>
-          <p className="text-xs text-[#94A3B8] mt-1">
-            Supports {SUPPORTED_MEDIA_TYPES.images.slice(0, 3).join(", ")} up to 15MB • {SUPPORTED_MEDIA_TYPES.video.slice(0, 2).join(", ")} up to 50MB
-          </p>
         </div>
       )}
 
-      {/* Validation / Error Message */}
       {errorMessage && (
-        <div className="flex items-start gap-2 p-3 bg-rose-950/30 border border-rose-500/40 rounded-xl text-xs text-rose-300">
-          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-rose-400" />
-          <p className="leading-relaxed">{errorMessage}</p>
+        <div className="p-3 rounded bg-rose-950/20 border border-rose-800/40 text-xs text-rose-300 flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
+          <span>{errorMessage}</span>
         </div>
       )}
     </div>

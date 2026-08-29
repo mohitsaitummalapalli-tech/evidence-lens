@@ -172,12 +172,12 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
         };
       case "FALSE":
         return {
-          color: "#EF4444",
-          fill: "#7F1D1D",
-          stroke: "#F87171",
-          glow: "rgba(239, 68, 68, 0.4)",
-          badgeBg: "bg-red-950/80 text-red-300 border-red-700/60",
-          icon: <XCircle className="h-3 w-3 text-red-400" />,
+          color: "#F43F5E",
+          fill: "#881337",
+          stroke: "#FB7185",
+          glow: "rgba(244, 63, 94, 0.4)",
+          badgeBg: "bg-rose-950/80 text-rose-300 border-rose-700/60",
+          icon: <XCircle className="h-3 w-3 text-rose-400" />,
         };
       case "MIXED":
         return {
@@ -191,12 +191,12 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
       case "UNVERIFIED":
       default:
         return {
-          color: "#94A3B8",
-          fill: "#161B24",
-          stroke: "#94A3B8",
-          glow: "rgba(148, 163, 184, 0.3)",
-          badgeBg: "bg-[#161B24] text-[#CBD5E1] border-stone-700",
-          icon: <HelpCircle className="h-3 w-3 text-[#94A3B8]" />,
+          color: "#A7AFB8",
+          fill: "#161B21",
+          stroke: "#707984",
+          glow: "rgba(112, 121, 132, 0.3)",
+          badgeBg: "bg-[#161B21] text-[#A7AFB8] border-[#2A3038]",
+          icon: <HelpCircle className="h-3 w-3 text-[#A7AFB8]" />,
         };
     }
   };
@@ -225,25 +225,25 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
   return (
     <div
       ref={containerRef}
-      className="bg-[#11141A] border border-stone-800 rounded-xl shadow-2xl flex flex-col transition-all duration-300 relative overflow-hidden"
+      className="bg-[#11151A] border border-[#2A3038] rounded-lg shadow-2xl flex flex-col transition-all duration-300 relative overflow-hidden"
     >
       {/* Header with Title & Telemetry */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-stone-800 bg-[#0B0D11]/80 backdrop-blur-sm z-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-[#2A3038] bg-[#080A0D]/90 backdrop-blur-sm z-10 font-mono">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-[#161B24] border border-stone-800 text-red-400 shadow-sm">
-            <TrendingUp className="h-5 w-5" />
+          <div className="p-2 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5]">
+            <TrendingUp className="h-4 w-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-[#F8F9FA] tracking-wide">
+              <h3 className="text-xs font-bold text-[#F3F5F7] tracking-wider uppercase">
                 Confidence Progression
               </h3>
-              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full font-semibold uppercase border border-emerald-700/50 bg-emerald-950/60 text-emerald-300 flex items-center gap-1.5">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded font-semibold uppercase border border-emerald-800/40 bg-emerald-950/30 text-emerald-300 flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3 text-emerald-400" />
                 <span>{isAnalyzing ? "CALCULATING..." : "ANALYSIS COMPLETE"}</span>
               </span>
             </div>
-            <p className="text-xs text-[#94A3B8] font-sans mt-0.5">
+            <p className="text-xs text-[#A7AFB8] font-sans mt-0.5">
               Confidence trajectory across individual claim verifications
             </p>
           </div>
@@ -252,11 +252,11 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
         {/* Telemetry & Controls */}
         <div className="flex items-center gap-3 self-end sm:self-auto">
           {/* Telemetry Box */}
-          <div className="flex items-center gap-3 text-xs font-mono text-[#94A3B8] px-3 py-1.5 rounded-lg bg-[#161B24] border border-stone-800">
+          <div className="flex items-center gap-3 text-xs font-mono text-[#707984] px-3 py-1.5 rounded bg-[#161B21] border border-[#2A3038]">
             <div>
-              CLAIMS: <span className="text-[#F8F9FA] font-bold">{mappedPoints.length}</span>
+              CLAIMS: <span className="text-[#F3F5F7] font-bold">{mappedPoints.length}</span>
             </div>
-            <div className="text-stone-700">•</div>
+            <div className="text-[#2A3038]">•</div>
             <div>
               AVG CONFIDENCE:{" "}
               <span className="text-emerald-400 font-bold">{avgConfidence}%</span>
@@ -268,9 +268,9 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
             type="button"
             onClick={() => setIsPlaying(!isPlaying)}
             title={isPlaying ? "Pause Animation" : "Play Animation"}
-            className="p-2 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-[#CBD5E1] border border-stone-800 transition-colors shadow-sm"
+            className="p-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#A7AFB8] hover:text-white border border-[#2A3038] transition-colors"
           >
-            {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current text-red-400" />}
+            {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 fill-current text-[#D9DEE5]" />}
           </button>
 
           {/* Replay Button */}
@@ -278,7 +278,7 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
             type="button"
             onClick={handleReplay}
             title="Replay Trajectory"
-            className="p-2 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-red-400 border border-stone-800 transition-colors shadow-sm"
+            className="p-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#D9DEE5] border border-[#2A3038] transition-colors"
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
@@ -288,14 +288,14 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
       {/* Main SVG Graph Container */}
       <div className="p-4 sm:p-6 w-full relative select-none">
         {isAnalyzing ? (
-          <div className="h-64 flex flex-col items-center justify-center gap-3 text-[#94A3B8] font-mono text-xs">
-            <Activity className="h-6 w-6 text-red-400 animate-pulse" />
-            <p className="animate-pulse text-[#CBD5E1]">
+          <div className="h-64 flex flex-col items-center justify-center gap-3 text-[#707984] font-mono text-xs">
+            <Activity className="h-6 w-6 text-[#D9DEE5] animate-pulse" />
+            <p className="animate-pulse text-[#A7AFB8]">
               Calculating confidence trajectory across claims...
             </p>
           </div>
         ) : mappedPoints.length === 0 ? (
-          <div className="h-48 flex items-center justify-center text-xs font-mono text-[#94A3B8]">
+          <div className="h-48 flex items-center justify-center text-xs font-mono text-[#707984]">
             No verified claim confidence trajectory to display.
           </div>
         ) : (
@@ -312,18 +312,18 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
             >
               {/* Definitions */}
               <defs>
-                {/* Red/Silver Trajectory Gradient */}
-                <linearGradient id="redTrajectoryGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#EF4444" />
-                  <stop offset="50%" stopColor="#F87171" />
-                  <stop offset="100%" stopColor="#DC2626" />
+                {/* Platinum/Silver Trajectory Gradient */}
+                <linearGradient id="platinumTrajectoryGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#94A3B8" />
+                  <stop offset="50%" stopColor="#CBD5E1" />
+                  <stop offset="100%" stopColor="#F8FAFC" />
                 </linearGradient>
 
                 {/* Area Gradient */}
-                <linearGradient id="redAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#EF4444" stopOpacity="0.18" />
-                  <stop offset="70%" stopColor="#EF4444" stopOpacity="0.04" />
-                  <stop offset="100%" stopColor="#EF4444" stopOpacity="0.0" />
+                <linearGradient id="platinumAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#CBD5E1" stopOpacity="0.15" />
+                  <stop offset="70%" stopColor="#CBD5E1" stopOpacity="0.03" />
+                  <stop offset="100%" stopColor="#CBD5E1" stopOpacity="0.0" />
                 </linearGradient>
 
                 {/* Comet Glow Filter */}
@@ -357,7 +357,7 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
                       y1={y}
                       x2={width - padding.right}
                       y2={y}
-                      stroke={isBaseline ? "rgba(239, 68, 68, 0.25)" : "rgba(255, 255, 255, 0.05)"}
+                      stroke={isBaseline ? "rgba(217, 222, 229, 0.2)" : "rgba(255, 255, 255, 0.05)"}
                       strokeDasharray={isBaseline ? "4 4" : undefined}
                       strokeWidth={isBaseline ? 1.5 : 1}
                     />
@@ -365,7 +365,7 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
                       x={padding.left - 12}
                       y={y + 3.5}
                       textAnchor="end"
-                      className="text-[10px] font-mono fill-stone-500 font-medium"
+                      className="text-[10px] font-mono fill-[#707984] font-medium"
                     >
                       {score}%
                     </text>
@@ -384,7 +384,7 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
               <text
                 x={width - padding.right + 8}
                 y={getY(65) + 3}
-                className="text-[9px] font-mono fill-stone-400 font-semibold"
+                className="text-[9px] font-mono fill-[#707984] font-semibold"
               >
                 MED (65%)
               </text>
@@ -400,7 +400,7 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
               {areaD && (
                 <path
                   d={areaD}
-                  fill="url(#redAreaGrad)"
+                  fill="url(#platinumAreaGrad)"
                   className="transition-opacity duration-500"
                 />
               )}
@@ -412,19 +412,19 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
                   <path
                     d={pathD}
                     fill="none"
-                    stroke="rgba(239, 68, 68, 0.2)"
-                    strokeWidth={7}
+                    stroke="rgba(217, 222, 229, 0.15)"
+                    strokeWidth={6}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
 
-                  {/* Primary Crimson Path */}
+                  {/* Primary Platinum Path */}
                   <path
                     id={`confidenceTrajectoryPath-${replayKey}`}
                     d={pathD}
                     fill="none"
-                    stroke="url(#redTrajectoryGrad)"
-                    strokeWidth={3}
+                    stroke="url(#platinumTrajectoryGrad)"
+                    strokeWidth={2.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -434,7 +434,7 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
               {/* Traveling Indicator Particle along Trajectory */}
               {pathD && isPlaying && (
                 <g className="comet-group">
-                  <circle r={8} fill="#EF4444" opacity={0.35} filter="url(#cometGlowFilter)">
+                  <circle r={8} fill="#CBD5E1" opacity={0.25} filter="url(#cometGlowFilter)">
                     <animateMotion
                       dur="3.2s"
                       repeatCount="indefinite"
@@ -443,7 +443,7 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
                     />
                   </circle>
 
-                  <circle r={4} fill="#F87171" opacity={0.8} filter="url(#cometGlowFilter)">
+                  <circle r={4} fill="#F8FAFC" opacity={0.8} filter="url(#cometGlowFilter)">
                     <animateMotion
                       dur="3.2s"
                       repeatCount="indefinite"
@@ -512,7 +512,7 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
                       y={height - padding.bottom + 20}
                       textAnchor="middle"
                       className={`text-xs font-mono font-bold transition-colors ${
-                        isHovered ? "fill-red-400" : "fill-[#94A3B8]"
+                        isHovered ? "fill-[#F3F5F7]" : "fill-[#707984]"
                       }`}
                     >
                       {coord.point.claimId}
@@ -538,25 +538,25 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
         {/* Hover Tooltip Card */}
         {hoveredPointIndex !== null && tooltipPos && mappedPoints[hoveredPointIndex] && (
           <div
-            className="absolute z-30 pointer-events-none p-3.5 rounded-xl bg-[#0B0D11]/95 border border-stone-800 shadow-2xl max-w-xs text-xs space-y-2 backdrop-blur-md animate-in fade-in zoom-in-95 duration-150"
+            className="absolute z-30 pointer-events-none p-3.5 rounded-lg bg-[#080A0D]/95 border border-[#2A3038] shadow-2xl max-w-xs text-xs space-y-2 backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 font-mono"
             style={{
               left: `${Math.min(tooltipPos.x + 12, containerWidth - 270)}px`,
               top: `${Math.max(10, tooltipPos.y - 120)}px`,
             }}
           >
             {/* Tooltip Header */}
-            <div className="flex items-center justify-between gap-2 border-b border-stone-800 pb-1.5">
+            <div className="flex items-center justify-between gap-2 border-b border-[#2A3038] pb-1.5">
               <div className="flex items-center gap-1.5">
-                <span className="font-mono font-bold text-[#F8F9FA]">
+                <span className="font-bold text-[#F3F5F7]">
                   {mappedPoints[hoveredPointIndex].claimId}
                 </span>
-                <span className="text-[10px] text-stone-500">•</span>
-                <span className="text-[10px] font-mono text-[#94A3B8]">
+                <span className="text-[#2A3038]">•</span>
+                <span className="text-[10px] text-[#707984]">
                   {mappedPoints[hoveredPointIndex].confidence} CONFIDENCE
                 </span>
               </div>
               <span
-                className={`text-[9px] font-mono px-2 py-0.5 rounded border font-semibold flex items-center gap-1 ${
+                className={`text-[9px] px-2 py-0.5 rounded border font-semibold flex items-center gap-1 ${
                   getVerdictStyle(mappedPoints[hoveredPointIndex].verdict).badgeBg
                 }`}
               >
@@ -566,25 +566,25 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
             </div>
 
             {/* Claim Statement */}
-            <p className="text-[#F8F9FA] text-xs font-medium leading-snug line-clamp-3">
+            <p className="text-[#F3F5F7] text-xs font-medium leading-snug line-clamp-3 font-sans">
               {mappedPoints[hoveredPointIndex].claimText}
             </p>
 
             {/* Supporting / Contradicting Counts */}
-            <div className="flex items-center justify-between text-[10px] font-mono bg-[#161B24] p-2 rounded-lg border border-stone-800">
+            <div className="flex items-center justify-between text-[10px] bg-[#161B21] p-2 rounded border border-[#2A3038]">
               <div className="text-emerald-400">
                 SUPPORTS: {mappedPoints[hoveredPointIndex].supportingCount}
               </div>
-              <div className="text-stone-700">|</div>
-              <div className="text-red-400">
+              <div className="text-[#2A3038]">|</div>
+              <div className="text-rose-400">
                 CONTRADICTS: {mappedPoints[hoveredPointIndex].contradictingCount}
               </div>
             </div>
 
             {/* Confidence Score Pill */}
-            <div className="flex items-center justify-between text-[10px] font-mono text-[#94A3B8] pt-0.5">
+            <div className="flex items-center justify-between text-[10px] text-[#707984] pt-0.5">
               <span>Numeric Weight:</span>
-              <span className="text-[#F8F9FA] font-bold">
+              <span className="text-[#F3F5F7] font-bold">
                 {mappedPoints[hoveredPointIndex].confidenceScore}%
               </span>
             </div>
@@ -593,13 +593,13 @@ export const ConfidenceCometGraph: React.FC<ConfidenceCometGraphProps> = ({
       </div>
 
       {/* Bottom Forensic Bar */}
-      <div className="p-3 border-t border-stone-800 bg-[#0B0D11]/90 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#94A3B8] z-10">
-        <div className="flex items-center gap-2 text-[#CBD5E1]">
-          <Shield className="h-3.5 w-3.5 text-red-400" />
+      <div className="p-3 border-t border-[#2A3038] bg-[#080A0D]/90 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono text-[#707984] z-10">
+        <div className="flex items-center gap-2 text-[#D9DEE5]">
+          <Shield className="h-3.5 w-3.5 text-[#B8C0C9]" />
           <span>Confidence progression across individual claim verifications</span>
         </div>
         <div className="flex items-center gap-4 text-[11px]">
-          <span>Hover node for full claim citation breakdown</span>
+          <span>Hover node for claim metrics</span>
         </div>
       </div>
     </div>

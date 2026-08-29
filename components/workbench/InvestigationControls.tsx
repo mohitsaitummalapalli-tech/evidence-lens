@@ -32,44 +32,44 @@ export const InvestigationControls: React.FC<InvestigationControlsProps> = ({
 
   return (
     <div className="space-y-3">
-      <div className="bg-[#11141A] border border-stone-800 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+      <div className="bg-[#11151A] border border-[#2A3038] rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
         {/* State Indicator Text */}
-        <div className="flex items-center gap-2.5 text-xs">
+        <div className="flex items-center gap-2.5 text-xs font-mono">
           {isSubmitting ? (
-            <div className="p-2 rounded-lg bg-[#161B24] border border-stone-800 text-red-300 flex items-center gap-2 font-sans shadow-sm">
-              <Loader2 className="h-4 w-4 animate-spin text-red-400" />
-              <span>Searching multi-source evidence and running AI jury...</span>
+            <div className="px-3 py-1.5 rounded bg-[#161B21] border border-[#343B45] text-[#D9DEE5] flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-[#D9DEE5]" />
+              <span>Retrieving grounded sources & synthesizing multi-AI consensus...</span>
             </div>
           ) : isCompleted ? (
-            <div className="p-2 rounded-lg bg-emerald-950/50 border border-emerald-500/30 text-emerald-300 flex items-center gap-2 font-sans shadow-sm">
+            <div className="px-3 py-1.5 rounded bg-emerald-950/20 border border-emerald-800/40 text-emerald-300 flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-              <span>Verification complete. Grounded results and sources ready below.</span>
+              <span>Investigation complete. Review evidence dossier and audit trail below.</span>
             </div>
           ) : isError ? (
-            <div className="p-2 rounded-lg bg-red-950/50 border border-red-500/30 text-red-300 flex items-center gap-2 font-sans shadow-sm">
-              <AlertTriangle className="h-4 w-4 text-red-400" />
-              <span>Unable to complete analysis. Please check your connection and retry.</span>
+            <div className="px-3 py-1.5 rounded bg-rose-950/20 border border-rose-800/40 text-rose-300 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-rose-400" />
+              <span>Investigation halted. Check network connection or input parameters.</span>
             </div>
           ) : hasValidInput ? (
-            <div className="p-2 rounded-lg bg-[#161B24] border border-stone-800 text-[#CBD5E1] flex items-center gap-2 font-sans shadow-sm">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Ready to verify. Click &quot;Analyze&quot; to begin.</span>
+            <div className="px-3 py-1.5 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5] flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <span>Assertion registered. Click &quot;Analyze Claim&quot; to execute.</span>
             </div>
           ) : (
-            <div className="p-2 rounded-lg bg-[#161B24] border border-stone-800 text-[#94A3B8] flex items-center gap-2 font-sans">
-              <AlertCircle className="h-4 w-4 text-red-400" />
-              <span>Enter a claim or question above (at least 5 characters) to start.</span>
+            <div className="px-3 py-1.5 rounded bg-[#161B21] border border-[#2A3038] text-[#707984] flex items-center gap-2">
+              <AlertCircle className="h-3.5 w-3.5 text-[#A7AFB8]" />
+              <span>Enter a claim above (minimum 5 characters) to start.</span>
             </div>
           )}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end font-mono">
           <button
             type="button"
             onClick={onReset}
             disabled={isSubmitting}
-            className="px-4 py-2.5 rounded-xl text-xs font-semibold text-[#CBD5E1] hover:text-white bg-[#161B24] hover:bg-[#1E2430] border border-stone-800 hover:border-stone-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 shadow-sm"
+            className="px-3.5 py-2 rounded text-xs font-medium text-[#A7AFB8] hover:text-[#F3F5F7] bg-[#161B21] hover:bg-[#1B2027] border border-[#2A3038] hover:border-[#343B45] disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             <span>Reset</span>
@@ -79,21 +79,21 @@ export const InvestigationControls: React.FC<InvestigationControlsProps> = ({
             type="button"
             onClick={onSubmit}
             disabled={!hasValidInput || isSubmitting}
-            className={`px-7 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-lg ${
+            className={`px-6 py-2 rounded text-xs font-bold transition-all flex items-center gap-2 ${
               hasValidInput && !isSubmitting
-                ? "bg-red-600 hover:bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)] cursor-pointer active:scale-95"
-                : "bg-[#161B24] text-stone-600 border border-stone-800 cursor-not-allowed"
+                ? "platinum-button-primary cursor-pointer active:scale-98"
+                : "bg-[#161B21] text-[#707984] border border-[#2A3038] cursor-not-allowed"
             }`}
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin text-white" />
-                <span>Analyzing...</span>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span>ANALYZING...</span>
               </>
             ) : (
               <>
-                <Play className="h-4 w-4 fill-current text-white" />
-                <span>Analyze</span>
+                <Play className="h-3.5 w-3.5 fill-current" />
+                <span>ANALYZE CLAIM</span>
               </>
             )}
           </button>
@@ -101,11 +101,11 @@ export const InvestigationControls: React.FC<InvestigationControlsProps> = ({
       </div>
 
       {errorMessage && (
-        <div className="p-3.5 rounded-xl bg-red-950/60 border border-red-800 text-xs text-red-300 flex items-start gap-2.5">
-          <AlertCircle className="h-4 w-4 shrink-0 text-red-400 mt-0.5" />
+        <div className="p-3.5 rounded bg-rose-950/20 border border-rose-800/40 text-xs text-rose-300 flex items-start gap-2.5 font-mono">
+          <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
           <div>
-            <p className="font-semibold">Analysis Notice</p>
-            <p className="text-red-300 font-sans mt-0.5">{errorMessage}</p>
+            <p className="font-bold">Investigation Notice</p>
+            <p className="text-rose-300 font-sans mt-0.5">{errorMessage}</p>
           </div>
         </div>
       )}

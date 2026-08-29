@@ -31,35 +31,35 @@ const STANCE_EDGE_COLORS: Record<
     glow: "rgba(16, 185, 129, 0.2)",
   },
   CONTRADICTS: {
-    stroke: "#EF4444", // crimson
-    glow: "rgba(239, 68, 68, 0.2)",
+    stroke: "#F43F5E", // rose
+    glow: "rgba(244, 63, 94, 0.2)",
   },
   MIXED: {
     stroke: "#F59E0B", // amber
     glow: "rgba(245, 158, 11, 0.2)",
   },
   INSUFFICIENT: {
-    stroke: "#475569", // slate
-    glow: "rgba(71, 85, 105, 0.15)",
+    stroke: "#707984", // neutral slate
+    glow: "rgba(112, 121, 132, 0.15)",
   },
   NEUTRAL: {
-    stroke: "#64748B", // slate
-    glow: "rgba(100, 116, 139, 0.15)",
+    stroke: "#A7AFB8", // secondary slate
+    glow: "rgba(167, 175, 184, 0.15)",
   },
   UNCERTAIN: {
-    stroke: "#475569",
-    glow: "rgba(71, 85, 105, 0.15)",
+    stroke: "#707984",
+    glow: "rgba(112, 121, 132, 0.15)",
   },
 };
 
 const ROOT_EDGE_COLOR = {
-  stroke: "#EF4444",
-  glow: "rgba(239, 68, 68, 0.2)",
+  stroke: "#D9DEE5",
+  glow: "rgba(217, 222, 229, 0.2)",
 };
 
 const IMAGE_PROVENANCE_EDGE_COLOR = {
-  stroke: "#EF4444",
-  glow: "rgba(239, 68, 68, 0.2)",
+  stroke: "#38BDF8",
+  glow: "rgba(56, 189, 248, 0.2)",
 };
 
 export const EvidenceGraphEdge: React.FC<EvidenceGraphEdgeProps> = ({
@@ -102,6 +102,14 @@ export const EvidenceGraphEdge: React.FC<EvidenceGraphEdgeProps> = ({
         strokeWidth={baseStrokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+
+      {/* Edge Direction Arrow Marker / Terminal Dot */}
+      <circle
+        cx={edge.endX}
+        cy={edge.endY}
+        r={isHighlighted ? 3.5 : 2.5}
+        fill={colorConfig.stroke}
         className="transition-all duration-200"
       />
     </g>
