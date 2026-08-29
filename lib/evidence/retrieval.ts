@@ -1,10 +1,18 @@
 /**
- * EvidenceLens - Evidence Retrieval Engine
- * Phase 4B: Connect Atomic Claims → Real Web Evidence
+ * EvidenceLens - Multi-Source Evidence Retrieval Engine
+ * Phase 4B, Phase 10 & Phase 17: Connect Atomic Claims → Real Web + YouTube Video Evidence
+ *
+ * Core Principles:
+ * 1. Concurrently discovers both authoritative Web publications and authentic YouTube video evidence.
+ * 2. Unifies all sources into ONE shared immutable evidence bundle per claim.
+ * 3. Identifies exact source types: "web", "youtube", "academic", "social", "video_portal".
+ * 4. Grounded AI Stance Evaluation across all retrieved snippets.
+ * 5. Resilient fault tolerance: If YouTube search fails, Web search proceeds uninterrupted.
  */
 
 import { AtomicClaim, ClaimEvidenceBundle, EvidenceItem, EvidenceRetrievalResult } from "@/types";
 import { tavilyClient } from "./tavily";
+import { youTubeClient, isYouTubeUrl } from "./youtube";
 import { geminiService, StanceEvaluationItem } from "../ai/gemini";
 import { sourceQualityService } from "./sourceQuality";
 
@@ -69,6 +77,10 @@ export class EvidenceRetrievalService {
    * Identifies the specific source type (e.g. YouTube video vs standard web publication).
    */
   public detectSourceType(url: string, domain: string): "youtube" | "web" | "academic" | "social" | "video_portal" {
+    if (isYouTubeUrl(url)) {
+      return "youtube";
+    }
+
     const lowerUrl = url.toLowerCase();
     const lowerDomain = domain.toLowerCase();
 
@@ -100,8 +112,8 @@ export class EvidenceRetrievalService {
   }
 
   /**
-   * Retrieves web evidence for a set of atomic claims concurrently using Tavily.
-   * Deduplicates URLs, keeps top 3 results per claim, and links each result strictly to its claimId.
+   * Retrieves both Web and YouTube video evidence for a set of atomic claims concurrently.
+   * Merges them into ONE shared evidence bundle per claim.
    */
   public async retrieveEvidenceForClaims(
     claims: AtomicClaim[],
@@ -127,18 +139,25 @@ export class EvidenceRetrievalService {
     let hasAnySearchFailure = false;
     let lastErrorMessage = "";
 
-    // 1. Concurrently fetch web evidence for each atomic claim via Promise.all
+    // 1. Concurrently fetch web and YouTube evidence for each atomic claim
     await Promise.all(
       claims.map(async (claim) => {
-        const query = this.buildQuery(claim);
+        const webQuery = this.buildQuery(claim);
+        const ytQuery = youTubeClient.buildYouTubeQuery(claim.text, claim.entities);
+
         const claimSources: EvidenceItem[] = [];
         const seenUrls = new Set<string>();
 
-        try {
-          // Keep best 3 results per claim as specified in Phase 4B
-          const rawResults = await tavilyClient.search(query, 3);
+        // Concurrently run Web Search and YouTube Search
+        const [webResultsRes, ytResultsRes] = await Promise.allSettled([
+          tavilyClient.search(webQuery, 3),
+          youTubeClient.search(ytQuery, 2),
+        ]);
 
-          rawResults.forEach((res, resIdx) => {
+        // Process Web Search results
+        if (webResultsRes.status === "fulfilled") {
+          const rawWebResults = webResultsRes.value;
+          rawWebResults.forEach((res, resIdx) => {
             const cleanUrl = res.url.trim();
             if (!cleanUrl || seenUrls.has(cleanUrl.toLowerCase())) return;
             seenUrls.add(cleanUrl.toLowerCase());
@@ -157,7 +176,7 @@ export class EvidenceRetrievalService {
               publishedDate: res.published_date || undefined,
               snippet: res.content || "",
               relevanceScore: typeof res.score === "number" ? res.score : undefined,
-              stance: "UNCERTAIN", // Initial stance is UNCERTAIN as required
+              stance: "UNCERTAIN",
               sourceType,
               sourceQuality: qualityProfile.tier,
               qualityReason: qualityProfile.reason,
@@ -177,16 +196,63 @@ export class EvidenceRetrievalService {
               });
             }
           });
-        } catch (err: unknown) {
+        } else {
           hasAnySearchFailure = true;
-          lastErrorMessage = err instanceof Error ? err.message : String(err);
-          console.warn(`Search retrieval failed for claim ${claim.id} ("${query}"):`, lastErrorMessage);
+          lastErrorMessage = webResultsRes.reason instanceof Error ? webResultsRes.reason.message : String(webResultsRes.reason);
+          console.warn(`Web search retrieval failed for claim ${claim.id} ("${webQuery}"):`, lastErrorMessage);
+        }
+
+        // Process YouTube Video Search results
+        if (ytResultsRes.status === "fulfilled") {
+          const rawYtResults = ytResultsRes.value;
+          rawYtResults.forEach((yt, ytIdx) => {
+            const cleanUrl = yt.url.trim();
+            if (!cleanUrl || seenUrls.has(cleanUrl.toLowerCase())) return;
+            seenUrls.add(cleanUrl.toLowerCase());
+
+            const evidenceId = `ev_${claim.id}_yt_${ytIdx + 1}`;
+            const domain = "youtube.com";
+            const sourceType = "youtube" as const;
+            const qualityProfile = sourceQualityService.evaluateSourceQuality(cleanUrl, domain, sourceType);
+
+            const item: EvidenceItem = {
+              id: evidenceId,
+              claimId: claim.id,
+              title: yt.title || "YouTube Video",
+              url: cleanUrl,
+              domain,
+              publishedDate: yt.publishedDate || undefined,
+              snippet: yt.snippet || "",
+              relevanceScore: yt.score || 0.85,
+              stance: "UNCERTAIN",
+              sourceType,
+              sourceQuality: qualityProfile.tier,
+              qualityReason: qualityProfile.reason,
+              channelOrAuthor: yt.channelOrAuthor || "YouTube Channel",
+              retrievedAt,
+            };
+
+            claimSources.push(item);
+            allEvidenceItems.push(item);
+
+            if (item.snippet) {
+              stanceEvalItems.push({
+                evidenceId,
+                claimId: claim.id,
+                claimText: claim.text,
+                sourceTitle: item.title,
+                snippetText: item.snippet,
+              });
+            }
+          });
+        } else {
+          console.warn(`YouTube video discovery failed for claim ${claim.id}:`, ytResultsRes.reason);
         }
 
         bundles.push({
           claimId: claim.id,
           claimText: claim.text,
-          query,
+          query: webQuery,
           sources: claimSources,
         });
       })

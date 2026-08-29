@@ -20,6 +20,7 @@ import {
   Lock,
   Globe,
   Video,
+  Play,
   BookOpen,
   Image as ImageIcon,
 } from "lucide-react";
@@ -101,6 +102,11 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
   evidence,
 }) => {
   const [showSharedEvidence, setShowSharedEvidence] = useState(false);
+  const [expandedEvals, setExpandedEvals] = useState<Record<string, boolean>>({});
+
+  const toggleEval = (key: string) => {
+    setExpandedEvals((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const majorityVerdictKey = consensus.majorityVerdict || "UNVERIFIED";
   const juryVerdictTheme =
@@ -161,10 +167,10 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
 
       {/* SHARED EVIDENCE BREAKDOWN BAR */}
       {metrics && (
-        <div className="p-3 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.25)] flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="p-3.5 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.25)] flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 text-[#D4AF5A] font-bold">
-            <Lock className="h-3.5 w-3.5" />
-            <span className="uppercase text-[11px] tracking-wider">Shared Evidence Grounding:</span>
+            <Lock className="h-3.5 w-3.5 text-[#D4AF5A]" />
+            <span className="uppercase text-[11px] tracking-wider">ALL MODELS RECEIVED THE SAME EVIDENCE:</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#D7DADF]">
@@ -196,38 +202,51 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
               <span className="font-bold text-[#F5F7FA]">GROUNDED JURY EVIDENCE DOSSIER</span>
             </div>
             <span className="text-[#8D949D] text-[10px]">
-              Every juror evaluated identical data: {evidenceList.length} sources
+              Every juror evaluated identical data: {evidenceList.length} sources ({metrics?.webSourcesCount || 0} Web, {metrics?.youtubeSourcesCount || 0} YouTube)
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-60 overflow-y-auto pr-1">
-            {evidenceList.map((src) => (
-              <div
-                key={src.id}
-                className="p-2.5 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.2)] text-xs flex items-center justify-between gap-2"
-              >
-                <div className="space-y-0.5 truncate">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] px-1 py-0.2 rounded bg-[#050607] border border-[rgba(212,175,90,0.25)] text-[#D4AF5A] font-bold">
-                      {src.id}
-                    </span>
-                    <span className="font-bold text-[#F5F7FA] truncate">{src.domain}</span>
+            {evidenceList.map((src) => {
+              const isYt = src.sourceType === "youtube" || src.domain.includes("youtube.com");
+              return (
+                <div
+                  key={src.id}
+                  className="p-2.5 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.2)] text-xs flex items-center justify-between gap-2"
+                >
+                  <div className="space-y-0.5 truncate">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] px-1 py-0.2 rounded bg-[#050607] border border-[rgba(212,175,90,0.25)] text-[#D4AF5A] font-bold">
+                        {src.id}
+                      </span>
+                      {isYt ? (
+                        <span className="text-[9px] px-1 py-0.2 rounded bg-rose-950/40 border border-rose-700/50 text-rose-300 font-bold flex items-center gap-0.5">
+                          <Play className="h-2 w-2 fill-rose-400 text-rose-400" /> ▶ YouTube
+                        </span>
+                      ) : (
+                        <span className="font-bold text-[#F5F7FA] truncate">{src.domain}</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-[#D7DADF] truncate font-sans">{src.title}</p>
                   </div>
-                  <p className="text-[11px] text-[#D7DADF] truncate font-sans">{src.title}</p>
+                  {src.url && (
+                    <a
+                      href={src.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`p-1.5 rounded shrink-0 border ${
+                        isYt
+                          ? "bg-rose-950/30 text-rose-300 hover:text-white border-rose-700/50"
+                          : "bg-[#050607] text-[#D4AF5A] hover:text-white border-[rgba(212,175,90,0.25)]"
+                      }`}
+                      title={isYt ? "Watch Video" : "Open Source"}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  )}
                 </div>
-                {src.url && (
-                  <a
-                    href={src.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-1 text-[#D4AF5A] hover:text-white shrink-0"
-                    title="Open Source"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -308,6 +327,30 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
               const eTheme = VERDICT_THEMES[mv.overallVerdict] || VERDICT_THEMES.UNVERIFIED;
               const EIcon = eTheme.icon;
 
+              // Calculate source type breakdown for citations in this model
+              let citedWebCount = 0;
+              let citedYtCount = 0;
+              let citedAcadCount = 0;
+
+              for (const cv of mv.claimVerdicts || []) {
+                const allCited = [
+                  ...(cv.supportingEvidenceIds || []),
+                  ...(cv.contradictingEvidenceIds || []),
+                ];
+                for (const cid of allCited) {
+                  const s = sourceById.get(cid);
+                  if (s) {
+                    if (s.sourceType === "youtube" || s.domain.includes("youtube.com")) {
+                      citedYtCount++;
+                    } else if (s.sourceType === "academic") {
+                      citedAcadCount++;
+                    } else {
+                      citedWebCount++;
+                    }
+                  }
+                }
+              }
+
               return (
                 <div
                   key={mv.provider}
@@ -344,22 +387,33 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
                       <strong className="text-[#D4AF5A]">{mv.overallConfidence} ({mv.quantitativeScore}%)</strong>
                     </div>
 
+                    {/* Citations Breakdown Badge */}
+                    <div className="p-2 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.15)] flex items-center justify-between text-[10px] text-[#8D949D]">
+                      <span className="font-bold text-[#D7DADF] uppercase">Citations:</span>
+                      <div className="flex items-center gap-2 font-bold">
+                        <span className="text-[#D4AF5A]">WEB {citedWebCount}</span>
+                        <span className="text-rose-400">YOUTUBE {citedYtCount}</span>
+                        {citedAcadCount > 0 && <span className="text-sky-400">ACADEMIC {citedAcadCount}</span>}
+                      </div>
+                    </div>
+
                     {/* Claims Evaluated & Reasoning */}
                     {mv.claimVerdicts && mv.claimVerdicts.length > 0 && (
                       <div className="space-y-2 pt-1">
                         <span className="text-[10px] text-[#8D949D] uppercase block font-bold">
-                          Evaluations ({mv.claimVerdicts.length}):
+                          Claim Evaluations ({mv.claimVerdicts.length}):
                         </span>
-                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                           {mv.claimVerdicts.map((cv) => {
                             const cvTheme = VERDICT_THEMES[cv.verdict] || VERDICT_THEMES.UNVERIFIED;
-                            const citedIds = [
-                              ...(cv.supportingEvidenceIds || []),
-                              ...(cv.contradictingEvidenceIds || []),
-                            ];
+                            const evalKey = `${mv.provider}_${cv.claimId}`;
+                            const isExpanded = Boolean(expandedEvals[evalKey]);
+
+                            const supportingIds = cv.supportingEvidenceIds || [];
+                            const contradictingIds = cv.contradictingEvidenceIds || [];
 
                             return (
-                              <div key={cv.claimId} className="p-2.5 rounded bg-[#0D0F12] text-[11px] space-y-1.5 border border-[rgba(212,175,90,0.15)]">
+                              <div key={cv.claimId} className="p-2.5 rounded bg-[#0D0F12] text-[11px] space-y-2 border border-[rgba(212,175,90,0.15)]">
                                 <div className="flex items-center justify-between">
                                   <span className="font-bold text-[#D4AF5A]">Claim {cv.claimId}</span>
                                   <span className={`text-[10px] font-bold ${cvTheme.text}`}>
@@ -373,24 +427,139 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
                                   </p>
                                 )}
 
-                                {/* Citations referenced */}
-                                {citedIds.length > 0 && (
-                                  <div className="pt-1 border-t border-[rgba(212,175,90,0.1)] space-y-1">
-                                    <span className="text-[9px] text-[#8D949D] uppercase font-bold block">
-                                      Citations ({citedIds.length}):
+                                {/* Citations Section with Expand/Collapse toggle */}
+                                <div className="pt-1.5 border-t border-[rgba(212,175,90,0.1)] space-y-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleEval(evalKey)}
+                                    className="w-full flex items-center justify-between text-[10px] text-[#8D949D] hover:text-[#D4AF5A] font-bold"
+                                  >
+                                    <span>
+                                      CITATIONS ({supportingIds.length + contradictingIds.length})
                                     </span>
+                                    {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                                  </button>
+
+                                  {isExpanded ? (
+                                    <div className="space-y-2 pt-1 animate-in fade-in duration-150">
+                                      {/* SUPPORTING EVIDENCE */}
+                                      {supportingIds.length > 0 && (
+                                        <div className="space-y-1">
+                                          <span className="text-[9px] text-emerald-400 uppercase font-bold block">
+                                            Supporting Evidence ({supportingIds.length}):
+                                          </span>
+                                          <div className="space-y-1">
+                                            {supportingIds.map((cid) => {
+                                              const src = sourceById.get(cid);
+                                              const isYt = src?.sourceType === "youtube" || src?.domain?.includes("youtube.com");
+                                              return (
+                                                <div
+                                                  key={cid}
+                                                  className="p-1.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)] flex items-center justify-between gap-1.5 text-[10px]"
+                                                >
+                                                  <div className="truncate flex items-center gap-1.5">
+                                                    {isYt ? (
+                                                      <span className="text-rose-400 font-bold flex items-center gap-0.5 shrink-0">
+                                                        <Play className="h-2.5 w-2.5 fill-rose-400" /> ▶ YouTube
+                                                      </span>
+                                                    ) : (
+                                                      <span className="text-[#D4AF5A] font-bold shrink-0">🌐 Web</span>
+                                                    )}
+                                                    <span className="text-[#D7DADF] truncate font-sans">
+                                                      {src?.title || cid}
+                                                    </span>
+                                                  </div>
+                                                  {src?.url && (
+                                                    <a
+                                                      href={src.url}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      className={`px-1.5 py-0.5 rounded border text-[9px] font-bold shrink-0 flex items-center gap-0.5 ${
+                                                        isYt
+                                                          ? "bg-rose-950/40 text-rose-300 hover:text-white border-rose-700/50"
+                                                          : "bg-[#131519] text-[#D4AF5A] hover:text-white border-[rgba(212,175,90,0.3)]"
+                                                      }`}
+                                                    >
+                                                      <span>{isYt ? "Watch Video" : "Open Source"}</span>
+                                                      <ExternalLink className="h-2.5 w-2.5" />
+                                                    </a>
+                                                  )}
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {/* CONTRADICTING EVIDENCE */}
+                                      {contradictingIds.length > 0 && (
+                                        <div className="space-y-1">
+                                          <span className="text-[9px] text-rose-400 uppercase font-bold block">
+                                            Contradicting Evidence ({contradictingIds.length}):
+                                          </span>
+                                          <div className="space-y-1">
+                                            {contradictingIds.map((cid) => {
+                                              const src = sourceById.get(cid);
+                                              const isYt = src?.sourceType === "youtube" || src?.domain?.includes("youtube.com");
+                                              return (
+                                                <div
+                                                  key={cid}
+                                                  className="p-1.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)] flex items-center justify-between gap-1.5 text-[10px]"
+                                                >
+                                                  <div className="truncate flex items-center gap-1.5">
+                                                    {isYt ? (
+                                                      <span className="text-rose-400 font-bold flex items-center gap-0.5 shrink-0">
+                                                        <Play className="h-2.5 w-2.5 fill-rose-400" /> ▶ YouTube
+                                                      </span>
+                                                    ) : (
+                                                      <span className="text-[#D4AF5A] font-bold shrink-0">🌐 Web</span>
+                                                    )}
+                                                    <span className="text-[#D7DADF] truncate font-sans">
+                                                      {src?.title || cid}
+                                                    </span>
+                                                  </div>
+                                                  {src?.url && (
+                                                    <a
+                                                      href={src.url}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      className={`px-1.5 py-0.5 rounded border text-[9px] font-bold shrink-0 flex items-center gap-0.5 ${
+                                                        isYt
+                                                          ? "bg-rose-950/40 text-rose-300 hover:text-white border-rose-700/50"
+                                                          : "bg-[#131519] text-[#D4AF5A] hover:text-white border-[rgba(212,175,90,0.3)]"
+                                                      }`}
+                                                    >
+                                                      <span>{isYt ? "Watch Video" : "Open Source"}</span>
+                                                      <ExternalLink className="h-2.5 w-2.5" />
+                                                    </a>
+                                                  )}
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    /* Collapsed Quick Badges */
                                     <div className="flex flex-wrap gap-1">
-                                      {citedIds.map((cid) => {
+                                      {[...supportingIds, ...contradictingIds].map((cid) => {
                                         const src = sourceById.get(cid);
+                                        const isYt = src?.sourceType === "youtube" || src?.domain?.includes("youtube.com");
                                         return (
                                           <a
                                             key={cid}
                                             href={src?.url || "#"}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="px-1.5 py-0.5 rounded bg-[#050607] hover:bg-[#131519] border border-[rgba(212,175,90,0.25)] text-[10px] text-[#D4AF5A] hover:text-[#F5F7FA] inline-flex items-center gap-1"
+                                            className={`px-1.5 py-0.5 rounded border text-[10px] inline-flex items-center gap-1 ${
+                                              isYt
+                                                ? "bg-rose-950/30 text-rose-300 hover:text-white border-rose-700/50"
+                                                : "bg-[#050607] hover:bg-[#131519] text-[#D4AF5A] hover:text-[#F5F7FA] border-[rgba(212,175,90,0.25)]"
+                                            }`}
                                             title={src?.title || cid}
                                           >
+                                            {isYt && <Play className="h-2 w-2 fill-rose-400 text-rose-400" />}
                                             <span>{cid}</span>
                                             {src?.domain && <span className="text-[#8D949D]">({src.domain})</span>}
                                             <ExternalLink className="h-2.5 w-2.5" />
@@ -398,8 +567,8 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
                                         );
                                       })}
                                     </div>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </div>
                             );
                           })}

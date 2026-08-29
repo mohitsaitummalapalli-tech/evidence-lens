@@ -11,11 +11,12 @@ import {
   XCircle,
   MinusCircle,
   HelpCircle,
-  Video,
+  Play,
   BookOpen,
   Info,
   X,
   ShieldCheck,
+  Tv,
 } from "lucide-react";
 
 interface EvidenceCardProps {
@@ -109,7 +110,11 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ item }) => {
   const qualityTheme = QUALITY_BADGES[quality.tier] || QUALITY_BADGES.MEDIUM;
   const StanceIcon = stanceTheme.icon;
 
-  const isVideo = item.sourceType === "youtube" || item.domain.includes("youtube.com");
+  const isVideo =
+    item.sourceType === "youtube" ||
+    item.domain.toLowerCase().includes("youtube.com") ||
+    item.domain.toLowerCase().includes("youtu.be");
+
   const isAcademic = item.sourceType === "academic" || quality.category === "academic";
 
   const relevancePct = Math.round((item.relevanceScore ?? 0.8) * 100);
@@ -119,23 +124,26 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ item }) => {
       {/* Top Header: Source Type + Domain + Quality + Stance */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[rgba(212,175,90,0.18)]">
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Source Type Icon */}
-          <div className="p-1 rounded bg-[#131519] border border-[rgba(212,175,90,0.3)] text-[#D4AF5A]">
-            {isVideo ? (
-              <Video className="h-3.5 w-3.5" />
-            ) : isAcademic ? (
-              <BookOpen className="h-3.5 w-3.5" />
-            ) : (
-              <Globe className="h-3.5 w-3.5" />
-            )}
-          </div>
+          {/* Source Type Icon & Badge */}
+          {isVideo ? (
+            <span className="px-2 py-0.5 rounded bg-rose-950/40 border border-rose-700/50 text-rose-300 text-[10px] font-bold flex items-center gap-1.5 uppercase tracking-wider">
+              <Play className="h-3 w-3 fill-rose-400 text-rose-400" />
+              ▶ YOUTUBE
+            </span>
+          ) : isAcademic ? (
+            <span className="px-2 py-0.5 rounded bg-sky-950/40 border border-sky-700/50 text-sky-300 text-[10px] font-bold flex items-center gap-1.5 uppercase tracking-wider">
+              <BookOpen className="h-3 w-3 text-sky-400" />
+              ACADEMIC
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 rounded bg-[#131519] border border-[rgba(212,175,90,0.3)] text-[#D4AF5A] text-[10px] font-bold flex items-center gap-1.5 uppercase tracking-wider">
+              <Globe className="h-3 w-3" />
+              WEB
+            </span>
+          )}
 
           <span className="font-bold text-xs text-[#F5F7FA]">
             {item.domain}
-          </span>
-
-          <span className="text-[9px] px-1.5 py-0.2 rounded uppercase bg-[#131519] border border-[rgba(212,175,90,0.25)] text-[#D4AF5A]">
-            {item.sourceType || "web"}
           </span>
 
           {/* Quality Tier Pill */}
@@ -155,10 +163,18 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ item }) => {
         </span>
       </div>
 
-      {/* Title */}
+      {/* Video Title / Web Title */}
       <h3 className="text-xs sm:text-sm font-semibold text-[#F5F7FA] font-sans leading-snug line-clamp-2">
         {item.title}
       </h3>
+
+      {/* Channel or Creator for YouTube video evidence */}
+      {isVideo && item.channelOrAuthor && (
+        <div className="flex items-center gap-1.5 text-[11px] text-[#8D949D]">
+          <Tv className="h-3.5 w-3.5 text-rose-400" />
+          <span>Channel: <strong className="text-[#F5F7FA]">{item.channelOrAuthor}</strong></span>
+        </div>
+      )}
 
       {/* Snippet / Citation Excerpt */}
       {item.snippet && (
@@ -167,13 +183,13 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ item }) => {
         </p>
       )}
 
-      {/* Structured Source Provenance (Retrieved via Tavily • Analyzed by Gemini) */}
+      {/* Structured Source Provenance */}
       <SourceProvenanceBadge
         provenance={{
           url: item.url,
           domain: item.domain,
           sourceType: item.sourceType,
-          retrievalProvider: "Tavily",
+          retrievalProvider: isVideo ? "YouTube Discovery" : "Tavily",
           analysisProviders: ["Gemini"],
           modelName: "Gemini 2.5 Flash",
         }}
@@ -205,16 +221,30 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ item }) => {
             <span>Inspect</span>
           </button>
 
-          {/* External Link Action */}
+          {/* Video or Web Action Button */}
           {item.url && (
             <a
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#131519] hover:bg-[#181B20] text-[#D4AF5A] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.35)] transition-all font-semibold text-[11px]"
+              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded border transition-all font-semibold text-[11px] ${
+                isVideo
+                  ? "bg-rose-950/30 hover:bg-rose-900/40 text-rose-300 hover:text-white border-rose-700/50"
+                  : "bg-[#131519] hover:bg-[#181B20] text-[#D4AF5A] hover:text-[#F5F7FA] border-[rgba(212,175,90,0.35)]"
+              }`}
             >
-              <span>Open source</span>
-              <ExternalLink className="h-3 w-3" />
+              {isVideo ? (
+                <>
+                  <Play className="h-3 w-3 fill-rose-400 text-rose-400" />
+                  <span>WATCH VIDEO</span>
+                  <ExternalLink className="h-3 w-3" />
+                </>
+              ) : (
+                <>
+                  <span>Open source</span>
+                  <ExternalLink className="h-3 w-3" />
+                </>
+              )}
             </a>
           )}
         </div>
@@ -240,76 +270,71 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ item }) => {
               </button>
             </div>
 
-            <div className="space-y-2">
-              <span className="text-[10px] text-[#8D949D] uppercase tracking-wider font-bold">Citation Title</span>
-              <h4 className="text-sm font-bold text-[#F5F7FA] font-sans leading-snug">
-                {item.title}
-              </h4>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <div className="p-2.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)]">
-                <span className="text-[9px] text-[#8D949D] uppercase font-bold block">Domain</span>
-                <span className="font-bold text-[#D4AF5A]">{item.domain}</span>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[#8D949D]">Evidence ID:</span>
+                <span className="font-bold text-[#D4AF5A]">{item.id}</span>
               </div>
-              <div className="p-2.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)]">
-                <span className="text-[9px] text-[#8D949D] uppercase font-bold block">Source Stance</span>
+              <div className="flex items-center justify-between">
+                <span className="text-[#8D949D]">Source Type:</span>
+                <span className="text-[#F5F7FA] uppercase">{item.sourceType || "web"}</span>
+              </div>
+              {isVideo && item.channelOrAuthor && (
+                <div className="flex items-center justify-between">
+                  <span className="text-[#8D949D]">Channel / Creator:</span>
+                  <span className="text-[#F5F7FA] font-bold">{item.channelOrAuthor}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-[#8D949D]">Domain:</span>
+                <span className="text-[#F5F7FA]">{item.domain}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#8D949D]">Quality Tier:</span>
+                <span className={`font-bold ${qualityTheme.text}`}>{quality.tier}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#8D949D]">Evaluation Reason:</span>
+                <span className="text-[#D7DADF] text-right max-w-[280px]">{quality.reason}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[#8D949D]">Grounded Stance:</span>
                 <span className={`font-bold ${stanceTheme.text}`}>{stanceTheme.label}</span>
               </div>
-              <div className="p-2.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)]">
-                <span className="text-[9px] text-[#8D949D] uppercase font-bold block">Relevance Calibrated</span>
-                <span className="font-bold text-[#D7DADF]">{relevancePct}%</span>
-              </div>
-              <div className="p-2.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)]">
-                <span className="text-[9px] text-[#8D949D] uppercase font-bold block">Authority Tier</span>
-                <span className="font-bold text-[#D4AF5A]">{quality.tier} ({quality.category || "web"})</span>
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-[10px] text-[#8D949D] uppercase tracking-wider font-bold">Extracted Context Excerpt</span>
-              <p className="text-xs text-[#D7DADF] font-sans leading-relaxed bg-[#050607] p-3 rounded-lg border border-[rgba(212,175,90,0.18)]">
-                &ldquo;{item.snippet}&rdquo;
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-[10px] text-[#8D949D] uppercase tracking-wider font-bold">Canonical URL</span>
-              <p className="text-[11px] text-[#8D949D] font-mono break-all bg-[#050607] p-2 rounded border border-[rgba(212,175,90,0.15)]">
-                {item.url}
-              </p>
-            </div>
-
-            <SourceProvenanceBadge
-              provenance={{
-                url: item.url,
-                domain: item.domain,
-                sourceType: item.sourceType,
-                retrievalProvider: "Tavily",
-                analysisProviders: ["Gemini"],
-                modelName: "Gemini 2.5 Flash",
-              }}
-            />
-
-            <div className="pt-3 border-t border-[rgba(212,175,90,0.25)] flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setIsInspecting(false)}
-                className="px-3 py-1.5 rounded bg-[#050607] text-[#D7DADF] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.25)] text-xs"
-              >
-                Close Dossier
-              </button>
-              {item.url && (
+              {item.stanceExplanation && (
+                <div className="space-y-1 pt-1">
+                  <span className="text-[#8D949D]">Stance Rationale:</span>
+                  <p className="p-2 rounded bg-[#050607] border border-[rgba(212,175,90,0.15)] text-[#D7DADF] font-sans">
+                    {item.stanceExplanation}
+                  </p>
+                </div>
+              )}
+              <div className="pt-2 border-t border-[rgba(212,175,90,0.2)]">
+                <span className="text-[#8D949D] block mb-1">Source URL:</span>
                 <a
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-[#131519] hover:bg-[#181B20] text-[#D4AF5A] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.35)] text-xs font-semibold"
+                  className="text-[#D4AF5A] hover:underline break-all block"
                 >
-                  <span>Open Primary Source</span>
-                  <ExternalLink className="h-3 w-3" />
+                  {item.url}
                 </a>
-              )}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-[rgba(212,175,90,0.25)] flex justify-end">
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`px-4 py-1.5 rounded border font-semibold inline-flex items-center gap-1.5 text-xs ${
+                  isVideo
+                    ? "bg-rose-950/30 text-rose-300 hover:text-white border-rose-700/50"
+                    : "bg-[#050607] hover:bg-[#131519] text-[#D4AF5A] hover:text-[#F5F7FA] border-[rgba(212,175,90,0.35)]"
+                }`}
+              >
+                {isVideo ? <span>WATCH VIDEO ↗</span> : <span>OPEN PRIMARY SOURCE ↗</span>}
+              </a>
             </div>
           </div>
         </div>
