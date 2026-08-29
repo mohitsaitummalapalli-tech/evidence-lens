@@ -1,145 +1,103 @@
+"use client";
+
 import React from "react";
-import { AtomicClaim, AtomicClaimCategory, ClaimCheckability } from "@/types";
-import { 
-  MapPin, 
-  Tag, 
-  GitFork, 
-  Clock, 
-  Camera, 
-  User, 
-  Flame, 
-  HelpCircle 
-} from "lucide-react";
+import { AtomicClaim, ClaimCheckability } from "@/types";
+import { CheckCircle2, HelpCircle, Tag, Clock, MapPin } from "lucide-react";
 
 interface AtomicClaimCardProps {
   claim: AtomicClaim;
-  index?: number;
 }
 
-const CATEGORY_STYLES: Record<
-  AtomicClaimCategory,
-  { label: string; bg: string; text: string; border: string; icon: React.ComponentType<{ className?: string }> }
+const CHECKABILITY_THEMES: Record<
+  ClaimCheckability,
+  {
+    label: string;
+    badgeBg: string;
+    text: string;
+    border: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }
 > = {
-  event: {
-    label: "EVENT",
-    bg: "bg-[#161B21]",
-    text: "text-[#38BDF8]",
-    border: "border-[#2A3038]",
-    icon: Flame,
+  high: {
+    label: "HIGH CHECKABILITY",
+    badgeBg: "bg-[#0D0F12]",
+    text: "text-[#D4AF5A]",
+    border: "border-[rgba(212,175,90,0.4)]",
+    icon: CheckCircle2,
   },
-  time: {
-    label: "TEMPORAL",
-    bg: "bg-[#161B21]",
-    text: "text-[#5DADE2]",
-    border: "border-[#2A3038]",
-    icon: Clock,
+  medium: {
+    label: "PARTIAL CHECKABILITY",
+    badgeBg: "bg-[#0D0F12]",
+    text: "text-[#D7DADF]",
+    border: "border-[rgba(212,175,90,0.25)]",
+    icon: HelpCircle,
   },
-  location: {
-    label: "LOCATION",
-    bg: "bg-[#161B21]",
-    text: "text-emerald-400",
-    border: "border-[#2A3038]",
-    icon: MapPin,
-  },
-  identity: {
-    label: "IDENTITY / ENTITY",
-    bg: "bg-[#161B21]",
-    text: "text-[#D9DEE5]",
-    border: "border-[#2A3038]",
-    icon: User,
-  },
-  media_context: {
-    label: "MEDIA PROVENANCE",
-    bg: "bg-[#161B21]",
-    text: "text-[#38BDF8]",
-    border: "border-[#2A3038]",
-    icon: Camera,
-  },
-  causal: {
-    label: "CAUSAL LINK",
-    bg: "bg-[#161B21]",
-    text: "text-amber-400",
-    border: "border-[#2A3038]",
-    icon: GitFork,
-  },
-  other: {
-    label: "OTHER",
-    bg: "bg-[#161B21]",
-    text: "text-[#707984]",
-    border: "border-[#2A3038]",
+  low: {
+    label: "SUBJECTIVE / LOW",
+    badgeBg: "bg-[#0D0F12]",
+    text: "text-[#8D949D]",
+    border: "border-[rgba(212,175,90,0.2)]",
     icon: HelpCircle,
   },
 };
 
-const CHECKABILITY_BADGES: Record<
-  ClaimCheckability,
-  { label: string; class: string }
-> = {
-  high: {
-    label: "HIGH CHECKABILITY",
-    class: "bg-emerald-950/30 text-emerald-400 border-emerald-800/40",
-  },
-  medium: {
-    label: "MED CHECKABILITY",
-    class: "bg-[#161B21] text-[#A7AFB8] border-[#2A3038]",
-  },
-  low: {
-    label: "LOW CHECKABILITY",
-    class: "bg-[#161B21] text-[#707984] border-[#2A3038]",
-  },
-};
-
 export const AtomicClaimCard: React.FC<AtomicClaimCardProps> = ({ claim }) => {
-  const cat = CATEGORY_STYLES[claim.category] || CATEGORY_STYLES.other;
-  const CategoryIcon = cat.icon;
-  const checkBadge = CHECKABILITY_BADGES[claim.checkability] || CHECKABILITY_BADGES.medium;
+  const checkTheme =
+    CHECKABILITY_THEMES[claim.checkability] || CHECKABILITY_THEMES.high;
 
   return (
-    <div className="bg-[#080A0D] border border-[#2A3038] hover:border-[#343B45] rounded-lg p-4 space-y-3 transition-all">
-      {/* Card Header: Claim ID + Category Tag + Checkability */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[#2A3038]">
+    <div className="p-4 rounded-lg bg-[#050607] hover:bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] hover:border-[rgba(212,175,90,0.55)] transition-all space-y-3 font-mono">
+      {/* Header: ID + Category + Checkability */}
+      <div className="flex items-center justify-between pb-2 border-b border-[rgba(212,175,90,0.18)] text-xs">
         <div className="flex items-center gap-2">
-          <span className="h-5 px-2 rounded bg-[#161B21] border border-[#2A3038] text-[#F3F5F7] font-mono font-bold text-xs flex items-center justify-center">
+          <span className="h-5 px-1.5 rounded bg-[#131519] border border-[rgba(212,175,90,0.35)] text-[#D4AF5A] font-bold text-[10px] flex items-center justify-center">
             {claim.id}
           </span>
-          <span
-            className={`text-[10px] font-mono font-semibold px-2 py-0.5 rounded flex items-center gap-1 border ${cat.bg} ${cat.text} ${cat.border}`}
-          >
-            <CategoryIcon className="h-3 w-3" />
-            {cat.label}
+          <span className="text-[10px] text-[#8D949D] uppercase">
+            {claim.category}
           </span>
         </div>
 
         <span
-          className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded border ${checkBadge.class}`}
+          className={`text-[9px] px-2 py-0.5 rounded border font-semibold uppercase ${checkTheme.badgeBg} ${checkTheme.text} ${checkTheme.border}`}
         >
-          {checkBadge.label}
+          {checkTheme.label}
         </span>
       </div>
 
-      {/* Main Assertion Text */}
-      <p className="text-xs sm:text-sm font-medium text-[#F3F5F7] leading-relaxed font-sans">
+      {/* Claim Text */}
+      <p className="text-xs sm:text-sm font-semibold text-[#F5F7FA] font-sans leading-snug">
         &ldquo;{claim.text}&rdquo;
       </p>
 
-      {/* Metadata Attributes (Entities, Time, Location, Dependencies) */}
-      <div className="space-y-2 pt-1 border-t border-[#2A3038] text-xs text-[#707984] font-mono">
-        {/* Entities */}
+      {/* Entities & Temporal/Location Reference */}
+      <div className="pt-2 border-t border-[rgba(212,175,90,0.15)] flex flex-wrap items-center justify-between gap-2 text-[10px] text-[#8D949D]">
         {claim.entities && claim.entities.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] text-[#707984] flex items-center gap-1">
-              <Tag className="h-3 w-3 text-[#B8C0C9]" />
-              ENTITIES:
-            </span>
-            {claim.entities.map((entity, idx) => (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Tag className="h-3 w-3 text-[#D4AF5A]" />
+            {claim.entities.map((ent, i) => (
               <span
-                key={idx}
-                className="px-1.5 py-0.5 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5] text-[10px]"
+                key={i}
+                className="px-1.5 py-0.2 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.2)] text-[#D7DADF]"
               >
-                {entity}
+                {ent}
               </span>
             ))}
           </div>
+        )}
+
+        {claim.timeReference && (
+          <span className="text-[#D4AF5A] flex items-center gap-1">
+            <Clock className="h-2.5 w-2.5" />
+            {claim.timeReference}
+          </span>
+        )}
+
+        {claim.locationReference && (
+          <span className="text-[#D7DADF] flex items-center gap-1">
+            <MapPin className="h-2.5 w-2.5 text-[#D4AF5A]" />
+            {claim.locationReference}
+          </span>
         )}
       </div>
     </div>

@@ -68,9 +68,9 @@ const VERDICT_BADGE_STYLES: Record<
   },
   UNVERIFIED: {
     label: "UNVERIFIED",
-    bg: "bg-[#161B21]",
-    text: "text-[#707984]",
-    border: "border-[#2A3038]",
+    bg: "bg-[#131519]",
+    text: "text-[#D7DADF]",
+    border: "border-[rgba(212,175,90,0.3)]",
     icon: HelpCircle,
   },
 };
@@ -165,24 +165,24 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
   return (
     <div
       id="investigation-history-panel"
-      className="bg-[#11151A] border border-[#2A3038] rounded-lg p-5 sm:p-6 space-y-6"
+      className="p-5 sm:p-6 space-y-6 font-mono"
     >
       {/* Top Banner & Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-[#2A3038] gap-4 font-mono">
+      <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-[rgba(212,175,90,0.2)] gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5]">
+          <div className="p-2.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.35)] text-[#D4AF5A]">
             <History className="h-4 w-4" />
           </div>
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">
-              <h3 className="text-xs font-bold text-[#F3F5F7] tracking-wider uppercase">
+              <h3 className="text-xs font-bold text-[#F5F7FA] tracking-wider uppercase">
                 Investigation History
               </h3>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-[#161B21] text-[#D9DEE5] border border-[#2A3038] font-semibold">
+              <span className="text-[10px] px-2 py-0.5 rounded bg-[#050607] text-[#D4AF5A] border border-[rgba(212,175,90,0.3)] font-semibold">
                 {history.length} {history.length === 1 ? "RECORD" : "RECORDS"}
               </span>
             </div>
-            <p className="text-xs text-[#A7AFB8] font-sans mt-0.5">
+            <p className="text-xs text-[#8D949D] font-sans mt-0.5">
               Client-side audit records • Cross-investigation comparison
             </p>
           </div>
@@ -194,7 +194,7 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
             <button
               type="button"
               onClick={handleLaunchCompare}
-              className="px-3.5 py-1.5 rounded bg-[#1B2027] text-white border border-[#D9DEE5] font-mono text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+              className="px-3.5 py-1.5 rounded-lg gold-button-primary text-xs font-bold flex items-center gap-1.5 shadow-sm"
             >
               <ArrowRightLeft className="h-3.5 w-3.5" />
               <span>COMPARE (2/2)</span>
@@ -205,7 +205,7 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
             <button
               type="button"
               onClick={() => setShowClearConfirm(true)}
-              className="px-2.5 py-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#707984] hover:text-rose-300 border border-[#2A3038] text-xs font-mono flex items-center gap-1 transition-colors"
+              className="px-2.5 py-1.5 rounded bg-[#050607] hover:bg-[#131519] text-[#8D949D] hover:text-rose-400 border border-[rgba(212,175,90,0.2)] text-xs flex items-center gap-1 transition-colors"
               title="Clear all stored history"
             >
               <Trash2 className="h-3 w-3" />
@@ -214,7 +214,7 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
           )}
 
           {showClearConfirm && (
-            <div className="flex items-center gap-1.5 bg-[#161B21] border border-rose-800/50 p-1 rounded font-mono">
+            <div className="flex items-center gap-1.5 bg-[#050607] border border-rose-800/50 p-1 rounded">
               <span className="text-[10px] text-rose-300 px-1">CLEAR ALL?</span>
               <button
                 type="button"
@@ -226,7 +226,7 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
               <button
                 type="button"
                 onClick={() => setShowClearConfirm(false)}
-                className="px-2 py-0.5 bg-[#1B2027] text-[#A7AFB8] hover:text-white rounded text-[10px]"
+                className="px-2 py-0.5 bg-[#131519] text-[#D7DADF] hover:text-white rounded text-[10px]"
               >
                 NO
               </button>
@@ -237,23 +237,23 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
 
       {/* Filter & Search Bar */}
       {history.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#080A0D] p-3 rounded-lg border border-[#2A3038] font-mono">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-[#050607] p-3 rounded-lg border border-[rgba(212,175,90,0.2)]">
           {/* Search Input */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[#707984]" />
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[#8D949D]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search claims, domains, or IDs..."
-              className="w-full bg-[#161B21] border border-[#2A3038] focus:border-[#D9DEE5] rounded pl-9 pr-3 py-1.5 text-xs text-[#F3F5F7] placeholder:text-[#707984] focus:outline-none transition-colors font-sans"
+              className="w-full bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] focus:border-[#D4AF5A] rounded pl-9 pr-3 py-1.5 text-xs text-[#F5F7FA] placeholder:text-[#8D949D] focus:outline-none transition-colors font-sans"
             />
           </div>
 
           {/* Verdict Filter Pills */}
           <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
-            <span className="text-[10px] text-[#707984] uppercase flex items-center gap-1 mr-1">
-              <Filter className="h-3 w-3" />
+            <span className="text-[10px] text-[#8D949D] uppercase flex items-center gap-1 mr-1">
+              <Filter className="h-3 w-3 text-[#D4AF5A]" />
             </span>
             {VERDICT_FILTERS.map((filter) => {
               const isSelected = verdictFilter === filter;
@@ -264,8 +264,8 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
                   onClick={() => setVerdictFilter(filter)}
                   className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-colors whitespace-nowrap ${
                     isSelected
-                      ? "bg-[#1B2027] text-white border border-[#D9DEE5]"
-                      : "bg-[#161B21] text-[#707984] hover:text-[#A7AFB8] border border-[#2A3038]"
+                      ? "bg-[#131519] text-[#D4AF5A] border border-[rgba(212,175,90,0.45)]"
+                      : "bg-[#0D0F12] text-[#8D949D] hover:text-[#D7DADF] border border-[rgba(212,175,90,0.2)]"
                   }`}
                 >
                   {filter}
@@ -276,13 +276,13 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
 
           {/* Sort Selector */}
           <div className="flex items-center gap-1.5 self-end sm:self-auto">
-            <span className="text-[10px] text-[#707984] uppercase flex items-center gap-1">
+            <span className="text-[10px] text-[#8D949D] uppercase flex items-center gap-1">
               <ArrowUpDown className="h-3 w-3" />
             </span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as HistorySortOption)}
-              className="bg-[#161B21] border border-[#2A3038] text-[#A7AFB8] text-xs rounded px-2.5 py-1.5 focus:outline-none focus:border-[#D9DEE5]"
+              className="bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] text-[#D7DADF] text-xs rounded px-2.5 py-1.5 focus:outline-none focus:border-[#D4AF5A]"
             >
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
@@ -295,9 +295,9 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
 
       {/* Comparison Selection Hint Banner */}
       {selectedForCompare.length > 0 && (
-        <div className="p-3 rounded-lg bg-[#080A0D] border border-[#343B45] flex items-center justify-between text-xs font-mono">
-          <div className="flex items-center gap-2 text-[#D9DEE5]">
-            <ArrowRightLeft className="h-4 w-4 text-[#38BDF8]" />
+        <div className="p-3 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.35)] flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-[#F5F7FA]">
+            <ArrowRightLeft className="h-4 w-4 text-[#D4AF5A]" />
             <span>
               {selectedForCompare.length === 1
                 ? "1 of 2 investigations selected for comparison. Select another to compare."
@@ -308,23 +308,23 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
           <button
             type="button"
             onClick={() => setSelectedForCompare([])}
-            className="text-[11px] text-[#707984] hover:text-white underline"
+            className="text-[11px] text-[#8D949D] hover:text-white underline"
           >
             Clear selection
           </button>
         </div>
       )}
 
-      {/* History Records List / Grid */}
+      {/* History Records List */}
       {history.length === 0 ? (
-        <div className="py-10 text-center bg-[#080A0D] border border-[#2A3038] rounded-lg space-y-2 font-mono">
-          <History className="h-6 w-6 text-[#707984] mx-auto" />
-          <p className="text-xs text-[#A7AFB8]">
+        <div className="py-10 text-center bg-[#050607] border border-[rgba(212,175,90,0.2)] rounded-lg space-y-2">
+          <History className="h-6 w-6 text-[#8D949D] mx-auto" />
+          <p className="text-xs text-[#D7DADF]">
             No investigation sessions stored yet.
           </p>
         </div>
       ) : filteredHistory.length === 0 ? (
-        <div className="py-8 text-center bg-[#080A0D] border border-[#2A3038] rounded-lg text-xs font-mono text-[#707984]">
+        <div className="py-8 text-center bg-[#050607] border border-[rgba(212,175,90,0.2)] rounded-lg text-xs text-[#8D949D]">
           No history records match the current filter or search criteria.
         </div>
       ) : (
@@ -340,18 +340,17 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
                 onClick={() => onOpenInvestigation(item)}
                 className={`p-4 rounded-lg border transition-all cursor-pointer select-none space-y-3 relative group ${
                   isSelectedForCompare
-                    ? "bg-[#161B21] border-[#D9DEE5]"
-                    : "bg-[#080A0D] hover:bg-[#161B21] border-[#2A3038] hover:border-[#343B45]"
+                    ? "bg-[#0D0F12] border-[#D4AF5A]"
+                    : "bg-[#050607] hover:bg-[#0D0F12] border-[rgba(212,175,90,0.25)] hover:border-[rgba(212,175,90,0.55)]"
                 }`}
               >
                 {/* Card Header: Timestamp + Compare Checkbox + Verdict Pill */}
-                <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#2A3038] font-mono">
+                <div className="flex items-center justify-between gap-2 pb-2 border-b border-[rgba(212,175,90,0.18)]">
                   <div className="flex items-center gap-2">
-                    {/* Compare Selection Checkbox */}
                     <button
                       type="button"
                       onClick={(e) => toggleCompareSelect(item.id, e)}
-                      className="p-1 text-[#707984] hover:text-[#F3F5F7] transition-colors"
+                      className="p-1 text-[#8D949D] hover:text-[#F5F7FA] transition-colors"
                       title={
                         isSelectedForCompare
                           ? "Deselect from comparison"
@@ -359,13 +358,13 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
                       }
                     >
                       {isSelectedForCompare ? (
-                        <CheckSquare className="h-4 w-4 text-[#38BDF8]" />
+                        <CheckSquare className="h-4 w-4 text-[#D4AF5A]" />
                       ) : (
                         <Square className="h-4 w-4" />
                       )}
                     </button>
 
-                    <span className="text-[11px] text-[#707984]">
+                    <span className="text-[11px] text-[#8D949D]">
                       {new Date(item.timestamp).toLocaleDateString()}{" "}
                       {new Date(item.timestamp).toLocaleTimeString([], {
                         hour: "2-digit",
@@ -385,7 +384,7 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
                     <button
                       type="button"
                       onClick={(e) => handleDeleteItem(item.id, e)}
-                      className="p-1 text-[#707984] hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-1 text-[#8D949D] hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity"
                       title="Delete record"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -394,19 +393,19 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
                 </div>
 
                 {/* Target Claim Text */}
-                <p className="text-xs sm:text-sm font-semibold text-[#F3F5F7] line-clamp-2 leading-snug font-sans">
+                <p className="text-xs sm:text-sm font-semibold text-[#F5F7FA] line-clamp-2 leading-snug font-sans">
                   &ldquo;{item.targetClaim}&rdquo;
                 </p>
 
                 {/* Metrics Grid Footer */}
-                <div className="pt-2 border-t border-[#2A3038] flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-[#707984]">
+                <div className="pt-2 border-t border-[rgba(212,175,90,0.15)] flex flex-wrap items-center justify-between gap-2 text-[10px] text-[#8D949D]">
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
-                      <Layers className="h-3 w-3 text-[#B8C0C9]" />
+                      <Layers className="h-3 w-3 text-[#D4AF5A]" />
                       {item.atomicClaimCount} Claims
                     </span>
                     <span className="flex items-center gap-1">
-                      <Database className="h-3 w-3 text-[#B8C0C9]" />
+                      <Database className="h-3 w-3 text-[#D4AF5A]" />
                       {item.evidenceCount} Sources
                     </span>
                     {item.hasMedia && (
@@ -417,7 +416,7 @@ export const InvestigationHistory: React.FC<InvestigationHistoryProps> = ({
                     )}
                   </div>
 
-                  <div className="flex items-center gap-1 text-[#D9DEE5]">
+                  <div className="flex items-center gap-1 text-[#D4AF5A]">
                     <span>Open ↗</span>
                     <ExternalLink className="h-2.5 w-2.5" />
                   </div>

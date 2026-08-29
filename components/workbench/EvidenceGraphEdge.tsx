@@ -1,116 +1,55 @@
 "use client";
 
 import React from "react";
-import { EvidenceStance } from "@/types";
 
 export interface GraphEdgeData {
   id: string;
-  fromId: string;
-  toId: string;
-  startX: number;
-  startY: number;
-  endX: number;
-  endY: number;
-  pathD: string;
-  stance?: EvidenceStance;
-  type: "root_to_claim" | "claim_to_evidence" | "image_to_provenance";
+  sourceId: string;
+  targetId: string;
+  type: "hierarchy" | "supports" | "contradicts" | "insufficient" | "provenance";
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+  isActive?: boolean;
 }
 
 interface EvidenceGraphEdgeProps {
   edge: GraphEdgeData;
-  isHighlighted?: boolean;
-  isDimmed?: boolean;
 }
 
-const STANCE_EDGE_COLORS: Record<
-  EvidenceStance,
-  { stroke: string; glow: string }
-> = {
-  SUPPORTS: {
-    stroke: "#10B981", // emerald
-    glow: "rgba(16, 185, 129, 0.2)",
-  },
-  CONTRADICTS: {
-    stroke: "#F43F5E", // rose
-    glow: "rgba(244, 63, 94, 0.2)",
-  },
-  MIXED: {
-    stroke: "#F59E0B", // amber
-    glow: "rgba(245, 158, 11, 0.2)",
-  },
-  INSUFFICIENT: {
-    stroke: "#707984", // neutral slate
-    glow: "rgba(112, 121, 132, 0.15)",
-  },
-  NEUTRAL: {
-    stroke: "#A7AFB8", // secondary slate
-    glow: "rgba(167, 175, 184, 0.15)",
-  },
-  UNCERTAIN: {
-    stroke: "#707984",
-    glow: "rgba(112, 121, 132, 0.15)",
-  },
+const EDGE_COLORS = {
+  hierarchy: "#D4AF5A", // Gold root connection
+  supports: "#10B981",  // Emerald
+  contradicts: "#F43F5E", // Rose
+  insufficient: "#8D949D", // Slate
+  provenance: "#38BDF8", // Cyan
 };
 
-const ROOT_EDGE_COLOR = {
-  stroke: "#D9DEE5",
-  glow: "rgba(217, 222, 229, 0.2)",
-};
+export const EvidenceGraphEdge: React.FC<EvidenceGraphEdgeProps> = ({ edge }) => {
+  const color = EDGE_COLORS[edge.type] || EDGE_COLORS.hierarchy;
+  const strokeDash = edge.type === "insufficient" || edge.type === "provenance" ? "4 4" : "none";
+  const strokeWidth = edge.type === "hierarchy" ? 2 : 1.5;
 
-const IMAGE_PROVENANCE_EDGE_COLOR = {
-  stroke: "#38BDF8",
-  glow: "rgba(56, 189, 248, 0.2)",
-};
+  // Compute bezier control points for smooth investigative flow
+  const dx = edge.toX - edge.fromX;
+  const cx1 = edge.fromX + dx * 0.5;
+  const cy1 = edge.fromY;
+  const cx2 = edge.fromX + dx * 0.5;
+  const cy2 = edge.toY;
 
-export const EvidenceGraphEdge: React.FC<EvidenceGraphEdgeProps> = ({
-  edge,
-  isHighlighted = false,
-  isDimmed = false,
-}) => {
-  const isRootEdge = edge.type === "root_to_claim";
-  const isProvenanceEdge = edge.type === "image_to_provenance";
-
-  const colorConfig = isRootEdge
-    ? ROOT_EDGE_COLOR
-    : isProvenanceEdge
-    ? IMAGE_PROVENANCE_EDGE_COLOR
-    : STANCE_EDGE_COLORS[edge.stance || "UNCERTAIN"] || STANCE_EDGE_COLORS.UNCERTAIN;
-
-  const baseStrokeWidth = isHighlighted ? 2.5 : 1.5;
-  const opacity = isDimmed ? "opacity-15" : isHighlighted ? "opacity-100" : "opacity-60";
+  const pathD = `M ${edge.fromX} ${edge.fromY} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${edge.toX} ${edge.toY}`;
 
   return (
-    <g className={`transition-opacity duration-300 ${opacity}`}>
-      {/* Subtle Shadow/Glow Line */}
-      {isHighlighted && (
-        <path
-          d={edge.pathD}
-          fill="none"
-          stroke={colorConfig.glow}
-          strokeWidth={6}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      )}
-
-      {/* Main Vector Path */}
+    <g className="evidence-edge">
       <path
-        id={`edge-path-${edge.id}`}
-        d={edge.pathD}
+        d={pathD}
         fill="none"
-        stroke={colorConfig.stroke}
-        strokeWidth={baseStrokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-
-      {/* Edge Direction Arrow Marker / Terminal Dot */}
-      <circle
-        cx={edge.endX}
-        cy={edge.endY}
-        r={isHighlighted ? 3.5 : 2.5}
-        fill={colorConfig.stroke}
-        className="transition-all duration-200"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeDasharray={strokeDash}
+        strokeOpacity={0.65}
+        className="transition-all duration-300"
       />
     </g>
   );

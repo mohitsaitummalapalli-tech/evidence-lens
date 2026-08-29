@@ -210,17 +210,17 @@ export const EvidenceLensWorkbench: React.FC = () => {
           </DepthCard>
         )}
 
-        {/* Progressive Disclosure Section Navigation (Visible once results are ready) */}
+        {/* Progressive Disclosure Section Navigation */}
         {uiState === "INPUT_RECEIVED" && apiResponse && (
-          <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-[#11151A] border border-[#2A3038] shadow-sm font-mono">
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] shadow-sm font-mono">
             <div className="flex flex-wrap items-center gap-1.5 text-xs">
               <button
                 type="button"
                 onClick={() => setActiveViewTab("ALL")}
                 className={`px-3 py-1.5 rounded transition-all ${
                   activeViewTab === "ALL"
-                    ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
-                    : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
+                    ? "bg-[#131519] text-[#D4AF5A] border border-[rgba(212,175,90,0.5)] font-bold shadow-sm"
+                    : "text-[#D7DADF] hover:text-[#F5F7FA] hover:bg-[#131519]"
                 }`}
               >
                 All Sections
@@ -230,8 +230,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
                 onClick={() => setActiveViewTab("WHY_RESULT")}
                 className={`px-3 py-1.5 rounded transition-all ${
                   activeViewTab === "WHY_RESULT"
-                    ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
-                    : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
+                    ? "bg-[#131519] text-[#D4AF5A] border border-[rgba(212,175,90,0.5)] font-bold shadow-sm"
+                    : "text-[#D7DADF] hover:text-[#F5F7FA] hover:bg-[#131519]"
                 }`}
               >
                 Audit Breakdown
@@ -241,8 +241,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
                 onClick={() => setActiveViewTab("SOURCES")}
                 className={`px-3 py-1.5 rounded transition-all ${
                   activeViewTab === "SOURCES"
-                    ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
-                    : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
+                    ? "bg-[#131519] text-[#D4AF5A] border border-[rgba(212,175,90,0.5)] font-bold shadow-sm"
+                    : "text-[#D7DADF] hover:text-[#F5F7FA] hover:bg-[#131519]"
                 }`}
               >
                 Sources ({apiResponse.evidence?.totalSourcesFound || 0})
@@ -253,8 +253,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
                   onClick={() => setActiveViewTab("MEDIA")}
                   className={`px-3 py-1.5 rounded transition-all ${
                     activeViewTab === "MEDIA"
-                      ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
-                      : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
+                      ? "bg-[#131519] text-[#D4AF5A] border border-[rgba(212,175,90,0.5)] font-bold shadow-sm"
+                      : "text-[#D7DADF] hover:text-[#F5F7FA] hover:bg-[#131519]"
                   }`}
                 >
                   Media Matches ({apiResponse.imageProvenance.totalCandidatesFound})
@@ -266,8 +266,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
                   onClick={() => setActiveViewTab("CONSENSUS")}
                   className={`px-3 py-1.5 rounded transition-all ${
                     activeViewTab === "CONSENSUS"
-                      ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
-                      : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
+                      ? "bg-[#131519] text-[#D4AF5A] border border-[rgba(212,175,90,0.5)] font-bold shadow-sm"
+                      : "text-[#D7DADF] hover:text-[#F5F7FA] hover:bg-[#131519]"
                   }`}
                 >
                   AI Jury ({apiResponse.consensus.overallAgreementRate}%)
@@ -278,8 +278,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
                 onClick={() => setActiveViewTab("MAP")}
                 className={`px-3 py-1.5 rounded transition-all ${
                   activeViewTab === "MAP"
-                    ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
-                    : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
+                    ? "bg-[#131519] text-[#D4AF5A] border border-[rgba(212,175,90,0.5)] font-bold shadow-sm"
+                    : "text-[#D7DADF] hover:text-[#F5F7FA] hover:bg-[#131519]"
                 }`}
               >
                 Evidence Map
@@ -289,14 +289,14 @@ export const EvidenceLensWorkbench: React.FC = () => {
                 onClick={() => setActiveViewTab("TIMELINE")}
                 className={`px-3 py-1.5 rounded transition-all ${
                   activeViewTab === "TIMELINE"
-                    ? "bg-[#1B2027] text-white border border-[#D9DEE5] font-semibold"
-                    : "text-[#707984] hover:text-[#F3F5F7] hover:bg-[#161B21]"
+                    ? "bg-[#131519] text-[#D4AF5A] border border-[rgba(212,175,90,0.5)] font-bold shadow-sm"
+                    : "text-[#D7DADF] hover:text-[#F5F7FA] hover:bg-[#131519]"
                 }`}
               >
                 Audit Trail
               </button>
             </div>
-            <span className="text-[11px] text-[#707984] pr-2 hidden sm:inline">
+            <span className="text-[11px] text-[#8D949D] pr-2 hidden sm:inline">
               Progressive Workbench View
             </span>
           </div>

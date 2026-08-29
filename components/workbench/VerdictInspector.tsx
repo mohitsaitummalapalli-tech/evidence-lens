@@ -1,115 +1,41 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import {
   InvestigationVerificationResult,
   EvidenceRetrievalResult,
   ClaimVerdictType,
-  VerificationConfidence,
-  EvidenceItem,
 } from "@/types";
 import {
-  HelpCircle,
+  X,
+  ExternalLink,
   CheckCircle2,
   XCircle,
-  MinusCircle,
-  ExternalLink,
-  X,
   Network,
-  Scale,
-  Sparkles,
-  Layers,
-  Globe,
-  Info,
 } from "lucide-react";
 
-export interface VerdictInspectorProps {
+interface VerdictInspectorProps {
   claimId: string | null;
-  verification?: InvestigationVerificationResult;
-  evidence?: EvidenceRetrievalResult;
+  verification?: InvestigationVerificationResult | null;
+  evidence?: EvidenceRetrievalResult | null;
   onClose: () => void;
   onViewInGraph?: (claimId: string) => void;
 }
 
 export function getDeterministicResolutionDescription(
-  verdict: ClaimVerdictType
+  verdict: ClaimVerdictType | string
 ): string {
-  switch (verdict) {
-    case "TRUE":
-      return "Supporting evidence was found and no material contradiction was recorded.";
-    case "FALSE":
-      return "Contradicting evidence was found and supporting evidence was insufficient to overturn the contradiction.";
-    case "MIXED":
-      return "Both supporting and contradicting evidence were recorded.";
-    case "UNVERIFIED":
-    default:
-      return "No sufficient evidence was available to resolve the claim.";
+  if (verdict === "TRUE" || verdict === "VERIFIED") {
+    return "Supporting evidence was found and no material contradiction was recorded.";
   }
+  if (verdict === "FALSE") {
+    return "Contradicting evidence was found and supporting evidence was insufficient to overturn the contradiction.";
+  }
+  if (verdict === "MIXED") {
+    return "Both supporting and contradicting evidence were recorded.";
+  }
+  return "No sufficient evidence was available to resolve the claim.";
 }
-
-const VERDICT_STYLES: Record<
-  ClaimVerdictType,
-  {
-    label: string;
-    bg: string;
-    border: string;
-    text: string;
-    icon: React.ComponentType<{ className?: string }>;
-  }
-> = {
-  TRUE: {
-    label: "TRUE",
-    bg: "bg-emerald-950/40",
-    border: "border-emerald-700/50",
-    text: "text-emerald-300",
-    icon: CheckCircle2,
-  },
-  FALSE: {
-    label: "FALSE",
-    bg: "bg-rose-950/40",
-    border: "border-rose-700/50",
-    text: "text-rose-300",
-    icon: XCircle,
-  },
-  MIXED: {
-    label: "MIXED",
-    bg: "bg-amber-950/40",
-    border: "border-amber-700/50",
-    text: "text-amber-300",
-    icon: MinusCircle,
-  },
-  UNVERIFIED: {
-    label: "UNVERIFIED",
-    bg: "bg-[#161B21]",
-    border: "border-[#2A3038]",
-    text: "text-[#707984]",
-    icon: HelpCircle,
-  },
-};
-
-const CONFIDENCE_STYLES: Record<
-  VerificationConfidence,
-  { label: string; text: string; bg: string; border: string }
-> = {
-  HIGH: {
-    label: "HIGH CONFIDENCE",
-    text: "text-emerald-400",
-    bg: "bg-emerald-950/30",
-    border: "border-emerald-700/40",
-  },
-  MEDIUM: {
-    label: "MEDIUM CONFIDENCE",
-    text: "text-[#D9DEE5]",
-    bg: "bg-[#161B21]",
-    border: "border-[#343B45]",
-  },
-  LOW: {
-    label: "LOW CONFIDENCE",
-    text: "text-amber-400",
-    bg: "bg-amber-950/30",
-    border: "border-amber-700/40",
-  },
-};
 
 export const VerdictInspector: React.FC<VerdictInspectorProps> = ({
   claimId,
@@ -118,352 +44,191 @@ export const VerdictInspector: React.FC<VerdictInspectorProps> = ({
   onClose,
   onViewInGraph,
 }) => {
-  // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  if (!claimId || !verification) return null;
 
-  if (!claimId || !verification) {
-    return null;
-  }
-
-  const claimVer = verification.claimVerifications.find((c) => c.claimId === claimId);
-
-  if (!claimVer) {
-    return null;
-  }
-
-  const verdictStyle = VERDICT_STYLES[claimVer.verdict] || VERDICT_STYLES.UNVERIFIED;
-  const VerdictIcon = verdictStyle.icon;
-  const confidenceStyle = CONFIDENCE_STYLES[claimVer.confidence] || CONFIDENCE_STYLES.LOW;
-
-  // Retrieve evidence items for this specific claim
-  const claimSources: EvidenceItem[] = (evidence?.allSources || []).filter(
-    (src) => src.claimId === claimId
+  const claimVer = verification.claimVerifications?.find(
+    (c) => c.claimId === claimId
   );
 
-  const supportingSources = claimSources.filter((src) => src.stance === "SUPPORTS");
-  const contradictingSources = claimSources.filter((src) => src.stance === "CONTRADICTS");
-  const otherSources = claimSources.filter(
-    (src) => src.stance !== "SUPPORTS" && src.stance !== "CONTRADICTS"
+  const supportingSources = (evidence?.allSources || []).filter(
+    (s) => claimVer?.supportingEvidenceIds?.includes(s.id)
   );
 
-  const deterministicDescription = getDeterministicResolutionDescription(
-    claimVer.verdict
+  const contradictingSources = (evidence?.allSources || []).filter(
+    (s) => claimVer?.contradictingEvidenceIds?.includes(s.id)
   );
+
+  const verdict = claimVer?.verdict || "UNVERIFIED";
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      {/* Click outside to dismiss backdrop */}
-      <div className="flex-1 hidden md:block cursor-pointer" onClick={onClose} />
-
-      {/* Verdict Inspector Console Drawer */}
-      <aside
-        aria-label="Verdict Analysis Inspector"
-        className="w-full md:max-w-xl h-full bg-[#0B0E12] border-l border-[#2A3038] shadow-2xl flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-300 relative z-10 font-sans will-change-transform"
+    <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div
+        className="w-full max-w-lg h-full bg-[#08090B] border-l border-[rgba(212,175,90,0.3)] p-6 flex flex-col justify-between shadow-2xl overflow-y-auto space-y-6 font-mono text-xs"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Verdict Inspector"
       >
         {/* Drawer Header */}
-        <div className="p-5 border-b border-[#2A3038] bg-[#11151A]/95 sticky top-0 z-20 backdrop-blur-md flex items-center justify-between gap-3 font-mono">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5]">
-              <Scale className="h-4 w-4" />
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[rgba(212,175,90,0.2)]">
+            <div className="flex items-center gap-2">
+              <span className="h-6 px-2 rounded bg-[#131519] border border-[rgba(212,175,90,0.4)] text-[#D4AF5A] font-bold flex items-center justify-center">
+                {claimId}
+              </span>
+              <h3 className="font-bold text-sm text-[#F5F7FA] uppercase tracking-wider">
+                Verdict Inspector Audit
+              </h3>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-xs font-bold text-[#F3F5F7] tracking-wider uppercase">
-                  Audit Inspector
-                </h3>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-[#161B21] text-[#F3F5F7] border border-[#2A3038] font-semibold">
-                  {claimVer.claimId}
-                </span>
-              </div>
-              <p className="text-[11px] text-[#707984] mt-0.5">
-                Deterministic claim synthesis & source citations
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {onViewInGraph && (
-              <button
-                type="button"
-                onClick={() => {
-                  onViewInGraph(claimVer.claimId);
-                  onClose();
-                }}
-                className="px-2.5 py-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#D9DEE5] hover:text-white border border-[#343B45] text-xs flex items-center gap-1.5 transition-colors"
-                title="View claim in Evidence Map"
-              >
-                <Network className="h-3.5 w-3.5 text-[#38BDF8]" />
-                <span className="hidden sm:inline">View Map</span>
-              </button>
-            )}
 
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#A7AFB8] hover:text-[#F3F5F7] border border-[#2A3038] transition-colors"
-              title="Close Inspector"
+              className="p-1.5 rounded bg-[#131519] hover:bg-[#181B20] text-[#8D949D] hover:text-white border border-[rgba(212,175,90,0.2)] transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
-        </div>
 
-        {/* Drawer Body */}
-        <div className="p-5 space-y-5 flex-1 text-xs">
-          {/* 1. Claim & Status Hero Card */}
-          <div className="p-4 rounded-lg bg-[#11151A] border border-[#2A3038] space-y-3">
-            <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#2A3038]">
-              <span className="text-[11px] font-mono font-bold text-[#F3F5F7]">
-                CLAIM {claimVer.claimId}
+          {/* Resolution Statement */}
+          <div className="p-3.5 rounded-lg bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[#D4AF5A] uppercase font-bold">
+                Deterministic Resolution
               </span>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase border flex items-center gap-1 ${verdictStyle.bg} ${verdictStyle.border} ${verdictStyle.text}`}
-                >
-                  <VerdictIcon className="h-3 w-3" />
-                  {claimVer.verdict}
-                </span>
-                <span
-                  className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold border ${confidenceStyle.bg} ${confidenceStyle.border} ${confidenceStyle.text}`}
-                >
-                  {confidenceStyle.label}
-                </span>
-              </div>
+              <span className="font-bold text-xs text-[#F5F7FA] px-2 py-0.2 rounded bg-[#050607] border border-[rgba(212,175,90,0.3)]">
+                {verdict}
+              </span>
             </div>
 
-            <p className="text-sm font-semibold text-[#F3F5F7] leading-relaxed">
-              &ldquo;{claimVer.claimText}&rdquo;
+            <p className="text-xs text-[#D7DADF] font-sans leading-relaxed">
+              {getDeterministicResolutionDescription(verdict)}
             </p>
           </div>
 
-          {/* 2. Evidence Resolution Metrics */}
-          <div className="space-y-2">
-            <h4 className="text-[11px] font-mono font-bold text-[#D9DEE5] uppercase tracking-wider flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-[#B8C0C9]" />
-              EVIDENCE RESOLUTION
-            </h4>
-
-            <div className="grid grid-cols-3 gap-2 text-center font-mono">
-              <div className="p-3 rounded-lg bg-[#11151A] border border-emerald-800/30">
-                <span className="text-[10px] text-[#707984] block">SUPPORTING</span>
-                <span className="text-lg font-bold text-emerald-400">
-                  {supportingSources.length}
-                </span>
-              </div>
-
-              <div className="p-3 rounded-lg bg-[#11151A] border border-rose-800/30">
-                <span className="text-[10px] text-[#707984] block">CONTRADICTING</span>
-                <span className="text-lg font-bold text-rose-400">
-                  {contradictingSources.length}
-                </span>
-              </div>
-
-              <div className="p-3 rounded-lg bg-[#11151A] border border-[#2A3038]">
-                <span className="text-[10px] text-[#707984] block">OTHER / NEUTRAL</span>
-                <span className="text-lg font-bold text-[#A7AFB8]">
-                  {otherSources.length}
-                </span>
-              </div>
+          {/* Reasoning */}
+          {claimVer?.reasoning && (
+            <div className="space-y-1.5 font-sans">
+              <span className="text-[11px] font-mono text-[#D4AF5A] block uppercase font-bold">
+                Synthesized Reasoning:
+              </span>
+              <p className="text-xs text-[#D7DADF] leading-relaxed bg-[#0D0F12] p-3 rounded border border-[rgba(212,175,90,0.18)]">
+                {claimVer.reasoning}
+              </p>
             </div>
-          </div>
+          )}
 
-          {/* 3. Supporting Sources */}
-          <div className="space-y-2.5">
-            <h4 className="text-[11px] font-mono font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-              SUPPORTING SOURCES ({supportingSources.length})
-            </h4>
+          {/* Supporting Citations */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-[11px] text-[#D4AF5A]">
+              <span className="flex items-center gap-1 font-bold">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                Supporting Primary Sources ({supportingSources.length})
+              </span>
+            </div>
 
             {supportingSources.length === 0 ? (
-              <div className="p-3 rounded bg-[#11151A] border border-[#2A3038] text-[#707984] font-mono text-[11px]">
-                No supporting evidence sources linked to this claim.
-              </div>
+              <p className="text-[#8D949D] italic text-xs">No direct supporting sources linked.</p>
             ) : (
               <div className="space-y-2">
                 {supportingSources.map((src) => (
                   <div
                     key={src.id}
-                    className="p-3.5 rounded-lg bg-[#11151A] border border-emerald-800/30 space-y-2"
+                    className="p-3 rounded bg-[#0D0F12] border border-emerald-700/40 space-y-1.5"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-700/50 font-mono font-bold text-[9px] uppercase">
-                        SUPPORTS
-                      </span>
-                      <span className="text-[10px] font-mono text-emerald-400/90 flex items-center gap-1">
-                        <Globe className="h-3 w-3" />
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-[#F5F7FA] truncate max-w-[200px]">
                         {src.domain}
                       </span>
+                      <span className="text-emerald-400 font-semibold">SUPPORTS</span>
                     </div>
-
-                    <h5 className="font-bold text-[#F3F5F7] text-xs leading-snug">
+                    <p className="text-xs text-[#D7DADF] font-sans truncate font-medium">
                       {src.title}
-                    </h5>
-
-                    {src.snippet && (
-                      <p className="text-[11px] text-[#A7AFB8] font-sans leading-relaxed">
-                        &ldquo;{src.snippet}&rdquo;
-                      </p>
-                    )}
-
-                    {src.stanceExplanation && (
-                      <p className="text-[10px] text-[#D9DEE5] font-mono italic">
-                        Reasoning: {src.stanceExplanation}
-                      </p>
-                    )}
-
-                    <div className="pt-2 border-t border-[#2A3038] flex justify-end">
+                    </p>
+                    {src.url && (
                       <a
                         href={src.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-2.5 py-1 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#D9DEE5] hover:text-white border border-[#343B45] text-[10px] font-mono font-semibold flex items-center gap-1 transition-colors"
+                        className="text-[10px] text-[#D4AF5A] hover:underline flex items-center gap-0.5"
                       >
-                        <span>Open source ↗</span>
-                        <ExternalLink className="h-3 w-3" />
+                        <span>Open citation</span>
+                        <ExternalLink className="h-2.5 w-2.5" />
                       </a>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* 4. Contradicting Sources */}
-          <div className="space-y-2.5">
-            <h4 className="text-[11px] font-mono font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-              <XCircle className="h-3.5 w-3.5 text-rose-400" />
-              CONTRADICTING SOURCES ({contradictingSources.length})
-            </h4>
+          {/* Contradicting Citations */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-[11px] text-[#D4AF5A]">
+              <span className="flex items-center gap-1 font-bold">
+                <XCircle className="h-3.5 w-3.5 text-rose-400" />
+                Contradicting Sources ({contradictingSources.length})
+              </span>
+            </div>
 
             {contradictingSources.length === 0 ? (
-              <div className="p-3 rounded bg-[#11151A] border border-[#2A3038] text-[#707984] font-mono text-[11px]">
-                No contradicting evidence sources recorded.
-              </div>
+              <p className="text-[#8D949D] italic text-xs">No contradicting sources identified.</p>
             ) : (
               <div className="space-y-2">
                 {contradictingSources.map((src) => (
                   <div
                     key={src.id}
-                    className="p-3.5 rounded-lg bg-[#11151A] border border-rose-800/30 space-y-2"
+                    className="p-3 rounded bg-[#0D0F12] border border-rose-700/40 space-y-1.5"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="px-2 py-0.5 rounded bg-rose-950/60 text-rose-300 border border-rose-700/50 font-mono font-bold text-[9px] uppercase">
-                        CONTRADICTS
-                      </span>
-                      <span className="text-[10px] font-mono text-rose-400/90 flex items-center gap-1">
-                        <Globe className="h-3 w-3" />
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="font-bold text-[#F5F7FA] truncate max-w-[200px]">
                         {src.domain}
                       </span>
+                      <span className="text-rose-400 font-semibold">CONTRADICTS</span>
                     </div>
-
-                    <h5 className="font-bold text-[#F3F5F7] text-xs leading-snug">
+                    <p className="text-xs text-[#D7DADF] font-sans truncate font-medium">
                       {src.title}
-                    </h5>
-
-                    {src.snippet && (
-                      <p className="text-[11px] text-[#A7AFB8] font-sans leading-relaxed">
-                        &ldquo;{src.snippet}&rdquo;
-                      </p>
-                    )}
-
-                    {src.stanceExplanation && (
-                      <p className="text-[10px] text-rose-300 font-mono italic">
-                        Reasoning: {src.stanceExplanation}
-                      </p>
-                    )}
-
-                    <div className="pt-2 border-t border-[#2A3038] flex justify-end">
+                    </p>
+                    {src.url && (
                       <a
                         href={src.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-2.5 py-1 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#D9DEE5] hover:text-white border border-[#343B45] text-[10px] font-mono font-semibold flex items-center gap-1 transition-colors"
+                        className="text-[10px] text-[#D4AF5A] hover:underline flex items-center gap-0.5"
                       >
-                        <span>Open source ↗</span>
-                        <ExternalLink className="h-3 w-3" />
+                        <span>Open citation</span>
+                        <ExternalLink className="h-2.5 w-2.5" />
                       </a>
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
           </div>
-
-          {/* 5. Verdict Reasoning */}
-          <div className="space-y-2">
-            <h4 className="text-[11px] font-mono font-bold text-[#D9DEE5] uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-[#B8C0C9]" />
-              VERDICT REASONING
-            </h4>
-
-            <div className="p-3.5 rounded-lg bg-[#11151A] border border-[#2A3038] text-[#A7AFB8] leading-relaxed space-y-1 font-sans text-xs">
-              <p>{claimVer.reasoning || "Verdict synthesized from evaluated evidence stances."}</p>
-            </div>
-          </div>
-
-          {/* 6. Deterministic Resolution */}
-          <div className="space-y-2">
-            <h4 className="text-[11px] font-mono font-bold text-[#F3F5F7] uppercase tracking-wider flex items-center gap-1.5">
-              <Scale className="h-3.5 w-3.5 text-[#D9DEE5]" />
-              DETERMINISTIC RESOLUTION
-            </h4>
-
-            <div className="p-3.5 rounded-lg bg-[#11151A] border border-[#2A3038] text-[#F3F5F7] leading-relaxed font-sans text-xs">
-              <p>{deterministicDescription}</p>
-            </div>
-          </div>
-
-          {/* 7. Forensic Transparency */}
-          <div className="p-4 rounded-lg bg-[#11151A] border border-[#2A3038] space-y-3">
-            <div className="flex items-center gap-2 text-[#F3F5F7] font-mono font-bold text-xs pb-1.5 border-b border-[#2A3038]">
-              <Info className="h-4 w-4 text-[#D9DEE5]" />
-              <span>FORENSIC TRANSPARENCY</span>
-            </div>
-
-            <p className="text-[#A7AFB8] font-sans leading-relaxed text-[11px]">
-              &ldquo;EvidenceLens does not treat AI knowledge alone as evidence.&rdquo;
-            </p>
-
-            <div className="space-y-2 font-mono text-[10px] pt-1">
-              <div className="flex items-center justify-between p-2 rounded bg-[#161B21] border border-[#2A3038]">
-                <span className="text-[#F3F5F7] font-bold">AI ROLE</span>
-                <span className="text-[#A7AFB8]">→ Evidence stance interpretation</span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded bg-[#161B21] border border-[#2A3038]">
-                <span className="text-[#F3F5F7] font-bold">EVIDENCE ROLE</span>
-                <span className="text-[#A7AFB8]">→ External retrieved sources</span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded bg-[#161B21] border border-[#2A3038]">
-                <span className="text-[#F3F5F7] font-bold">VERDICT ROLE</span>
-                <span className="text-[#A7AFB8]">→ Deterministic claim-level synthesis</span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Drawer Footer */}
-        <div className="p-4 border-t border-[#2A3038] bg-[#11151A]/95 flex items-center justify-between gap-3 text-xs font-mono sticky bottom-0 z-20 backdrop-blur-md">
-          <span className="text-[#707984] text-[10px]">
-            EvidenceLens Audit Drawer
-          </span>
+        {/* Footer Actions */}
+        <div className="pt-4 border-t border-[rgba(212,175,90,0.2)] flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              onViewInGraph?.(claimId);
+              onClose();
+            }}
+            className="px-3 py-1.5 rounded bg-[#131519] hover:bg-[#181B20] text-[#D4AF5A] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.35)] flex items-center gap-1.5 transition-colors font-semibold"
+          >
+            <Network className="h-3.5 w-3.5" />
+            <span>Highlight in Evidence Map</span>
+          </button>
 
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#F3F5F7] hover:text-white border border-[#343B45] transition-colors font-semibold"
+            className="px-3.5 py-1.5 rounded bg-[#050607] hover:bg-[#131519] text-[#8D949D] hover:text-white border border-[rgba(212,175,90,0.2)] transition-colors"
           >
             Close
           </button>
         </div>
-      </aside>
+      </div>
     </div>
   );
 };

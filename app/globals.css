@@ -2,88 +2,138 @@
 
 @layer base {
   :root {
-    --background: #080A0D;
-    --background-alt: #0B0E12;
-    --foreground: #F3F5F7;
-    --foreground-secondary: #A7AFB8;
-    --foreground-muted: #707984;
+    /* Foundations: Ultra-Dark Charcoal / Near-Black */
+    --surface-canvas: #050607;
+    --surface-canvas-subtle: #08090b;
+    --surface-drawer: #0b0d10;
+    --surface-card: #0d0f12;
+    --surface-card-hover: #101216;
+    --surface-subcard: #131519;
+    --surface-active: #181b20;
 
-    --surface-primary: #11151A;
-    --surface-secondary: #161B21;
-    --surface-elevated: #1B2027;
+    /* Metallic Gold Palette (Brand / Structure / Framework) */
+    --gold-100: #fbf5e6;
+    --gold-200: #f2e3be;
+    --gold-300: #e1c16e;
+    --gold-400: #d4af5a;
+    --gold-500: #c8a24a;
+    --gold-600: #a98532;
+    --gold-700: #866723;
+    --gold-800: #624b18;
+    --gold-900: #3f2f0c;
 
-    --border-subtle: #2A3038;
-    --border-strong: #343B45;
+    /* Gold Borders & Opacity Accents */
+    --gold-border-subtle: rgba(212, 175, 90, 0.2);
+    --gold-border: rgba(212, 175, 90, 0.35);
+    --gold-border-hover: rgba(225, 193, 110, 0.6);
+    --gold-border-active: rgba(225, 193, 110, 0.85);
 
-    /* Subtle Platinum / Brushed Silver Metallic */
-    --platinum-100: #F5F7FA;
-    --platinum-200: #D9DEE5;
-    --platinum-300: #B8C0C9;
-    --platinum-400: #8E98A4;
+    /* Platinum / Silver Palette (Secondary Info Hierarchy) */
+    --platinum-100: #f4f6f8;
+    --platinum-200: #d7dadf;
+    --platinum-300: #b8bec7;
+    --platinum-400: #8d949d;
+    --platinum-500: #656c76;
 
-    /* Secondary Cool Blue / Cyan (Restrained for metadata & links) */
-    --accent-cyan: #38BDF8;
-    --accent-blue: #5DADE2;
+    /* Text & Typography */
+    --text-primary: #f5f7fa;
+    --text-secondary: #d7dadf;
+    --text-muted: #8d949d;
+    --text-gold: #d4af5a;
 
-    /* Semantic Evidence States */
-    --status-supports: #10B981;
-    --status-contradicts: #F43F5E;
-    --status-mixed: #F59E0B;
-    --status-insufficient: #707984;
+    /* Semantic Evidence States (STRICTLY FOR TRUTH / EVIDENCE VALUES) */
+    --semantic-supports: #10b981;
+    --semantic-contradicts: #f43f5e;
+    --semantic-mixed: #f59e0b;
+    --semantic-insufficient: #8d949d;
+    --semantic-media: #38bdf8;
   }
 
   body {
-    background-color: var(--background);
-    color: var(--foreground);
-    color-scheme: dark;
-    background-image:
-      radial-gradient(ellipse 80% 40% at 50% 0%, rgba(217, 222, 229, 0.03), transparent 70%),
-      linear-gradient(to bottom, #080A0D, #0B0E12);
-    background-attachment: fixed;
+    background-color: var(--surface-canvas);
+    color: var(--text-primary);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Brushed Platinum Metallic Text & Surfaces */
-.platinum-gradient-text {
-  background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 45%, #CBD5E1 85%, #94A3B8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.platinum-button-primary {
-  background: linear-gradient(180deg, #F8FAFC 0%, #E2E8F0 60%, #CBD5E1 100%);
-  color: #080A0D;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.platinum-button-primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 60%, #E2E8F0 100%);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.platinum-surface {
-  background: #11151A;
-  border: 1px solid #2A3038;
-}
-
-/* Custom Clean Technical Scrollbar */
+/* Custom Scrollbar in Dark Metallic Gold */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #080A0D;
+  background: #050607;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2A3038;
+  background: #25221b;
   border-radius: 3px;
+  border: 1px solid rgba(212, 175, 90, 0.2);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #343B45;
+  background: #a98532;
+}
+
+/* Metallic Gold Primary Button */
+.gold-button-primary {
+  background: linear-gradient(135deg, #e1c16e 0%, #d4af5a 50%, #c8a24a 100%);
+  color: #050607;
+  font-weight: 700;
+  border: 1px solid #f2e3be;
+  box-shadow: 0 2px 10px rgba(200, 162, 74, 0.2);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gold-button-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f2e3be 0%, #e1c16e 50%, #d4af5a 100%);
+  box-shadow: 0 4px 16px rgba(212, 175, 90, 0.35);
+  transform: translateY(-1px);
+}
+
+.gold-button-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(200, 162, 74, 0.3);
+}
+
+.gold-button-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Gold Outline Secondary Button */
+.gold-button-secondary {
+  background: #0d0f12;
+  color: #d4af5a;
+  border: 1px solid rgba(212, 175, 90, 0.35);
+  transition: all 0.2s ease;
+}
+
+.gold-button-secondary:hover:not(:disabled) {
+  background: #131519;
+  border-color: rgba(225, 193, 110, 0.7);
+  color: #f2e3be;
+}
+
+/* Gold Focus Rings */
+.gold-focus:focus {
+  outline: none;
+  border-color: #d4af5a !important;
+  box-shadow: 0 0 0 1px rgba(212, 175, 90, 0.5);
+}
+
+/* Gold Structural Border Card */
+.gold-card {
+  background-color: #0d0f12;
+  border: 1px solid rgba(212, 175, 90, 0.25);
+  transition: border-color 0.2s ease;
+}
+
+.gold-card:hover {
+  border-color: rgba(212, 175, 90, 0.45);
 }

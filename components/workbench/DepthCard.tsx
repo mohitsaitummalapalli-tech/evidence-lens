@@ -5,10 +5,9 @@ import React from "react";
 interface DepthCardProps {
   children: React.ReactNode;
   className?: string;
-  floatingPhase?: 1 | 2 | 3 | "none";
+  depth?: "sm" | "md" | "lg" | "floating";
+  floatingPhase?: "none" | "slow" | "pulse";
   enableTilt?: boolean;
-  maxTiltDeg?: number;
-  glowOnHover?: boolean;
 }
 
 export const DepthCard: React.FC<DepthCardProps> = ({
@@ -17,7 +16,7 @@ export const DepthCard: React.FC<DepthCardProps> = ({
 }) => {
   return (
     <div
-      className={`relative rounded-lg bg-[#11151A] border border-[#2A3038] hover:border-[#343B45] transition-all duration-200 shadow-sm ${className}`}
+      className={`rounded-lg bg-[#0D0F12] border border-[rgba(212,175,90,0.22)] hover:border-[rgba(212,175,90,0.45)] shadow-[0_4px_20px_rgba(0,0,0,0.4)] transition-all duration-200 ${className}`}
     >
       {children}
     </div>

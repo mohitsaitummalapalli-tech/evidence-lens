@@ -47,9 +47,9 @@ const VERDICT_THEMES = {
   },
   UNVERIFIED: {
     label: "UNVERIFIED",
-    badgeBg: "bg-[#161B21] text-[#707984] border-[#2A3038]",
+    badgeBg: "bg-[#131519] text-[#D7DADF] border-[rgba(212,175,90,0.3)]",
     icon: HelpCircle,
-    barColor: "bg-[#707984]",
+    barColor: "bg-[#8D949D]",
   },
 };
 
@@ -71,7 +71,7 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
 
   const renderDelta = (delta: number, suffix = "", invertSentiment = false) => {
     if (delta === 0) {
-      return <span className="text-xs font-mono text-[#707984]">SAME (0)</span>;
+      return <span className="text-xs font-mono text-[#8D949D]">SAME (0)</span>;
     }
     const isPositive = delta > 0;
     const isGood = invertSentiment ? !isPositive : isPositive;
@@ -89,22 +89,22 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="bg-[#0B0E12] border border-[#2A3038] rounded-xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl relative overflow-hidden"
+        className="bg-[#08090B] border border-[rgba(212,175,90,0.35)] rounded-xl w-full max-w-5xl max-h-[92vh] flex flex-col shadow-2xl relative overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-label="Investigation Comparison"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-5 border-b border-[#2A3038] bg-[#11151A]/90 font-mono">
+        <div className="flex items-center justify-between p-5 border-b border-[rgba(212,175,90,0.2)] bg-[#0D0F12] font-mono">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5]">
+            <div className="p-2 rounded bg-[#131519] border border-[rgba(212,175,90,0.35)] text-[#D4AF5A]">
               <ArrowRightLeft className="h-4 w-4" />
             </div>
             <div>
-              <h2 className="text-xs sm:text-sm font-bold text-[#F3F5F7] tracking-wider uppercase">
+              <h2 className="text-xs sm:text-sm font-bold text-[#F5F7FA] tracking-wider uppercase">
                 Investigation Comparison
               </h2>
-              <p className="text-[11px] text-[#707984] font-sans">
+              <p className="text-[11px] text-[#8D949D] font-sans">
                 Side-by-side analytical comparison between two verification sessions
               </p>
             </div>
@@ -114,17 +114,17 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
             <button
               type="button"
               onClick={onSwap}
-              className="px-3 py-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#D9DEE5] border border-[#343B45] text-xs flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded bg-[#131519] hover:bg-[#181B20] text-[#D4AF5A] border border-[rgba(212,175,90,0.35)] text-xs flex items-center gap-1.5 transition-colors"
               title="Swap Investigation A and B"
             >
-              <ArrowRightLeft className="h-3.5 w-3.5 text-[#38BDF8]" />
+              <ArrowRightLeft className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Swap</span>
             </button>
 
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#707984] hover:text-white border border-[#2A3038] transition-colors"
+              className="p-1.5 rounded bg-[#131519] hover:bg-[#181B20] text-[#8D949D] hover:text-white border border-[rgba(212,175,90,0.2)] transition-colors"
               title="Close comparison"
               aria-label="Close modal"
             >
@@ -133,14 +133,14 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
           </div>
         </div>
 
-        {/* Modal Body: Scrollable Comparison Grid */}
-        <div className="p-5 overflow-y-auto space-y-6 flex-1 text-xs">
-          {/* Side-by-side session overview cards */}
+        {/* Modal Body */}
+        <div className="p-5 overflow-y-auto space-y-6 flex-1 text-xs font-mono">
+          {/* Side-by-side session cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Session A */}
-            <div className="p-4 rounded-lg bg-[#11151A] border border-[#2A3038] space-y-3">
-              <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#2A3038] font-mono">
-                <span className="text-[10px] text-[#707984] uppercase">
+            <div className="p-4 rounded-lg bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] space-y-3">
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-[rgba(212,175,90,0.18)]">
+                <span className="text-[10px] text-[#D4AF5A] uppercase font-bold">
                   INVESTIGATION A
                 </span>
                 <span
@@ -151,11 +151,11 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
                 </span>
               </div>
 
-              <p className="text-sm font-semibold text-[#F3F5F7] line-clamp-3 leading-snug font-sans">
+              <p className="text-sm font-semibold text-[#F5F7FA] line-clamp-3 leading-snug font-sans">
                 &ldquo;{investigationA.targetClaim}&rdquo;
               </p>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-[#707984] pt-1">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#8D949D] pt-1">
                 <span>{new Date(investigationA.timestamp).toLocaleString()}</span>
                 <button
                   type="button"
@@ -163,7 +163,7 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
                     onOpenInvestigation(investigationA);
                     onClose();
                   }}
-                  className="text-[#38BDF8] hover:underline flex items-center gap-1"
+                  className="text-[#D4AF5A] hover:underline flex items-center gap-1"
                 >
                   <span>Load into workbench</span>
                   <ExternalLink className="h-3 w-3" />
@@ -172,9 +172,9 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
             </div>
 
             {/* Session B */}
-            <div className="p-4 rounded-lg bg-[#11151A] border border-[#2A3038] space-y-3">
-              <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#2A3038] font-mono">
-                <span className="text-[10px] text-[#707984] uppercase">
+            <div className="p-4 rounded-lg bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] space-y-3">
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-[rgba(212,175,90,0.18)]">
+                <span className="text-[10px] text-[#D4AF5A] uppercase font-bold">
                   INVESTIGATION B
                 </span>
                 <span
@@ -185,11 +185,11 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
                 </span>
               </div>
 
-              <p className="text-sm font-semibold text-[#F3F5F7] line-clamp-3 leading-snug font-sans">
+              <p className="text-sm font-semibold text-[#F5F7FA] line-clamp-3 leading-snug font-sans">
                 &ldquo;{investigationB.targetClaim}&rdquo;
               </p>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-[#707984] pt-1">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#8D949D] pt-1">
                 <span>{new Date(investigationB.timestamp).toLocaleString()}</span>
                 <button
                   type="button"
@@ -197,7 +197,7 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
                     onOpenInvestigation(investigationB);
                     onClose();
                   }}
-                  className="text-[#38BDF8] hover:underline flex items-center gap-1"
+                  className="text-[#D4AF5A] hover:underline flex items-center gap-1"
                 >
                   <span>Load into workbench</span>
                   <ExternalLink className="h-3 w-3" />
@@ -206,20 +206,19 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
             </div>
           </div>
 
-          {/* Analytical Metrics Comparison Table */}
+          {/* Metrics Comparison Table */}
           <div className="space-y-2">
-            <h4 className="text-xs font-mono font-bold text-[#F3F5F7] uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-[#F5F7FA] uppercase tracking-wider">
               Forensic Metrics Comparison
             </h4>
 
-            <div className="border border-[#2A3038] rounded-lg overflow-hidden divide-y divide-[#2A3038] bg-[#11151A] font-mono text-xs">
-              {/* Row 1: Overall Verdict */}
+            <div className="border border-[rgba(212,175,90,0.25)] rounded-lg overflow-hidden divide-y divide-[rgba(212,175,90,0.18)] bg-[#0D0F12]">
               <div className="grid grid-cols-3 p-3 items-center">
-                <span className="text-[#707984]">Overall Verdict</span>
-                <span className="text-[#F3F5F7] font-semibold">{investigationA.overallVerdict}</span>
+                <span className="text-[#8D949D]">Overall Verdict</span>
+                <span className="text-[#F5F7FA] font-semibold">{investigationA.overallVerdict}</span>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#F3F5F7] font-semibold">{investigationB.overallVerdict}</span>
-                  <span className="text-[10px] text-[#707984]">
+                  <span className="text-[#F5F7FA] font-semibold">{investigationB.overallVerdict}</span>
+                  <span className="text-[10px]">
                     {!metrics.verdictMatches ? (
                       <span className="text-amber-400">CHANGED</span>
                     ) : (
@@ -229,53 +228,48 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
                 </div>
               </div>
 
-              {/* Row 2: Confidence Score */}
               <div className="grid grid-cols-3 p-3 items-center">
-                <span className="text-[#707984]">Confidence Level</span>
-                <span className="text-[#F3F5F7]">{investigationA.confidenceScore}%</span>
+                <span className="text-[#8D949D]">Confidence Level</span>
+                <span className="text-[#F5F7FA]">{investigationA.confidenceScore}%</span>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#F3F5F7]">{investigationB.confidenceScore}%</span>
+                  <span className="text-[#F5F7FA]">{investigationB.confidenceScore}%</span>
                   {renderDelta(metrics.confidenceDelta, "%")}
                 </div>
               </div>
 
-              {/* Row 3: Claims Count */}
               <div className="grid grid-cols-3 p-3 items-center">
-                <span className="text-[#707984]">Claims Evaluated</span>
-                <span className="text-[#F3F5F7]">{investigationA.atomicClaimCount}</span>
+                <span className="text-[#8D949D]">Claims Evaluated</span>
+                <span className="text-[#F5F7FA]">{investigationA.atomicClaimCount}</span>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#F3F5F7]">{investigationB.atomicClaimCount}</span>
+                  <span className="text-[#F5F7FA]">{investigationB.atomicClaimCount}</span>
                   {renderDelta(metrics.claimsDelta)}
                 </div>
               </div>
 
-              {/* Row 4: Evidence Count */}
               <div className="grid grid-cols-3 p-3 items-center">
-                <span className="text-[#707984]">Retrieved Sources</span>
-                <span className="text-[#F3F5F7]">{investigationA.evidenceCount}</span>
+                <span className="text-[#8D949D]">Retrieved Sources</span>
+                <span className="text-[#F5F7FA]">{investigationA.evidenceCount}</span>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#F3F5F7]">{investigationB.evidenceCount}</span>
+                  <span className="text-[#F5F7FA]">{investigationB.evidenceCount}</span>
                   {renderDelta(metrics.sourcesDelta)}
                 </div>
               </div>
 
-              {/* Row 5: Domains */}
               <div className="grid grid-cols-3 p-3 items-center">
-                <span className="text-[#707984]">Unique Domains</span>
-                <span className="text-[#F3F5F7]">{investigationA.uniqueDomainCount}</span>
+                <span className="text-[#8D949D]">Unique Domains</span>
+                <span className="text-[#F5F7FA]">{investigationA.uniqueDomainCount}</span>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#F3F5F7]">{investigationB.uniqueDomainCount}</span>
+                  <span className="text-[#F5F7FA]">{investigationB.uniqueDomainCount}</span>
                   {renderDelta(metrics.domainsDelta)}
                 </div>
               </div>
 
-              {/* Row 6: Multimodal Payload */}
               <div className="grid grid-cols-3 p-3 items-center">
-                <span className="text-[#707984]">Multimodal Media</span>
-                <span className="text-[#F3F5F7]">{investigationA.hasMedia ? "Attached" : "None"}</span>
+                <span className="text-[#8D949D]">Multimodal Media</span>
+                <span className="text-[#F5F7FA]">{investigationA.hasMedia ? "Attached" : "None"}</span>
                 <div className="flex items-center justify-between">
-                  <span className="text-[#F3F5F7]">{investigationB.hasMedia ? "Attached" : "None"}</span>
-                  <span className="text-[10px] text-[#707984]">
+                  <span className="text-[#F5F7FA]">{investigationB.hasMedia ? "Attached" : "None"}</span>
+                  <span className="text-[10px] text-[#8D949D]">
                     {investigationA.hasMedia === investigationB.hasMedia ? "SAME" : "DIFFERENT"}
                   </span>
                 </div>
@@ -285,15 +279,15 @@ export const InvestigationComparison: React.FC<InvestigationComparisonProps> = (
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 border-t border-[#2A3038] bg-[#11151A]/90 flex items-center justify-between text-xs font-mono">
-          <span className="text-[#707984]">
+        <div className="p-4 border-t border-[rgba(212,175,90,0.2)] bg-[#0D0F12] flex items-center justify-between text-xs font-mono">
+          <span className="text-[#8D949D]">
             Investigation Comparison Engine
           </span>
 
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 rounded bg-[#161B21] hover:bg-[#1B2027] text-[#F3F5F7] hover:text-white border border-[#343B45] transition-colors font-semibold"
+            className="px-4 py-1.5 rounded bg-[#131519] hover:bg-[#181B20] text-[#D4AF5A] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.35)] transition-colors font-semibold"
           >
             Close
           </button>

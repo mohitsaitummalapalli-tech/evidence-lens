@@ -3,435 +3,347 @@
 import React, { useState } from "react";
 import {
   MultiAIConsensusResult,
-  MultiAIConsensusStatus,
-  EvidenceItem,
-  ClaimEvidenceBundle,
+  EvidenceRetrievalResult,
+  ModelJuryVerdict,
 } from "@/types";
 import {
   ShieldCheck,
   ShieldAlert,
+  ShieldX,
   HelpCircle,
   Cpu,
+  Users,
   ChevronDown,
   ChevronUp,
-  Scale,
   ExternalLink,
-  Globe,
-  Play,
-  GraduationCap,
-  Layers,
+  BookOpen,
+  FileCheck2,
+  Lock,
 } from "lucide-react";
 
 interface MultiAIConsensusPanelProps {
-  consensus?: MultiAIConsensusResult;
-  evidence?: {
-    bundles?: ClaimEvidenceBundle[];
-    allSources?: EvidenceItem[];
-  };
+  consensus: MultiAIConsensusResult;
+  evidence?: EvidenceRetrievalResult | null;
 }
 
-const STATUS_CONFIG: Record<
-  MultiAIConsensusStatus,
-  { label: string; bg: string; text: string; border: string; icon: React.ComponentType<{ className?: string }> }
+const PROVIDER_METADATA: Record<
+  string,
+  { name: string; org: string; modelName: string }
 > = {
-  UNANIMOUS: {
-    label: "UNANIMOUS CONSENSUS",
-    bg: "bg-emerald-950/30",
-    text: "text-emerald-300",
-    border: "border-emerald-700/40",
-    icon: ShieldCheck,
+  google: {
+    name: "Gemini 2.5 Flash",
+    org: "Google DeepMind",
+    modelName: "gemini-2.5-flash",
   },
-  MAJORITY: {
-    label: "MAJORITY VERDICT",
-    bg: "bg-[#161B21]",
-    text: "text-[#D9DEE5]",
-    border: "border-[#343B45]",
-    icon: ShieldCheck,
+  openai: {
+    name: "GPT-4o Reasoning",
+    org: "OpenAI",
+    modelName: "gpt-4o",
   },
-  SPLIT: {
-    label: "SPLIT DECISION",
-    bg: "bg-amber-950/30",
-    text: "text-amber-300",
-    border: "border-amber-700/40",
+  anthropic: {
+    name: "Claude 3.7 Sonnet",
+    org: "Anthropic",
+    modelName: "claude-3-7-sonnet",
+  },
+  groq: {
+    name: "Llama 3.3 70B",
+    org: "Groq",
+    modelName: "llama-3.3-70b-versatile",
+  },
+  local: {
+    name: "EvidenceLens Engine",
+    org: "On-Premises / Deterministic",
+    modelName: "deterministic-synthesis",
+  },
+};
+
+const VERDICT_THEMES: Record<
+  string,
+  {
+    label: string;
+    badgeBg: string;
+    icon: React.ComponentType<{ className?: string }>;
+    barColor: string;
+  }
+> = {
+  VERIFIED: {
+    label: "VERIFIED TRUE",
+    badgeBg: "bg-emerald-950/40 text-emerald-300 border-emerald-700/50",
+    icon: ShieldCheck,
+    barColor: "bg-emerald-500",
+  },
+  TRUE: {
+    label: "VERIFIED TRUE",
+    badgeBg: "bg-emerald-950/40 text-emerald-300 border-emerald-700/50",
+    icon: ShieldCheck,
+    barColor: "bg-emerald-500",
+  },
+  FALSE: {
+    label: "REFUTED FALSE",
+    badgeBg: "bg-rose-950/40 text-rose-300 border-rose-700/50",
+    icon: ShieldX,
+    barColor: "bg-rose-500",
+  },
+  MIXED: {
+    label: "MIXED EVIDENCE",
+    badgeBg: "bg-amber-950/40 text-amber-300 border-amber-700/50",
     icon: ShieldAlert,
+    barColor: "bg-amber-500",
   },
-  SINGLE_MODEL: {
-    label: "SINGLE MODEL",
-    bg: "bg-[#161B21]",
-    text: "text-[#A7AFB8]",
-    border: "border-[#2A3038]",
-    icon: Cpu,
-  },
-  INSUFFICIENT: {
-    label: "INSUFFICIENT DATA",
-    bg: "bg-[#161B21]",
-    text: "text-[#707984]",
-    border: "border-[#2A3038]",
+  UNVERIFIED: {
+    label: "UNVERIFIED / INSUFFICIENT",
+    badgeBg: "bg-[#131519] text-[#D7DADF] border-[rgba(212,175,90,0.3)]",
     icon: HelpCircle,
-  },
-  NO_CONSENSUS: {
-    label: "NO CONSENSUS",
-    bg: "bg-[#161B21]",
-    text: "text-[#707984]",
-    border: "border-[#2A3038]",
-    icon: HelpCircle,
+    barColor: "bg-[#8D949D]",
   },
 };
 
-const VERDICT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  VERIFIED: { bg: "bg-emerald-950/40", text: "text-emerald-400", border: "border-emerald-800/50" },
-  TRUE: { bg: "bg-emerald-950/40", text: "text-emerald-400", border: "border-emerald-800/50" },
-  FALSE: { bg: "bg-rose-950/40", text: "text-rose-400", border: "border-rose-800/50" },
-  MIXED: { bg: "bg-amber-950/40", text: "text-amber-400", border: "border-amber-800/50" },
-  UNVERIFIED: { bg: "bg-[#161B21]", text: "text-[#707984]", border: "border-[#2A3038]" },
-};
+export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
+  consensus,
+  evidence,
+}) => {
+  const [showSharedEvidence, setShowSharedEvidence] = useState(false);
+  const [expandedModel, setExpandedModel] = useState<string | null>(null);
 
-export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ consensus, evidence }) => {
-  const [expandedModelId, setExpandedModelId] = useState<string | null>(null);
+  const majorityVerdictKey = consensus.majorityVerdict || "UNVERIFIED";
+  const juryVerdictTheme =
+    VERDICT_THEMES[majorityVerdictKey] || VERDICT_THEMES.UNVERIFIED;
+  const JuryIcon = juryVerdictTheme.icon;
 
-  if (!consensus || consensus.totalModelsParticipating === 0) {
-    return null;
-  }
-
-  // Lookup map for shared evidence items by ID
-  const evidenceMap = new Map<string, EvidenceItem>();
-  if (evidence?.allSources) {
-    for (const src of evidence.allSources) {
-      evidenceMap.set(src.id, src);
-    }
-  }
-  if (evidence?.bundles) {
-    for (const b of evidence.bundles) {
-      for (const src of b.sources) {
-        if (!evidenceMap.has(src.id)) {
-          evidenceMap.set(src.id, src);
-        }
-      }
-    }
-  }
-
-  const overallStatus = STATUS_CONFIG[consensus.overallConsensusStatus] || STATUS_CONFIG.SINGLE_MODEL;
-  const StatusIcon = overallStatus.icon;
-
-  const sharedSummary = consensus.sharedEvidenceSummary || {
-    totalSources: evidenceMap.size,
-    webSourcesCount: Array.from(evidenceMap.values()).filter((s) => (s.sourceType || "web") === "web").length,
-    youtubeSourcesCount: Array.from(evidenceMap.values()).filter((s) => s.sourceType === "youtube").length,
-    academicSourcesCount: Array.from(evidenceMap.values()).filter((s) => s.sourceType === "academic").length,
-    imageProvenanceCount: Array.from(evidenceMap.values()).filter((s) => (s.sourceType as string) === "image" || (s.sourceType as string) === "video").length,
-    uniqueDomainsCount: new Set(Array.from(evidenceMap.values()).map((s) => s.domain).filter(Boolean)).size,
-    uniqueDomains: [],
-    sharedNotice: `All models evaluated the same ${evidenceMap.size} retrieved sources.`,
-  };
-
+  const totalModels = consensus.totalModelsParticipating || consensus.participatingModels?.length || 0;
+  const agreementRate = consensus.overallAgreementRate || 0;
+  const evidenceList = evidence?.allSources || [];
   const modelVerdicts = consensus.modelVerdicts || [];
-  const majorityVerdict = consensus.majorityVerdict || "UNVERIFIED";
-  const majorityConfidence = consensus.majorityConfidence || "MEDIUM";
-  const agreeCount = consensus.agreementCount ?? consensus.totalModelsParticipating;
-  const totalModels = consensus.totalModelsParticipating;
-
-  const toggleModelExpand = (modelId: string) => {
-    setExpandedModelId((prev) => (prev === modelId ? null : modelId));
-  };
 
   return (
     <div
       id="multi-ai-consensus-panel"
-      className="bg-[#11151A] border border-[#2A3038] rounded-lg p-5 sm:p-6 space-y-6"
+      className="p-5 sm:p-6 space-y-6 font-mono border-t border-[rgba(212,175,90,0.35)]"
     >
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#2A3038] gap-3">
+      {/* Header & Shared Evidence Grounding Protocol Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[rgba(212,175,90,0.2)]">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5]">
-            <Scale className="h-4 w-4" />
+          <div className="p-2.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.35)] text-[#D4AF5A]">
+            <Users className="h-4 w-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-xs font-mono font-bold text-[#F3F5F7] tracking-wider uppercase">
-                AI Evidence Jury
-              </h3>
-
-              {/* Status Badge */}
-              <span
-                className={`text-[10px] font-mono px-2.5 py-0.5 rounded font-bold uppercase border flex items-center gap-1 ${overallStatus.bg} ${overallStatus.text} ${overallStatus.border}`}
-              >
-                <StatusIcon className="h-3 w-3" />
-                {overallStatus.label}
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-xs font-bold text-[#F5F7FA] tracking-wider uppercase">
+                AI Evidence Jury & Consensus
+              </h2>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.3)] text-[#D4AF5A] font-semibold">
+                SHARED EVIDENCE PROTOCOL
               </span>
             </div>
-            <p className="text-xs text-[#A7AFB8] mt-0.5 font-sans">
-              {agreeCount} of {totalModels} models agree • All models evaluate the exact same shared evidence dataset.
+            <p className="text-xs text-[#8D949D] font-sans mt-0.5">
+              Independent evaluation across multiple frontier models grounded on the exact same retrieved evidence
             </p>
           </div>
         </div>
 
-        {/* Final Jury Verdict Callout */}
-        <div className="flex items-center gap-3 bg-[#080A0D] border border-[#2A3038] px-3.5 py-2 rounded-lg font-mono">
-          <div className="text-right">
-            <span className="text-[10px] uppercase font-semibold text-[#707984] block">
-              Majority Verdict
-            </span>
-            <span className="text-xs font-bold text-[#F3F5F7]">
-              {majorityVerdict}
-            </span>
-          </div>
-          <div className="h-5 w-px bg-[#2A3038]" />
-          <div className="text-left">
-            <span className="text-[10px] uppercase font-semibold text-[#707984] block">
-              Confidence
-            </span>
-            <span className="text-xs font-semibold text-[#D9DEE5]">
-              {majorityConfidence}
-            </span>
-          </div>
-        </div>
+        {/* Action to Inspect Shared Evidence Bundle */}
+        <button
+          type="button"
+          onClick={() => setShowSharedEvidence(!showSharedEvidence)}
+          className="px-3 py-1.5 rounded-lg bg-[#050607] hover:bg-[#131519] text-[#D4AF5A] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.35)] text-xs flex items-center gap-1.5 transition-all self-start md:self-auto font-semibold"
+        >
+          <FileCheck2 className="h-3.5 w-3.5" />
+          <span>Shared Evidence ({evidenceList.length})</span>
+          {showSharedEvidence ? (
+            <ChevronUp className="h-3.5 w-3.5" />
+          ) : (
+            <ChevronDown className="h-3.5 w-3.5" />
+          )}
+        </button>
       </div>
 
-      {/* Shared Evidence Grounding Notice */}
-      <div className="bg-[#080A0D] border border-[#2A3038] rounded-lg p-4 space-y-2.5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-[#D9DEE5]" />
-            <span className="text-xs font-mono font-semibold text-[#F3F5F7] tracking-wide uppercase">
-              Shared Evidence Bundle
+      {/* Shared Evidence Inspection Dossier */}
+      {showSharedEvidence && (
+        <div className="p-4 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.3)] space-y-3 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between pb-2 border-b border-[rgba(212,175,90,0.2)] text-xs">
+            <div className="flex items-center gap-2">
+              <Lock className="h-3.5 w-3.5 text-[#D4AF5A]" />
+              <span className="font-bold text-[#F5F7FA]">GROUNDED JURY EVIDENCE DOSSIER</span>
+            </div>
+            <span className="text-[#8D949D] text-[10px]">
+              Every juror evaluated identical data: {evidenceList.length} sources
             </span>
           </div>
-          <span className="text-xs font-mono font-medium text-[#A7AFB8]">
-            {agreeCount} / {totalModels} models agree ({consensus.overallAgreementRate}% consensus)
-          </span>
-        </div>
 
-        <p className="text-xs text-[#A7AFB8] font-sans">
-          {sharedSummary.sharedNotice || `All models evaluated the exact same ${sharedSummary.totalSources} retrieved sources.`}
-        </p>
-
-        {/* Evidence Counts Breakdown */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1 font-mono">
-          <div className="bg-[#11151A] border border-[#2A3038] rounded p-2.5 text-center">
-            <span className="text-[10px] text-[#707984] block uppercase">Total Sources</span>
-            <span className="text-xs font-bold text-[#F3F5F7]">{sharedSummary.totalSources}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-60 overflow-y-auto pr-1">
+            {evidenceList.map((src) => (
+              <div
+                key={src.id}
+                className="p-2.5 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.2)] text-xs flex items-center justify-between gap-2"
+              >
+                <div className="space-y-0.5 truncate">
+                  <span className="font-bold text-[#F5F7FA] block truncate">{src.domain}</span>
+                  <p className="text-[11px] text-[#D7DADF] truncate font-sans">{src.title}</p>
+                </div>
+                {src.url && (
+                  <a
+                    href={src.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1 text-[#D4AF5A] hover:text-white shrink-0"
+                    title="Open Source"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
+            ))}
           </div>
-          <div className="bg-[#11151A] border border-[#2A3038] rounded p-2.5 text-center flex items-center justify-center gap-2">
-            <Globe className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
-            <div>
-              <span className="text-[10px] text-[#707984] block uppercase">Web</span>
-              <span className="text-xs font-bold text-[#F3F5F7]">{sharedSummary.webSourcesCount}</span>
-            </div>
-          </div>
-          <div className="bg-[#11151A] border border-[#2A3038] rounded p-2.5 text-center flex items-center justify-center gap-2">
-            <Play className="h-3.5 w-3.5 text-rose-400 fill-current shrink-0" />
-            <div>
-              <span className="text-[10px] text-[#707984] block uppercase">YouTube</span>
-              <span className="text-xs font-bold text-[#F3F5F7]">{sharedSummary.youtubeSourcesCount}</span>
-            </div>
-          </div>
-          <div className="bg-[#11151A] border border-[#2A3038] rounded p-2.5 text-center flex items-center justify-center gap-2">
-            <GraduationCap className="h-3.5 w-3.5 text-[#5DADE2] shrink-0" />
-            <div>
-              <span className="text-[10px] text-[#707984] block uppercase">Academic</span>
-              <span className="text-xs font-bold text-[#F3F5F7]">{sharedSummary.academicSourcesCount}</span>
-            </div>
-          </div>
-          <div className="bg-[#11151A] border border-[#2A3038] rounded p-2.5 text-center">
-            <span className="text-[10px] text-[#707984] block uppercase">Domains</span>
-            <span className="text-xs font-bold text-[#F3F5F7]">{sharedSummary.uniqueDomainsCount}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Disagreement Callout (if any) */}
-      {consensus.disagreementSummary && consensus.overallConsensusStatus !== "UNANIMOUS" && (
-        <div className="bg-amber-950/20 border border-amber-800/40 rounded-lg p-3.5 flex items-center gap-3 text-xs text-amber-200 font-mono">
-          <ShieldAlert className="h-4 w-4 text-amber-400 shrink-0" />
-          <span>{consensus.disagreementSummary}</span>
         </div>
       )}
 
-      {/* Model Scoreboard Table */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between pb-1.5 border-b border-[#2A3038]">
-          <h4 className="text-xs font-mono font-bold text-[#F3F5F7] uppercase tracking-wider">
-            Model Verdict Scoreboard
-          </h4>
-          <span className="text-[11px] font-mono text-[#707984]">
-            Click a model to inspect evidence citations
-          </span>
+      {/* Central Jury Verdict & Consensus Scoreboard */}
+      <div className="p-5 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.35)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <div className="p-3.5 rounded-lg bg-[#0D0F12] border border-[rgba(212,175,90,0.35)] text-[#D4AF5A]">
+            <JuryIcon className="h-7 w-7" />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-[#D4AF5A] uppercase tracking-wider font-bold">
+                Jury Verdict
+              </span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded border uppercase ${juryVerdictTheme.badgeBg}`}>
+                {majorityVerdictKey}
+              </span>
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-bold text-[#F5F7FA]">
+              {majorityVerdictKey === "VERIFIED"
+                ? "Grounded Evidence Validated"
+                : majorityVerdictKey === "FALSE"
+                ? "Assertion Contradicted by Evidence"
+                : majorityVerdictKey === "MIXED"
+                ? "Conflicting Evidence Identified"
+                : "Insufficient Evidence"}
+            </h3>
+
+            <p className="text-xs text-[#D7DADF] font-sans">
+              Agreement status: <strong className="text-[#D4AF5A] uppercase">{consensus.overallConsensusStatus}</strong> ({consensus.agreementCount ?? totalModels} of {totalModels} models agree)
+            </p>
+          </div>
         </div>
 
-        <div className="border border-[#2A3038] rounded-lg overflow-hidden divide-y divide-[#2A3038] bg-[#080A0D]">
-          {modelVerdicts.length > 0 ? (
-            modelVerdicts.map((mv) => {
-              const isExpanded = expandedModelId === mv.modelId;
-              const vColor = VERDICT_COLORS[mv.overallVerdict] || VERDICT_COLORS.UNVERIFIED;
+        {/* Agreement Rate Meter */}
+        <div className="p-3.5 rounded-lg bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] space-y-2 min-w-[200px] shrink-0">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-[#8D949D]">Consensus Rate:</span>
+            <span className="font-bold text-[#F5F7FA]">{agreementRate}%</span>
+          </div>
+
+          <div className="w-full bg-[#131519] rounded-full h-2 overflow-hidden border border-[rgba(212,175,90,0.2)]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#C8A24A] via-[#E1C16E] to-[#D4AF5A]"
+              style={{ width: `${agreementRate}%` }}
+            />
+          </div>
+
+          <div className="flex justify-between text-[9px] text-[#8D949D]">
+            <span>Split (0%)</span>
+            <span>Unanimous (100%)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Model Evaluation Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {modelVerdicts.length > 0
+          ? modelVerdicts.map((mv: ModelJuryVerdict) => {
+              const meta = PROVIDER_METADATA[mv.provider] || {
+                name: mv.modelDisplayName || mv.provider,
+                org: "AI Provider",
+                modelName: mv.modelId,
+              };
+
+              const eTheme = VERDICT_THEMES[mv.overallVerdict] || VERDICT_THEMES.UNVERIFIED;
+              const EIcon = eTheme.icon;
+              const isExpanded = expandedModel === mv.provider;
 
               return (
-                <div key={mv.modelId} className="transition-colors hover:bg-[#161B21]/50">
-                  {/* Row Summary */}
-                  <div
-                    onClick={() => toggleModelExpand(mv.modelId)}
-                    className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5]">
-                        <Cpu className="h-4 w-4" />
-                      </div>
+                <div
+                  key={mv.provider}
+                  className="p-4 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.25)] hover:border-[rgba(212,175,90,0.55)] transition-all space-y-3 flex flex-col justify-between"
+                >
+                  <div className="space-y-3">
+                    {/* Model Header */}
+                    <div className="flex items-center justify-between pb-2 border-b border-[rgba(212,175,90,0.18)]">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs sm:text-sm font-semibold text-[#F3F5F7]">
-                            {mv.modelDisplayName}
-                          </span>
-                          <span className="text-[10px] font-mono text-[#707984] bg-[#161B21] px-2 py-0.5 rounded border border-[#2A3038]">
-                            {mv.modelId}
-                          </span>
+                        <div className="flex items-center gap-1.5">
+                          <Cpu className="h-3.5 w-3.5 text-[#D4AF5A]" />
+                          <h4 className="font-bold text-xs text-[#F5F7FA]">
+                            {meta.name}
+                          </h4>
                         </div>
-                        <span className="text-xs text-[#707984] font-mono block mt-0.5">
-                          {mv.validEvidenceReferencesCount} grounded citations evaluated
+                        <span className="text-[10px] text-[#8D949D] font-sans">
+                          {meta.org}
                         </span>
                       </div>
-                    </div>
 
-                    {/* Right Metrics */}
-                    <div className="flex items-center gap-3 self-end sm:self-auto font-mono">
                       <span
-                        className={`text-xs font-bold px-2.5 py-1 rounded border ${vColor.bg} ${vColor.text} ${vColor.border}`}
+                        className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase flex items-center gap-1 ${eTheme.badgeBg}`}
                       >
+                        <EIcon className="h-3 w-3" />
                         {mv.overallVerdict}
                       </span>
-                      <span className="text-xs font-medium text-[#A7AFB8] bg-[#161B21] px-2.5 py-1 rounded border border-[#2A3038]">
-                        {mv.overallConfidence} ({mv.quantitativeScore}%)
-                      </span>
-                      {isExpanded ? (
-                        <ChevronUp className="h-4 w-4 text-[#707984]" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4 text-[#707984]" />
-                      )}
                     </div>
-                  </div>
 
-                  {/* Expanded Detail View */}
-                  {isExpanded && (
-                    <div className="p-4 bg-[#11151A] border-t border-[#2A3038] space-y-4">
-                      {/* Claim Evaluations by this model */}
-                      <div className="space-y-3">
-                        <span className="text-xs font-mono font-semibold text-[#D9DEE5] uppercase block">
-                          Claim Evaluations & Grounded Citations
+                    {/* Quantitative Score */}
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[#8D949D]">Confidence Level:</span>
+                      <strong className="text-[#D4AF5A]">{mv.overallConfidence} ({mv.quantitativeScore}%)</strong>
+                    </div>
+
+                    {/* Claims Evaluated Breakdown */}
+                    {mv.claimVerdicts && mv.claimVerdicts.length > 0 && (
+                      <div className="space-y-1 pt-1">
+                        <span className="text-[10px] text-[#8D949D] uppercase block">
+                          Claims Evaluated ({mv.claimVerdicts.length}):
                         </span>
-
-                        {mv.claimVerdicts.map((cv) => {
-                          const cvColor = VERDICT_COLORS[cv.verdict] || VERDICT_COLORS.UNVERIFIED;
-
-                          const supportingSources = cv.supportingEvidenceIds
-                            .map((id) => evidenceMap.get(id))
-                            .filter((s): s is EvidenceItem => Boolean(s));
-
-                          const contradictingSources = cv.contradictingEvidenceIds
-                            .map((id) => evidenceMap.get(id))
-                            .filter((s): s is EvidenceItem => Boolean(s));
-
-                          return (
-                            <div
-                              key={cv.claimId}
-                              className="p-3.5 bg-[#080A0D] border border-[#2A3038] rounded-lg space-y-3 font-sans"
-                            >
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                          {mv.claimVerdicts.map((cv) => (
+                            <div key={cv.claimId} className="p-2 rounded bg-[#0D0F12] text-[11px] space-y-1">
                               <div className="flex items-center justify-between">
-                                <span className="text-xs font-mono text-[#707984]">
-                                  Claim ID: {cv.claimId}
-                                </span>
-                                <span
-                                  className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${cvColor.bg} ${cvColor.text} ${cvColor.border}`}
-                                >
-                                  {cv.verdict} • {cv.confidence}
-                                </span>
+                                <span className="font-bold text-[#D4AF5A]">{cv.claimId}</span>
+                                <span className="text-[10px] text-[#F5F7FA] font-semibold">{cv.verdict}</span>
                               </div>
-
-                              <p className="text-xs text-[#A7AFB8] leading-relaxed">
-                                {cv.reasoning}
-                              </p>
-
-                              {/* Supporting Evidence Citations */}
-                              {supportingSources.length > 0 && (
-                                <div className="space-y-1.5 pt-1">
-                                  <span className="text-[11px] font-mono font-semibold text-emerald-400 block">
-                                    Supporting Evidence Citations ({supportingSources.length}):
-                                  </span>
-                                  <div className="space-y-1">
-                                    {supportingSources.map((src) => (
-                                      <a
-                                        key={src.id}
-                                        href={src.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center justify-between p-2 rounded bg-[#161B21] border border-[#2A3038] hover:border-[#D9DEE5] text-xs text-[#F3F5F7] group transition-all"
-                                      >
-                                        <div className="flex items-center gap-2 truncate pr-2">
-                                          {src.sourceType === "youtube" ? (
-                                            <Play className="h-3.5 w-3.5 text-rose-400 fill-current shrink-0" />
-                                          ) : (
-                                            <Globe className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
-                                          )}
-                                          <span className="truncate group-hover:text-white">
-                                            {src.title}
-                                          </span>
-                                          <span className="text-[10px] text-[#707984] font-mono">
-                                            ({src.domain})
-                                          </span>
-                                        </div>
-                                        <ExternalLink className="h-3 w-3 text-[#707984] shrink-0 group-hover:text-white" />
-                                      </a>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Contradicting Evidence Citations */}
-                              {contradictingSources.length > 0 && (
-                                <div className="space-y-1.5 pt-1">
-                                  <span className="text-[11px] font-mono font-semibold text-rose-400 block">
-                                    Contradicting Evidence Citations ({contradictingSources.length}):
-                                  </span>
-                                  <div className="space-y-1">
-                                    {contradictingSources.map((src) => (
-                                      <a
-                                        key={src.id}
-                                        href={src.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center justify-between p-2 rounded bg-[#161B21] border border-[#2A3038] hover:border-rose-500/40 text-xs text-[#F3F5F7] group transition-all"
-                                      >
-                                        <div className="flex items-center gap-2 truncate pr-2">
-                                          {src.sourceType === "youtube" ? (
-                                            <Play className="h-3.5 w-3.5 text-rose-400 fill-current shrink-0" />
-                                          ) : (
-                                            <Globe className="h-3.5 w-3.5 text-[#38BDF8] shrink-0" />
-                                          )}
-                                          <span className="truncate group-hover:text-white">
-                                            {src.title}
-                                          </span>
-                                          <span className="text-[10px] text-[#707984] font-mono">
-                                            ({src.domain})
-                                          </span>
-                                        </div>
-                                        <ExternalLink className="h-3 w-3 text-[#707984] shrink-0 group-hover:text-white" />
-                                      </a>
-                                    ))}
-                                  </div>
-                                </div>
+                              {cv.reasoning && (
+                                <p className="text-[#D7DADF] font-sans text-[10px] line-clamp-2">
+                                  {cv.reasoning}
+                                </p>
                               )}
                             </div>
-                          );
-                        })}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+
+                  {/* Valid Evidence References Count */}
+                  <div className="pt-2 border-t border-[rgba(212,175,90,0.15)] flex items-center justify-between text-[10px] text-[#8D949D]">
+                    <span>Valid Citations: {mv.validEvidenceReferencesCount}</span>
+                    <span className="text-[#D4AF5A]">Grounded</span>
+                  </div>
                 </div>
               );
             })
-          ) : (
-            <div className="p-4 text-center text-xs text-[#707984] font-mono">
-              No participating model evaluations recorded.
-            </div>
-          )}
-        </div>
+          : consensus.participatingModels?.map((pm) => (
+              <div
+                key={pm.modelId}
+                className="p-4 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.25)] space-y-2"
+              >
+                <div className="flex items-center gap-2">
+                  <Cpu className="h-4 w-4 text-[#D4AF5A]" />
+                  <h4 className="font-bold text-xs text-[#F5F7FA]">{pm.displayName}</h4>
+                </div>
+                <span className="text-[10px] text-emerald-400">Juror Active</span>
+              </div>
+            ))}
       </div>
     </div>
   );

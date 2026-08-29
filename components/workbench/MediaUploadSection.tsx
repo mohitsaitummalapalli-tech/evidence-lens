@@ -1,17 +1,16 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { 
-  UploadCloud, 
-  Image as ImageIcon, 
-  Video, 
-  Trash2, 
-  RefreshCw, 
-  AlertTriangle,
-  FileCheck
-} from "lucide-react";
-import { INPUT_VALIDATION, SUPPORTED_MEDIA_TYPES } from "@/lib/constants";
 import { UploadedMediaPreview } from "@/types";
+import { INPUT_VALIDATION, SUPPORTED_MEDIA_TYPES } from "@/lib/constants";
+import {
+  Upload,
+  Image as ImageIcon,
+  Video,
+  X,
+  FileCheck,
+  AlertCircle,
+} from "lucide-react";
 
 interface MediaUploadSectionProps {
   media: UploadedMediaPreview | null;
@@ -24,48 +23,29 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
   setMedia,
   disabled = false,
 }) => {
+  const [dragOver, setDragOver] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [dragActive, setDragActive] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
 
   const processFile = (file: File) => {
-    setErrorMessage(null);
+    setErrorMsg(null);
 
     const isImage = INPUT_VALIDATION.allowedImageMimeTypes.includes(file.type);
     const isVideo = INPUT_VALIDATION.allowedVideoMimeTypes.includes(file.type);
 
     if (!isImage && !isVideo) {
-      setErrorMessage(
-        `Unsupported file type '${file.type || file.name.split(".").pop()}'. Allowed: JPG, PNG, WEBP, GIF, MP4, WEBM, MOV.`
-      );
+      setErrorMsg("Unsupported format. Please upload JPG, PNG, WEBP, GIF, or MP4/WEBM/MOV video.");
       return;
     }
 
     if (isImage && file.size > INPUT_VALIDATION.maxImageSizeBytes) {
-      const maxMb = INPUT_VALIDATION.maxImageSizeBytes / (1024 * 1024);
-      setErrorMessage(
-        `Image exceeds the ${maxMb}MB size limit (File size: ${formatFileSize(file.size)}).`
-      );
+      setErrorMsg(`Image exceeds maximum size of ${INPUT_VALIDATION.maxImageSizeBytes / (1024 * 1024)}MB.`);
       return;
     }
 
     if (isVideo && file.size > INPUT_VALIDATION.maxVideoSizeBytes) {
-      const maxMb = INPUT_VALIDATION.maxVideoSizeBytes / (1024 * 1024);
-      setErrorMessage(
-        `Video exceeds the ${maxMb}MB size limit (File size: ${formatFileSize(file.size)}).`
-      );
+      setErrorMsg(`Video exceeds maximum size of ${INPUT_VALIDATION.maxVideoSizeBytes / (1024 * 1024)}MB.`);
       return;
-    }
-
-    // Clean up previous preview URL
-    if (media?.previewUrl) {
-      URL.revokeObjectURL(media.previewUrl);
     }
 
     const previewUrl = URL.createObjectURL(file);
@@ -74,8 +54,8 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
       previewUrl,
       type: isImage ? "image" : "video",
       filename: file.name,
-      mimeType: file.type,
       sizeBytes: file.size,
+      mimeType: file.type,
     });
   };
 
@@ -85,21 +65,9 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
     }
   };
 
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (disabled) return;
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+    setDragOver(false);
     if (disabled) return;
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
@@ -107,43 +75,37 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
     }
   };
 
-  const handleRemove = () => {
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (media?.previewUrl) {
       URL.revokeObjectURL(media.previewUrl);
     }
     setMedia(null);
-    setErrorMessage(null);
+    setErrorMsg(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  const handleReplaceClick = () => {
-    if (disabled) return;
-    fileInputRef.current?.click();
-  };
-
   return (
-    <div className="bg-[#11151A] border border-[#2A3038] rounded-lg p-5 space-y-4 transition-all">
-      <div className="flex items-center justify-between">
+    <div id="media-upload-section" className="p-5 sm:p-6 space-y-4 font-mono">
+      {/* Header with Gold Step Number */}
+      <div className="flex items-center justify-between border-b border-[rgba(212,175,90,0.2)] pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5]">
-            <UploadCloud className="h-4 w-4" />
+          <div className="h-6 w-6 rounded bg-[#131519] border border-[rgba(212,175,90,0.4)] flex items-center justify-center text-[11px] font-bold text-[#D4AF5A]">
+            02
           </div>
-          <div>
-            <h2 className="text-xs font-mono font-bold text-[#F3F5F7] tracking-wider uppercase">
-              Multimodal Media <span className="text-[#707984] font-normal">(Optional)</span>
-            </h2>
-            <p className="text-[11px] text-[#A7AFB8]">
-              Attach photo or video for provenance & visual verification
-            </p>
-          </div>
+          <h2 className="text-xs font-bold text-[#F5F7FA] tracking-wider uppercase">
+            Multimodal Evidence
+          </h2>
         </div>
-        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161B21] text-[#38BDF8] border border-[#2A3038]">
-          Exact Match Engine
+
+        <span className="text-[10px] text-[#8D949D] font-sans">
+          Image or Video Provenance Match
         </span>
       </div>
 
+      {/* Hidden native input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -154,98 +116,99 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
         id="media-file-input"
       />
 
+      {/* Dropzone Container */}
       {!media ? (
         <div
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
+          onDragOver={(e) => {
+            e.preventDefault();
+            if (!disabled) setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
-          onClick={() => !disabled && fileInputRef.current?.click()}
-          className={`border border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all bg-[#080A0D] ${
-            dragActive
-              ? "border-[#38BDF8] bg-[#161B21]"
-              : "border-[#2A3038] hover:border-[#B8C0C9] hover:bg-[#161B21]/50"
+          onClick={() => {
+            if (!disabled) fileInputRef.current?.click();
+          }}
+          className={`h-48 rounded-lg border border-dashed flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all ${
+            dragOver
+              ? "bg-[#131519] border-[#D4AF5A]"
+              : "bg-[#050607] border-[rgba(212,175,90,0.25)] hover:border-[rgba(212,175,90,0.55)]"
           } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          <div className="p-2.5 rounded-full bg-[#161B21] text-[#B8C0C9] border border-[#2A3038]">
-            <UploadCloud className="h-5 w-5" />
+          <div className="p-3 rounded-full bg-[#0D0F12] border border-[rgba(212,175,90,0.3)] text-[#D4AF5A] mb-2">
+            <Upload className="h-5 w-5" />
           </div>
-          <div className="text-center space-y-1">
-            <p className="text-xs font-medium text-[#F3F5F7]">
-              Drop photo or video here, or <span className="text-[#38BDF8] underline">browse files</span>
-            </p>
-            <p className="text-[11px] font-mono text-[#707984]">
-              JPG, PNG, WEBP, GIF (10MB) • MP4, WEBM, MOV (50MB)
-            </p>
+
+          <span className="text-xs font-semibold text-[#F5F7FA] font-sans">
+            Drop image or video here, or <span className="text-[#D4AF5A] underline">browse</span>
+          </span>
+
+          <p className="text-[11px] text-[#8D949D] font-sans mt-1">
+            PNG, JPG, WEBP, GIF (up to 15MB) • MP4, WEBM, MOV (up to 50MB)
+          </p>
+
+          <div className="flex items-center gap-2 mt-3 text-[10px] text-[#38BDF8]">
+            <span className="px-2 py-0.5 rounded bg-[#0D0F12] border border-[#38BDF8]/30 flex items-center gap-1">
+              <ImageIcon className="h-3 w-3" /> Image Reverse Search
+            </span>
+            <span className="px-2 py-0.5 rounded bg-[#0D0F12] border border-[#38BDF8]/30 flex items-center gap-1">
+              <Video className="h-3 w-3" /> Video Footage Match
+            </span>
           </div>
         </div>
       ) : (
-        <div className="bg-[#161B21] border border-[#2A3038] rounded-md p-3.5 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-mono text-[#A7AFB8]">
-              {media.type === "image" ? (
-                <ImageIcon className="h-4 w-4 text-[#38BDF8]" />
-              ) : (
-                <Video className="h-4 w-4 text-[#38BDF8]" />
-              )}
-              <span className="font-semibold text-[#F3F5F7] truncate max-w-[200px]">
-                {media.filename}
-              </span>
-              <span className="text-[#707984]">({formatFileSize(media.sizeBytes)})</span>
+        /* Attached Media Preview */
+        <div className="h-48 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.35)] p-3.5 flex flex-col justify-between relative overflow-hidden">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <div className="h-16 w-20 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] overflow-hidden flex items-center justify-center shrink-0">
+                {media.type === "image" ? (
+                  <img
+                    src={media.previewUrl}
+                    alt="Upload preview"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <Video className="h-6 w-6 text-[#38BDF8]" />
+                )}
+              </div>
+
+              <div className="space-y-0.5 truncate">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#F5F7FA] truncate">
+                  <FileCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <span className="truncate">{media.filename}</span>
+                </div>
+                <div className="text-[10px] text-[#8D949D]">
+                  {(media.sizeBytes / (1024 * 1024)).toFixed(2)} MB • {media.mimeType}
+                </div>
+                <span className="inline-block text-[9px] px-1.5 py-0.2 rounded bg-[#0D0F12] border border-[#38BDF8]/40 text-[#38BDF8] uppercase font-bold">
+                  {media.type}
+                </span>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleReplaceClick}
-                disabled={disabled}
-                className="p-1.5 rounded hover:bg-[#1B2027] text-[#A7AFB8] hover:text-[#F3F5F7] transition-colors"
-                title="Replace Media"
-              >
-                <RefreshCw className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleRemove}
-                disabled={disabled}
-                className="p-1.5 rounded hover:bg-[#1B2027] text-rose-400 hover:text-rose-300 transition-colors"
-                title="Remove Media"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleClear}
+              disabled={disabled}
+              className="p-1 rounded bg-[#0D0F12] hover:bg-[#131519] border border-[rgba(212,175,90,0.3)] text-[#8D949D] hover:text-[#F5F7FA] transition-colors"
+              title="Remove attachment"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
-          {/* Media Preview Frame */}
-          <div className="relative rounded overflow-hidden bg-[#080A0D] border border-[#2A3038] max-h-48 flex items-center justify-center">
-            {media.type === "image" ? (
-              <img
-                src={media.previewUrl}
-                alt="Upload preview"
-                className="max-h-44 object-contain w-auto mx-auto"
-              />
-            ) : (
-              <video
-                src={media.previewUrl}
-                controls
-                className="max-h-44 w-full object-contain"
-              />
-            )}
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] font-mono text-[#707984] pt-1">
-            <div className="flex items-center gap-1.5 text-[#A7AFB8]">
-              <FileCheck className="h-3.5 w-3.5 text-emerald-400" />
-              <span>Multimodal asset registered for cross-domain matching</span>
-            </div>
+          <div className="text-[10px] text-[#D7DADF] bg-[#0D0F12] p-2 rounded border border-[rgba(212,175,90,0.2)] flex items-center justify-between font-sans">
+            <span>Attachment queued for exact match & reverse image search.</span>
+            <span className="text-[#D4AF5A] font-mono font-bold">READY</span>
           </div>
         </div>
       )}
 
-      {errorMessage && (
-        <div className="p-3 rounded bg-rose-950/20 border border-rose-800/40 text-xs text-rose-300 flex items-start gap-2">
-          <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
-          <span>{errorMessage}</span>
+      {/* Error display */}
+      {errorMsg && (
+        <div className="flex items-center gap-2 p-2.5 rounded bg-[#050607] border border-rose-800/50 text-rose-300 text-xs font-sans">
+          <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+          <span>{errorMsg}</span>
         </div>
       )}
     </div>

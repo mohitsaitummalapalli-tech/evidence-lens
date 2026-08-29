@@ -18,230 +18,168 @@ interface EvidencePanelProps {
 
 export const EvidencePanel: React.FC<EvidencePanelProps> = ({
   evidence,
-  isSearching = false
 }) => {
   const [selectedClaimFilter, setSelectedClaimFilter] = useState<string>("ALL");
   const [selectedStanceFilter, setSelectedStanceFilter] = useState<string>("ALL");
   const [selectedSourceTypeFilter, setSelectedSourceTypeFilter] = useState<string>("ALL");
-  const [viewMode, setViewMode] = useState<"HIERARCHY" | "GRID">("HIERARCHY");
+  const [viewMode, setViewMode] = useState<"grouped" | "grid">("grid");
 
-  // Determine evidence state
-  const evidenceStatus: "SEARCHING EVIDENCE" | "EVIDENCE FOUND" | "NO EVIDENCE FOUND" | "EVIDENCE ERROR" = useMemo(() => {
-    if (isSearching) return "SEARCHING EVIDENCE";
-    if (evidence.status === "error" || Boolean(evidence.error)) return "EVIDENCE ERROR";
-    if (evidence.totalSourcesFound === 0) return "NO EVIDENCE FOUND";
-    return "EVIDENCE FOUND";
-  }, [isSearching, evidence.status, evidence.error, evidence.totalSourcesFound]);
+  const sources = useMemo(() => evidence.allSources || [], [evidence.allSources]);
 
-  // Compute Source Diversity & Consensus via deterministic service
-  const diversitySummary = useMemo(() => {
-    return sourceQualityService.calculateSourceDiversity(evidence.allSources);
-  }, [evidence.allSources]);
+  // Calculate high-level metrics
+  const uniqueDomainsCount = useMemo(() => {
+    return new Set(sources.map((s) => s.domain)).size;
+  }, [sources]);
 
-  // Distinct claim IDs
-  const claimIds = useMemo(() => {
-    return evidence.bundles.map((b) => b.claimId);
-  }, [evidence.bundles]);
+  const sourceDiversity = useMemo(() => {
+    return sourceQualityService.calculateSourceDiversity(sources);
+  }, [sources]);
 
-  // Filtered bundles for hierarchical view
-  const filteredBundles = useMemo(() => {
-    return evidence.bundles
-      .filter((bundle) => selectedClaimFilter === "ALL" || bundle.claimId === selectedClaimFilter)
-      .map((bundle) => {
-        const filteredSources = bundle.sources.filter((src) => {
-          const matchesStance = selectedStanceFilter === "ALL" || src.stance === selectedStanceFilter;
-          const matchesType = selectedSourceTypeFilter === "ALL" || (src.sourceType || "web") === selectedSourceTypeFilter;
-          return matchesStance && matchesType;
-        });
-        return {
-          ...bundle,
-          sources: filteredSources,
-        };
-      });
-  }, [evidence.bundles, selectedClaimFilter, selectedStanceFilter, selectedSourceTypeFilter]);
-
-  // Flattened filtered sources for grid view
-  const filteredAllSources = useMemo(() => {
-    return evidence.allSources.filter((src) => {
-      const matchesClaim = selectedClaimFilter === "ALL" || src.claimId === selectedClaimFilter;
-      const matchesStance = selectedStanceFilter === "ALL" || src.stance === selectedStanceFilter;
-      const matchesType = selectedSourceTypeFilter === "ALL" || (src.sourceType || "web") === selectedSourceTypeFilter;
-      return matchesClaim && matchesStance && matchesType;
+  // Extract all available claim IDs for filtering
+  const availableClaimIds = useMemo(() => {
+    const ids = new Set<string>();
+    sources.forEach((s) => {
+      if (s.claimId) ids.add(s.claimId);
     });
-  }, [evidence.allSources, selectedClaimFilter, selectedStanceFilter, selectedSourceTypeFilter]);
+    return Array.from(ids);
+  }, [sources]);
+
+  // Filter sources
+  const filteredSources = useMemo(() => {
+    return sources.filter((item) => {
+      if (selectedClaimFilter !== "ALL" && item.claimId !== selectedClaimFilter) {
+        return false;
+      }
+      if (selectedStanceFilter !== "ALL" && item.stance !== selectedStanceFilter) {
+        return false;
+      }
+      if (selectedSourceTypeFilter !== "ALL" && item.sourceType !== selectedSourceTypeFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [sources, selectedClaimFilter, selectedStanceFilter, selectedSourceTypeFilter]);
 
   return (
-    <div id="evidence-panel" className="bg-[#11151A] border border-[#2A3038] rounded-lg p-5 sm:p-6 space-y-6">
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#2A3038] gap-3">
+    <div id="evidence-panel" className="p-5 sm:p-6 space-y-5 font-mono">
+      {/* Header & High-Level Source Metrics */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[rgba(212,175,90,0.2)]">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded bg-[#161B21] border border-[#2A3038] text-[#D9DEE5]">
+          <div className="p-2.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.35)] text-[#D4AF5A]">
             <Database className="h-4 w-4" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-xs font-mono font-bold text-[#F3F5F7] tracking-wider uppercase">
-                Grounded Evidence Sources
-              </h3>
-
-              {/* State Badges */}
-              <span
-                className={`text-[10px] font-mono px-2 py-0.5 rounded font-semibold uppercase border ${
-                  evidenceStatus === "EVIDENCE FOUND"
-                    ? "bg-emerald-950/30 text-emerald-300 border-emerald-800/40"
-                    : evidenceStatus === "SEARCHING EVIDENCE"
-                    ? "bg-[#161B21] text-[#D9DEE5] border-[#343B45] animate-pulse"
-                    : evidenceStatus === "EVIDENCE ERROR"
-                    ? "bg-rose-950/30 text-rose-300 border-rose-800/40"
-                    : "bg-amber-950/30 text-amber-300 border-amber-800/40"
-                }`}
-              >
-                {evidenceStatus}
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-xs font-bold text-[#F5F7FA] tracking-wider uppercase">
+                Grounded Source Intelligence
+              </h2>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.3)] text-[#D4AF5A] font-semibold">
+                {sources.length} Sources Found
               </span>
             </div>
-            <p className="text-xs text-[#A7AFB8] mt-0.5 font-sans">
-              {evidence.totalSourcesFound > 0
-                ? `${evidence.totalSourcesFound} external sources indexed across ${diversitySummary.uniqueDomainCount} independent domains.`
-                : "No external evidence sources returned for the current search parameters."}
+            <p className="text-xs text-[#8D949D] font-sans mt-0.5">
+              Primary citations retrieved from open web, academic repositories, and video archives
             </p>
           </div>
         </div>
 
-        {/* View Switcher */}
-        <div className="hidden md:flex items-center p-0.5 rounded bg-[#080A0D] border border-[#2A3038] text-xs font-mono">
-          <button
-            type="button"
-            onClick={() => setViewMode("HIERARCHY")}
-            className={`px-3 py-1 rounded flex items-center gap-1.5 transition-all ${
-              viewMode === "HIERARCHY"
-                ? "bg-[#161B21] text-white border border-[#343B45] font-semibold"
-                : "text-[#707984] hover:text-[#F3F5F7]"
-            }`}
-            title="Group by Claim"
-          >
-            <Layers className="h-3.5 w-3.5 text-[#B8C0C9]" />
-            <span>Grouped</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode("GRID")}
-            className={`px-3 py-1 rounded flex items-center gap-1.5 transition-all ${
-              viewMode === "GRID"
-                ? "bg-[#161B21] text-white border border-[#343B45] font-semibold"
-                : "text-[#707984] hover:text-[#F3F5F7]"
-            }`}
-            title="Flat Grid View"
-          >
-            <LayoutGrid className="h-3.5 w-3.5 text-[#B8C0C9]" />
-            <span>All Sources ({evidence.allSources.length})</span>
-          </button>
+        {/* Intelligence Scoreboard */}
+        <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#D7DADF]">
+          <div className="px-3 py-1 rounded bg-[#050607] border border-[rgba(212,175,90,0.25)]">
+            <span className="text-[#8D949D]">Domains: </span>
+            <strong className="text-[#D4AF5A]">{uniqueDomainsCount}</strong>
+          </div>
+          <div className="px-3 py-1 rounded bg-[#050607] border border-[rgba(212,175,90,0.25)]">
+            <span className="text-[#8D949D]">Diversity: </span>
+            <strong className="text-emerald-400">{sourceDiversity.diversityLevel}</strong>
+          </div>
         </div>
       </div>
 
-      {/* Filter Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded bg-[#080A0D] border border-[#2A3038] text-xs font-mono">
+      {/* Filter Toolbar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.2)] text-xs">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[#707984] flex items-center gap-1 font-semibold text-[11px]">
-            <Filter className="h-3.5 w-3.5 text-[#B8C0C9]" />
-            FILTERS:
+          <span className="text-[#8D949D] flex items-center gap-1 text-[11px]">
+            <Filter className="h-3 w-3 text-[#D4AF5A]" /> Filters:
           </span>
-
-          {/* Claim Filter */}
-          {claimIds.length > 1 && (
-            <select
-              value={selectedClaimFilter}
-              onChange={(e) => setSelectedClaimFilter(e.target.value)}
-              className="bg-[#161B21] border border-[#2A3038] rounded px-2.5 py-1 text-xs text-[#F3F5F7] focus:outline-none focus:border-[#D9DEE5]"
-            >
-              <option value="ALL">All Claims ({evidence.bundles.length})</option>
-              {claimIds.map((cid) => (
-                <option key={cid} value={cid}>
-                  Claim {cid}
-                </option>
-              ))}
-            </select>
-          )}
 
           {/* Stance Filter */}
           <select
             value={selectedStanceFilter}
             onChange={(e) => setSelectedStanceFilter(e.target.value)}
-            className="bg-[#161B21] border border-[#2A3038] rounded px-2.5 py-1 text-xs text-[#F3F5F7] focus:outline-none focus:border-[#D9DEE5]"
+            className="bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] focus:border-[#D4AF5A] text-[#F5F7FA] rounded px-2.5 py-1 text-xs focus:outline-none"
           >
             <option value="ALL">All Stances</option>
-            <option value="SUPPORTS">Supports Only</option>
-            <option value="CONTRADICTS">Contradicts Only</option>
-            <option value="MIXED">Mixed Only</option>
-            <option value="INSUFFICIENT">Insufficient Only</option>
+            <option value="SUPPORTS">Supports</option>
+            <option value="CONTRADICTS">Contradicts</option>
+            <option value="NEUTRAL">Neutral / Referred</option>
           </select>
 
           {/* Source Type Filter */}
           <select
             value={selectedSourceTypeFilter}
             onChange={(e) => setSelectedSourceTypeFilter(e.target.value)}
-            className="bg-[#161B21] border border-[#2A3038] rounded px-2.5 py-1 text-xs text-[#F3F5F7] focus:outline-none focus:border-[#D9DEE5]"
+            className="bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] focus:border-[#D4AF5A] text-[#F5F7FA] rounded px-2.5 py-1 text-xs focus:outline-none"
           >
             <option value="ALL">All Media Types</option>
-            <option value="web">Web Sources</option>
-            <option value="youtube">YouTube Videos</option>
+            <option value="web">Web Articles</option>
+            <option value="youtube">YouTube / Video</option>
             <option value="academic">Academic Papers</option>
-            <option value="video_portal">Video Portals</option>
           </select>
+
+          {/* Claim Filter (if multiple) */}
+          {availableClaimIds.length > 1 && (
+            <select
+              value={selectedClaimFilter}
+              onChange={(e) => setSelectedClaimFilter(e.target.value)}
+              className="bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] focus:border-[#D4AF5A] text-[#F5F7FA] rounded px-2.5 py-1 text-xs focus:outline-none"
+            >
+              <option value="ALL">All Atomic Claims</option>
+              {availableClaimIds.map((cid) => (
+                <option key={cid} value={cid}>Claim {cid}</option>
+              ))}
+            </select>
+          )}
         </div>
 
-        {/* Domain Count Tag */}
-        <div className="text-[11px] text-[#707984]">
-          Showing <span className="text-[#F3F5F7] font-bold">{filteredAllSources.length}</span> of {evidence.totalSourcesFound} sources
+        {/* View mode toggle */}
+        <div className="flex items-center gap-1 self-end sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setViewMode("grid")}
+            className={`p-1.5 rounded transition-colors ${
+              viewMode === "grid"
+                ? "bg-[#131519] text-[#D4AF5A] border border-[rgba(212,175,90,0.35)]"
+                : "text-[#8D949D] hover:text-[#F5F7FA]"
+            }`}
+            title="Grid View"
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("grouped")}
+            className={`p-1.5 rounded transition-colors ${
+              viewMode === "grouped"
+                ? "bg-[#131519] text-[#D4AF5A] border border-[rgba(212,175,90,0.35)]"
+                : "text-[#8D949D] hover:text-[#F5F7FA]"
+            }`}
+            title="Grouped View"
+          >
+            <Layers className="h-3.5 w-3.5" />
+          </button>
         </div>
       </div>
 
-      {/* Sources Display Body */}
-      {evidence.totalSourcesFound === 0 ? (
-        <div className="p-8 text-center bg-[#080A0D] border border-[#2A3038] rounded-lg space-y-2">
-          <p className="text-xs font-mono text-[#A7AFB8]">
-            No evidence sources currently available for this assertion.
-          </p>
-        </div>
-      ) : viewMode === "HIERARCHY" ? (
-        <div className="space-y-6">
-          {filteredBundles.map((bundle) => {
-            if (bundle.sources.length === 0 && selectedClaimFilter !== "ALL") return null;
-
-            return (
-              <div key={bundle.claimId} className="space-y-3">
-                <div className="flex items-center justify-between pb-1.5 border-b border-[#2A3038]">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-[#161B21] border border-[#2A3038] text-[#F3F5F7] font-mono font-bold text-xs">
-                      {bundle.claimId}
-                    </span>
-                    <span className="text-xs font-semibold text-[#F3F5F7] font-sans line-clamp-1">
-                      &ldquo;{bundle.claimText}&rdquo;
-                    </span>
-                  </div>
-                  <span className="text-[11px] font-mono text-[#707984]">
-                    {bundle.sources.length} sources
-                  </span>
-                </div>
-
-                {bundle.sources.length === 0 ? (
-                  <div className="p-4 rounded bg-[#080A0D] border border-[#2A3038] text-xs font-mono text-[#707984]">
-                    No sources match the selected filters for Claim {bundle.claimId}.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {bundle.sources.map((src) => (
-                      <EvidenceCard key={src.id} evidence={src} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {/* Sources Grid / List */}
+      {filteredSources.length === 0 ? (
+        <div className="py-8 text-center bg-[#050607] border border-[rgba(212,175,90,0.2)] rounded-lg text-xs text-[#8D949D]">
+          No evidence sources match the selected filter criteria.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredAllSources.map((src) => (
-            <EvidenceCard key={src.id} evidence={src} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filteredSources.map((item) => (
+            <EvidenceCard key={item.id} item={item} />
           ))}
         </div>
       )}
