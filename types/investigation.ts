@@ -6,6 +6,9 @@
 import { Claim, ClaimExtractionResult } from "./claim";
 import { EvidenceRetrievalResult, EvidenceSnippet, MediaItem } from "./evidence";
 import { InvestigationVerificationResult } from "./verification";
+import { ImageProvenanceResult } from "./imageProvenance";
+import { MultiAIConsensusResult } from "./consensus";
+import { MultimodalMediaMatchSummary } from "./mediaMatch";
 
 export type InvestigationStatus = 
   | "draft"
@@ -104,10 +107,6 @@ export interface InvestigationInputPayload {
   };
 }
 
-import { ImageProvenanceResult } from "./imageProvenance";
-import { MultiAIConsensusResult } from "./consensus";
-import { MultimodalMediaMatchSummary } from "./mediaMatch";
-
 export interface InvestigationInputResponse {
   success: boolean;
   stage: "input_received" | "claim_extracted" | "evidence_retrieved" | "verified";
@@ -132,6 +131,7 @@ export interface InvestigationInputResponse {
   verification?: InvestigationVerificationResult;
   imageProvenance?: ImageProvenanceResult;
   consensus?: MultiAIConsensusResult;
+  multiAIConsensus?: MultiAIConsensusResult;
   mediaMatch?: MultimodalMediaMatchSummary;
   nextStage: string;
 }

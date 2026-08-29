@@ -302,11 +302,11 @@ export const EvidenceLensWorkbench: React.FC = () => {
           </div>
         )}
 
-        {/* 2. MULTI-AI EVIDENCE CONSENSUS (Phase 12 / 14 AI Evidence Jury) */}
-        {uiState === "INPUT_RECEIVED" && apiResponse?.consensus && (activeViewTab === "ALL" || activeViewTab === "CONSENSUS") && (
+        {/* 2. MULTI-AI EVIDENCE CONSENSUS (Phase 12 / 14 / 16 AI Evidence Jury) */}
+        {uiState === "INPUT_RECEIVED" && (apiResponse?.consensus || apiResponse?.multiAIConsensus) && (activeViewTab === "ALL" || activeViewTab === "CONSENSUS") && (
           <DepthCard floatingPhase="none" enableTilt={false}>
             <MultiAIConsensusPanel
-              consensus={apiResponse.consensus}
+              consensus={apiResponse.consensus || apiResponse.multiAIConsensus!}
               evidence={apiResponse.evidence}
             />
           </DepthCard>

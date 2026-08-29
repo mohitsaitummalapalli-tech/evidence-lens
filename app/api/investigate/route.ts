@@ -330,6 +330,7 @@ export async function POST(req: NextRequest) {
       verification: verificationResult,
       imageProvenance: imageProvenanceResult,
       consensus: consensusResult,
+      multiAIConsensus: consensusResult,
       mediaMatch: mediaMatchResult,
       nextStage: "Phase 14: Exact Multimodal Media Match",
     };

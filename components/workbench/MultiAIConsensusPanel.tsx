@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import {
   MultiAIConsensusResult,
   EvidenceRetrievalResult,
-  ModelJuryVerdict,
 } from "@/types";
 import { GeminiLogo, OpenAILogo, AnthropicLogo } from "./ProviderLogos";
 import {
@@ -234,11 +233,10 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
                       href={src.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`p-1.5 rounded shrink-0 border ${
-                        isYt
+                      className={`p-1.5 rounded shrink-0 border ${isYt
                           ? "bg-rose-950/30 text-rose-300 hover:text-white border-rose-700/50"
                           : "bg-[#050607] text-[#D4AF5A] hover:text-white border-[rgba(212,175,90,0.25)]"
-                      }`}
+                        }`}
                       title={isYt ? "Watch Video" : "Open Source"}
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
@@ -272,10 +270,10 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
               {majorityVerdictKey === "VERIFIED"
                 ? "Grounded Evidence Validated"
                 : majorityVerdictKey === "FALSE"
-                ? "Assertion Contradicted by Evidence"
-                : majorityVerdictKey === "MIXED"
-                ? "Conflicting Evidence Identified"
-                : "Insufficient Evidence"}
+                  ? "Assertion Contradicted by Evidence"
+                  : majorityVerdictKey === "MIXED"
+                    ? "Conflicting Evidence Identified"
+                    : "Insufficient Evidence"}
             </h3>
 
             <p className="text-xs text-[#D7DADF] font-sans">
@@ -315,288 +313,340 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
 
       {/* INDIVIDUAL MODEL CARDS (Gemini • OpenAI • Claude) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {modelVerdicts.length > 0
-          ? modelVerdicts.map((mv: ModelJuryVerdict) => {
-              const meta = PROVIDER_METADATA[mv.provider] || {
-                name: mv.modelDisplayName || mv.provider,
-                org: mv.modelId,
-                icon: Users,
-              };
-              const ProviderIcon = meta.icon;
+        {[
+          { provider: "google" as const, name: "Google Gemini 2.5 Flash", org: "Google DeepMind" },
+          { provider: "openai" as const, name: "OpenAI GPT-4o Mini", org: "OpenAI" },
+          { provider: "anthropic" as const, name: "Anthropic Claude 3.5 Haiku", org: "Anthropic" },
+        ].map((seat) => {
+          const mv = modelVerdicts.find((m) => m.provider === seat.provider);
+          const meta = PROVIDER_METADATA[seat.provider] || {
+            name: seat.name,
+            org: seat.org,
+            icon: Users,
+          };
+          const ProviderIcon = meta.icon;
+          const provStatus = consensus.providerStatuses?.find((s) => s.provider === seat.provider);
 
-              const eTheme = VERDICT_THEMES[mv.overallVerdict] || VERDICT_THEMES.UNVERIFIED;
-              const EIcon = eTheme.icon;
+          if (mv) {
+            const eTheme = VERDICT_THEMES[mv.overallVerdict] || VERDICT_THEMES.UNVERIFIED;
+            const EIcon = eTheme.icon;
 
-              // Calculate source type breakdown for citations in this model
-              let citedWebCount = 0;
-              let citedYtCount = 0;
-              let citedAcadCount = 0;
+            // Calculate source type breakdown for citations in this model
+            let citedWebCount = 0;
+            let citedYtCount = 0;
+            let citedAcadCount = 0;
 
-              for (const cv of mv.claimVerdicts || []) {
-                const allCited = [
-                  ...(cv.supportingEvidenceIds || []),
-                  ...(cv.contradictingEvidenceIds || []),
-                ];
-                for (const cid of allCited) {
-                  const s = sourceById.get(cid);
-                  if (s) {
-                    if (s.sourceType === "youtube" || s.domain.includes("youtube.com")) {
-                      citedYtCount++;
-                    } else if (s.sourceType === "academic") {
-                      citedAcadCount++;
-                    } else {
-                      citedWebCount++;
-                    }
+            for (const cv of mv.claimVerdicts || []) {
+              const allCited = [
+                ...(cv.supportingEvidenceIds || []),
+                ...(cv.contradictingEvidenceIds || []),
+              ];
+              for (const cid of allCited) {
+                const s = sourceById.get(cid);
+                if (s) {
+                  if (s.sourceType === "youtube" || s.domain.includes("youtube.com")) {
+                    citedYtCount++;
+                  } else if (s.sourceType === "academic") {
+                    citedAcadCount++;
+                  } else {
+                    citedWebCount++;
                   }
                 }
               }
+            }
 
-              return (
-                <div
-                  key={mv.provider}
-                  className="p-4 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.25)] hover:border-[rgba(212,175,90,0.55)] transition-all space-y-3 flex flex-col justify-between"
-                >
-                  <div className="space-y-3">
-                    {/* Model Header with Brand Logo */}
-                    <div className="flex items-center justify-between pb-2 border-b border-[rgba(212,175,90,0.18)]">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.3)] text-[#D4AF5A]">
-                          <ProviderIcon className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-xs text-[#F5F7FA]">
-                            {meta.name}
-                          </h4>
-                          <span className="text-[10px] text-[#8D949D] font-sans">
-                            {meta.org}
-                          </span>
-                        </div>
+            return (
+              <div
+                key={seat.provider}
+                className="p-4 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.35)] hover:border-[rgba(212,175,90,0.65)] transition-all space-y-3 flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  {/* Model Header with Brand Logo */}
+                  <div className="flex items-center justify-between pb-2 border-b border-[rgba(212,175,90,0.18)]">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.3)] text-[#D4AF5A]">
+                        <ProviderIcon className="h-4 w-4" />
                       </div>
-
-                      <span
-                        className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase flex items-center gap-1 ${eTheme.badgeBg}`}
-                      >
-                        <EIcon className="h-3 w-3" />
-                        {mv.overallVerdict}
-                      </span>
-                    </div>
-
-                    {/* Quantitative Score & Confidence */}
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-[#8D949D]">Confidence:</span>
-                      <strong className="text-[#D4AF5A]">{mv.overallConfidence} ({mv.quantitativeScore}%)</strong>
-                    </div>
-
-                    {/* Citations Breakdown Badge */}
-                    <div className="p-2 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.15)] flex items-center justify-between text-[10px] text-[#8D949D]">
-                      <span className="font-bold text-[#D7DADF] uppercase">Citations:</span>
-                      <div className="flex items-center gap-2 font-bold">
-                        <span className="text-[#D4AF5A]">WEB {citedWebCount}</span>
-                        <span className="text-rose-400">YOUTUBE {citedYtCount}</span>
-                        {citedAcadCount > 0 && <span className="text-sky-400">ACADEMIC {citedAcadCount}</span>}
-                      </div>
-                    </div>
-
-                    {/* Claims Evaluated & Reasoning */}
-                    {mv.claimVerdicts && mv.claimVerdicts.length > 0 && (
-                      <div className="space-y-2 pt-1">
-                        <span className="text-[10px] text-[#8D949D] uppercase block font-bold">
-                          Claim Evaluations ({mv.claimVerdicts.length}):
+                      <div>
+                        <h4 className="font-bold text-xs text-[#F5F7FA]">
+                          {meta.name}
+                        </h4>
+                        <span className="text-[10px] text-[#8D949D] font-sans">
+                          {meta.org}
                         </span>
-                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                          {mv.claimVerdicts.map((cv) => {
-                            const cvTheme = VERDICT_THEMES[cv.verdict] || VERDICT_THEMES.UNVERIFIED;
-                            const evalKey = `${mv.provider}_${cv.claimId}`;
-                            const isExpanded = Boolean(expandedEvals[evalKey]);
+                      </div>
+                    </div>
 
-                            const supportingIds = cv.supportingEvidenceIds || [];
-                            const contradictingIds = cv.contradictingEvidenceIds || [];
+                    <span
+                      className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase flex items-center gap-1 ${eTheme.badgeBg}`}
+                    >
+                      <EIcon className="h-3 w-3" />
+                      {mv.overallVerdict}
+                    </span>
+                  </div>
 
-                            return (
-                              <div key={cv.claimId} className="p-2.5 rounded bg-[#0D0F12] text-[11px] space-y-2 border border-[rgba(212,175,90,0.15)]">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-bold text-[#D4AF5A]">Claim {cv.claimId}</span>
-                                  <span className={`text-[10px] font-bold ${cvTheme.text}`}>
-                                    {cv.verdict} ({cv.confidence})
+                  {/* Quantitative Score & Confidence */}
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[#8D949D]">Confidence:</span>
+                    <strong className="text-[#D4AF5A]">{mv.overallConfidence} ({mv.quantitativeScore}%)</strong>
+                  </div>
+
+                  {/* Citations Breakdown Badge */}
+                  <div className="p-2 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.15)] flex items-center justify-between text-[10px] text-[#8D949D]">
+                    <span className="font-bold text-[#D7DADF] uppercase">Citations:</span>
+                    <div className="flex items-center gap-2 font-bold">
+                      <span className="text-[#D4AF5A]">WEB {citedWebCount}</span>
+                      <span className="text-rose-400">YOUTUBE {citedYtCount}</span>
+                      {citedAcadCount > 0 && <span className="text-sky-400">ACADEMIC {citedAcadCount}</span>}
+                    </div>
+                  </div>
+
+                  {/* Claims Evaluated & Reasoning */}
+                  {mv.claimVerdicts && mv.claimVerdicts.length > 0 && (
+                    <div className="space-y-2 pt-1">
+                      <span className="text-[10px] text-[#8D949D] uppercase block font-bold">
+                        Claim Evaluations ({mv.claimVerdicts.length}):
+                      </span>
+                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        {mv.claimVerdicts.map((cv) => {
+                          const cvTheme = VERDICT_THEMES[cv.verdict] || VERDICT_THEMES.UNVERIFIED;
+                          const evalKey = `${mv.provider}_${cv.claimId}`;
+                          const isExpanded = Boolean(expandedEvals[evalKey]);
+
+                          const supportingIds = cv.supportingEvidenceIds || [];
+                          const contradictingIds = cv.contradictingEvidenceIds || [];
+
+                          return (
+                            <div key={cv.claimId} className="p-2.5 rounded bg-[#0D0F12] text-[11px] space-y-2 border border-[rgba(212,175,90,0.15)]">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-[#D4AF5A]">Claim {cv.claimId}</span>
+                                <span className={`text-[10px] font-bold ${cvTheme.text}`}>
+                                  {cv.verdict} ({cv.confidence})
+                                </span>
+                              </div>
+
+                              <p className="text-[10px] text-[#D7DADF] font-sans leading-relaxed">
+                                {cv.reasoning}
+                              </p>
+
+                              {/* Toggle Citations Accordion */}
+                              {(supportingIds.length > 0 || contradictingIds.length > 0) && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleEval(evalKey)}
+                                  className="text-[9px] text-[#D4AF5A] hover:underline flex items-center gap-1 font-semibold"
+                                >
+                                  <span>
+                                    {isExpanded ? "Hide" : "Inspect"} Citations ({supportingIds.length + contradictingIds.length})
                                   </span>
-                                </div>
+                                  {isExpanded ? <ChevronUp className="h-2.5 w-2.5" /> : <ChevronDown className="h-2.5 w-2.5" />}
+                                </button>
+                              )}
 
-                                {cv.reasoning && (
-                                  <p className="text-[#D7DADF] font-sans text-[11px] leading-relaxed">
-                                    {cv.reasoning}
-                                  </p>
-                                )}
-
-                                {/* Citations Section with Expand/Collapse toggle */}
-                                <div className="pt-1.5 border-t border-[rgba(212,175,90,0.1)] space-y-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleEval(evalKey)}
-                                    className="w-full flex items-center justify-between text-[10px] text-[#8D949D] hover:text-[#D4AF5A] font-bold"
-                                  >
-                                    <span>
-                                      CITATIONS ({supportingIds.length + contradictingIds.length})
-                                    </span>
-                                    {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                                  </button>
-
-                                  {isExpanded ? (
-                                    <div className="space-y-2 pt-1 animate-in fade-in duration-150">
-                                      {/* SUPPORTING EVIDENCE */}
-                                      {supportingIds.length > 0 && (
-                                        <div className="space-y-1">
-                                          <span className="text-[9px] text-emerald-400 uppercase font-bold block">
-                                            Supporting Evidence ({supportingIds.length}):
-                                          </span>
-                                          <div className="space-y-1">
-                                            {supportingIds.map((cid) => {
-                                              const src = sourceById.get(cid);
-                                              const isYt = src?.sourceType === "youtube" || src?.domain?.includes("youtube.com");
-                                              return (
-                                                <div
-                                                  key={cid}
-                                                  className="p-1.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)] flex items-center justify-between gap-1.5 text-[10px]"
+                              {isExpanded ? (
+                                <div className="space-y-2 pt-1 border-t border-[rgba(212,175,90,0.15)] animate-in fade-in duration-150">
+                                  {/* SUPPORTING EVIDENCE */}
+                                  {supportingIds.length > 0 && (
+                                    <div className="space-y-1">
+                                      <span className="text-[9px] text-emerald-400 uppercase font-bold block">
+                                        Supporting Evidence ({supportingIds.length}):
+                                      </span>
+                                      <div className="space-y-1">
+                                        {supportingIds.map((cid) => {
+                                          const src = sourceById.get(cid);
+                                          const isYt = src?.sourceType === "youtube" || src?.domain?.includes("youtube.com");
+                                          return (
+                                            <div
+                                              key={cid}
+                                              className="p-1.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)] flex items-center justify-between gap-1.5 text-[10px]"
+                                            >
+                                              <div className="truncate flex items-center gap-1.5">
+                                                {isYt ? (
+                                                  <span className="text-rose-400 font-bold flex items-center gap-0.5 shrink-0">
+                                                    <Play className="h-2.5 w-2.5 fill-rose-400" /> ▶ YouTube
+                                                  </span>
+                                                ) : (
+                                                  <span className="text-[#D4AF5A] font-bold shrink-0">🌐 Web</span>
+                                                )}
+                                                <span className="text-[#D7DADF] truncate font-sans">
+                                                  {src?.title || cid}
+                                                </span>
+                                              </div>
+                                              {src?.url && (
+                                                <a
+                                                  href={src.url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className={`px-1.5 py-0.5 rounded border text-[9px] font-bold shrink-0 flex items-center gap-0.5 ${
+                                                    isYt
+                                                      ? "bg-rose-950/40 text-rose-300 hover:text-white border-rose-700/50"
+                                                      : "bg-[#131519] text-[#D4AF5A] hover:text-white border-[rgba(212,175,90,0.3)]"
+                                                  }`}
                                                 >
-                                                  <div className="truncate flex items-center gap-1.5">
-                                                    {isYt ? (
-                                                      <span className="text-rose-400 font-bold flex items-center gap-0.5 shrink-0">
-                                                        <Play className="h-2.5 w-2.5 fill-rose-400" /> ▶ YouTube
-                                                      </span>
-                                                    ) : (
-                                                      <span className="text-[#D4AF5A] font-bold shrink-0">🌐 Web</span>
-                                                    )}
-                                                    <span className="text-[#D7DADF] truncate font-sans">
-                                                      {src?.title || cid}
-                                                    </span>
-                                                  </div>
-                                                  {src?.url && (
-                                                    <a
-                                                      href={src.url}
-                                                      target="_blank"
-                                                      rel="noopener noreferrer"
-                                                      className={`px-1.5 py-0.5 rounded border text-[9px] font-bold shrink-0 flex items-center gap-0.5 ${
-                                                        isYt
-                                                          ? "bg-rose-950/40 text-rose-300 hover:text-white border-rose-700/50"
-                                                          : "bg-[#131519] text-[#D4AF5A] hover:text-white border-[rgba(212,175,90,0.3)]"
-                                                      }`}
-                                                    >
-                                                      <span>{isYt ? "Watch Video" : "Open Source"}</span>
-                                                      <ExternalLink className="h-2.5 w-2.5" />
-                                                    </a>
-                                                  )}
-                                                </div>
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {/* CONTRADICTING EVIDENCE */}
-                                      {contradictingIds.length > 0 && (
-                                        <div className="space-y-1">
-                                          <span className="text-[9px] text-rose-400 uppercase font-bold block">
-                                            Contradicting Evidence ({contradictingIds.length}):
-                                          </span>
-                                          <div className="space-y-1">
-                                            {contradictingIds.map((cid) => {
-                                              const src = sourceById.get(cid);
-                                              const isYt = src?.sourceType === "youtube" || src?.domain?.includes("youtube.com");
-                                              return (
-                                                <div
-                                                  key={cid}
-                                                  className="p-1.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)] flex items-center justify-between gap-1.5 text-[10px]"
-                                                >
-                                                  <div className="truncate flex items-center gap-1.5">
-                                                    {isYt ? (
-                                                      <span className="text-rose-400 font-bold flex items-center gap-0.5 shrink-0">
-                                                        <Play className="h-2.5 w-2.5 fill-rose-400" /> ▶ YouTube
-                                                      </span>
-                                                    ) : (
-                                                      <span className="text-[#D4AF5A] font-bold shrink-0">🌐 Web</span>
-                                                    )}
-                                                    <span className="text-[#D7DADF] truncate font-sans">
-                                                      {src?.title || cid}
-                                                    </span>
-                                                  </div>
-                                                  {src?.url && (
-                                                    <a
-                                                      href={src.url}
-                                                      target="_blank"
-                                                      rel="noopener noreferrer"
-                                                      className={`px-1.5 py-0.5 rounded border text-[9px] font-bold shrink-0 flex items-center gap-0.5 ${
-                                                        isYt
-                                                          ? "bg-rose-950/40 text-rose-300 hover:text-white border-rose-700/50"
-                                                          : "bg-[#131519] text-[#D4AF5A] hover:text-white border-[rgba(212,175,90,0.3)]"
-                                                      }`}
-                                                    >
-                                                      <span>{isYt ? "Watch Video" : "Open Source"}</span>
-                                                      <ExternalLink className="h-2.5 w-2.5" />
-                                                    </a>
-                                                  )}
-                                                </div>
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      )}
+                                                  <span>{isYt ? "Watch Video" : "Open Source"}</span>
+                                                  <ExternalLink className="h-2.5 w-2.5" />
+                                                </a>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
                                     </div>
-                                  ) : (
-                                    /* Collapsed Quick Badges */
-                                    <div className="flex flex-wrap gap-1">
-                                      {[...supportingIds, ...contradictingIds].map((cid) => {
-                                        const src = sourceById.get(cid);
-                                        const isYt = src?.sourceType === "youtube" || src?.domain?.includes("youtube.com");
-                                        return (
-                                          <a
-                                            key={cid}
-                                            href={src?.url || "#"}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className={`px-1.5 py-0.5 rounded border text-[10px] inline-flex items-center gap-1 ${
-                                              isYt
-                                                ? "bg-rose-950/30 text-rose-300 hover:text-white border-rose-700/50"
-                                                : "bg-[#050607] hover:bg-[#131519] text-[#D4AF5A] hover:text-[#F5F7FA] border-[rgba(212,175,90,0.25)]"
-                                            }`}
-                                            title={src?.title || cid}
-                                          >
-                                            {isYt && <Play className="h-2 w-2 fill-rose-400 text-rose-400" />}
-                                            <span>{cid}</span>
-                                            {src?.domain && <span className="text-[#8D949D]">({src.domain})</span>}
-                                            <ExternalLink className="h-2.5 w-2.5" />
-                                          </a>
-                                        );
-                                      })}
+                                  )}
+
+                                  {/* CONTRADICTING EVIDENCE */}
+                                  {contradictingIds.length > 0 && (
+                                    <div className="space-y-1">
+                                      <span className="text-[9px] text-rose-400 uppercase font-bold block">
+                                        Contradicting Evidence ({contradictingIds.length}):
+                                      </span>
+                                      <div className="space-y-1">
+                                        {contradictingIds.map((cid) => {
+                                          const src = sourceById.get(cid);
+                                          const isYt = src?.sourceType === "youtube" || src?.domain?.includes("youtube.com");
+                                          return (
+                                            <div
+                                              key={cid}
+                                              className="p-1.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)] flex items-center justify-between gap-1.5 text-[10px]"
+                                            >
+                                              <div className="truncate flex items-center gap-1.5">
+                                                {isYt ? (
+                                                  <span className="text-rose-400 font-bold flex items-center gap-0.5 shrink-0">
+                                                    <Play className="h-2.5 w-2.5 fill-rose-400" /> ▶ YouTube
+                                                  </span>
+                                                ) : (
+                                                  <span className="text-[#D4AF5A] font-bold shrink-0">🌐 Web</span>
+                                                )}
+                                                <span className="text-[#D7DADF] truncate font-sans">
+                                                  {src?.title || cid}
+                                                </span>
+                                              </div>
+                                              {src?.url && (
+                                                <a
+                                                  href={src.url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className={`px-1.5 py-0.5 rounded border text-[9px] font-bold shrink-0 flex items-center gap-0.5 ${
+                                                    isYt
+                                                      ? "bg-rose-950/40 text-rose-300 hover:text-white border-rose-700/50"
+                                                      : "bg-[#131519] text-[#D4AF5A] hover:text-white border-[rgba(212,175,90,0.3)]"
+                                                  }`}
+                                                >
+                                                  <span>{isYt ? "Watch Video" : "Open Source"}</span>
+                                                  <ExternalLink className="h-2.5 w-2.5" />
+                                                </a>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
                                     </div>
                                   )}
                                 </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                              ) : (
+                                /* Collapsed Quick Badges */
+                                <div className="flex flex-wrap gap-1">
+                                  {[...supportingIds, ...contradictingIds].map((cid) => {
+                                    const src = sourceById.get(cid);
+                                    const isYt = src?.sourceType === "youtube" || src?.domain?.includes("youtube.com");
+                                    return (
+                                      <a
+                                        key={cid}
+                                        href={src?.url || "#"}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={`px-1.5 py-0.5 rounded border text-[10px] inline-flex items-center gap-1 ${
+                                          isYt
+                                            ? "bg-rose-950/30 text-rose-300 hover:text-white border-rose-700/50"
+                                            : "bg-[#050607] hover:bg-[#131519] text-[#D4AF5A] hover:text-[#F5F7FA] border-[rgba(212,175,90,0.25)]"
+                                        }`}
+                                        title={src?.title || cid}
+                                      >
+                                        {isYt && <Play className="h-2 w-2 fill-rose-400 text-rose-400" />}
+                                        <span>{cid}</span>
+                                        {src?.domain && <span className="text-[#8D949D]">({src.domain})</span>}
+                                        <ExternalLink className="h-2.5 w-2.5" />
+                                      </a>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Valid Evidence References Count Footer */}
+                <div className="pt-2 border-t border-[rgba(212,175,90,0.15)] flex items-center justify-between text-[10px] text-[#8D949D]">
+                  <span>Valid Citations: <strong className="text-[#F5F7FA]">{mv.validEvidenceReferencesCount}</strong></span>
+                  <span className="text-[#D4AF5A] font-semibold">Grounded</span>
+                </div>
+              </div>
+            );
+          }
+
+          // Standby / Provider Notice Juror Card
+          return (
+            <div
+              key={seat.provider}
+              className="p-4 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.2)] space-y-3 flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                {/* Model Header */}
+                <div className="flex items-center justify-between pb-2 border-b border-[rgba(212,175,90,0.15)]">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] text-[#8D949D]">
+                      <ProviderIcon className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs text-[#D7DADF]">{meta.name}</h4>
+                      <span className="text-[10px] text-[#8D949D] font-sans">{meta.org}</span>
+                    </div>
                   </div>
 
-                  {/* Valid Evidence References Count Footer */}
-                  <div className="pt-2 border-t border-[rgba(212,175,90,0.15)] flex items-center justify-between text-[10px] text-[#8D949D]">
-                    <span>Valid Citations: <strong className="text-[#F5F7FA]">{mv.validEvidenceReferencesCount}</strong></span>
-                    <span className="text-[#D4AF5A] font-semibold">Grounded</span>
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded border border-amber-800/40 bg-amber-950/30 text-amber-400 uppercase">
+                    {provStatus?.status === "QUOTA_EXHAUSTED"
+                      ? "QUOTA LIMIT"
+                      : provStatus?.status === "CREDITS_LOW"
+                      ? "CREDITS DEPLETED"
+                      : provStatus?.status === "RATE_LIMITED"
+                      ? "RATE LIMITED"
+                      : "STANDBY"}
+                  </span>
+                </div>
+
+                {/* Status Explanation */}
+                <div className="p-3 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.15)] space-y-1.5 text-xs">
+                  <span className="text-[#8D949D] text-[10px] uppercase font-bold block">
+                    Juror Standby Status:
+                  </span>
+                  <p className="text-[#D7DADF] text-[11px] font-sans leading-relaxed">
+                    {provStatus?.message || "Juror configured and ready for consensus evaluation."}
+                  </p>
+                </div>
+
+                {/* Grounding Notice */}
+                <div className="p-2.5 rounded bg-[#0A0C0E] border border-[rgba(212,175,90,0.12)] text-[10px] text-[#8D949D] space-y-1">
+                  <div className="flex items-center gap-1.5 text-[#D4AF5A]">
+                    <Lock className="h-3 w-3" />
+                    <span className="font-bold uppercase">Shared Bundle Provided</span>
                   </div>
+                  <p className="font-sans text-[#D7DADF]">
+                    {evidenceList.length} evidence sources dispatched to juror.
+                  </p>
                 </div>
-              );
-            })
-          : consensus.participatingModels?.map((pm) => (
-              <div
-                key={pm.modelId}
-                className="p-4 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.25)] space-y-2"
-              >
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-[#D4AF5A]" />
-                  <h4 className="font-bold text-xs text-[#F5F7FA]">{pm.displayName}</h4>
-                </div>
-                <span className="text-[10px] text-emerald-400">Juror Active</span>
               </div>
-            ))}
+
+              <div className="pt-2 border-t border-[rgba(212,175,90,0.15)] flex items-center justify-between text-[10px] text-[#8D949D]">
+                <span>Status: <strong className="text-amber-400">Standby</strong></span>
+                <span className="text-[#8D949D]">Phase 16 Battle</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

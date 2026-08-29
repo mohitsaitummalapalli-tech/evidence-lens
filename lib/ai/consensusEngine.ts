@@ -19,6 +19,7 @@ import {
   ClaimConsensusDetail,
   ModelClaimEvaluation,
   AIProviderModelInfo,
+  AIProviderStatus,
   ModelJuryVerdict,
   SharedEvidenceMetrics,
   EvidenceItem,
@@ -210,7 +211,13 @@ export class MultiAIConsensusEngine {
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) return null;
 
-    const candidateModels = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash", "gemini-2.5-flash"];
+    const candidateModels = [
+      "gemini-3.5-flash-lite",
+      "gemini-3.5-flash",
+      "gemini-3.6-flash",
+      "gemini-2.0-flash",
+      "gemini-2.5-flash",
+    ];
     const validIdsSet = new Set(evidenceItems.map((e) => e.id));
 
     const evidencePromptBlock = evidenceItems
@@ -346,7 +353,7 @@ Respond ONLY with valid JSON having keys:
 - contradictingEvidenceIds: array of strings (must match provided IDs)
 - reasoning: string`;
 
-      const candidateModels = [modelInfo.modelId, "gpt-4o-mini", "gpt-4o"];
+      const candidateModels = [modelInfo.modelId, "gpt-4o-mini", "gpt-4o", "gpt-4-turbo"];
 
       for (const mId of candidateModels) {
         try {
@@ -860,6 +867,58 @@ Respond ONLY with valid JSON having keys:
     const overallAgreementRate =
       totalClaimVotes > 0 ? Math.round((totalClaimAgreements / totalClaimVotes) * 100) : 0;
 
+    // Track honest provider statuses (Active, Standby Quota Limit, Standby Credits Depleted, etc.)
+    const providerStatuses: AIProviderStatus[] = [
+      {
+        provider: "google",
+        displayName: "Google Gemini",
+        modelId: "gemini-2.5-flash",
+        configured: Boolean(process.env.GEMINI_API_KEY?.trim()),
+        status: !process.env.GEMINI_API_KEY?.trim()
+          ? "NOT_CONFIGURED"
+          : modelsActuallyResponded.has("google")
+          ? "ACTIVE"
+          : "RATE_LIMITED",
+        message: !process.env.GEMINI_API_KEY?.trim()
+          ? "GEMINI_API_KEY not configured"
+          : modelsActuallyResponded.has("google")
+          ? "Juror evaluation active and verified"
+          : "Rate limit / quota boundary reached",
+      },
+      {
+        provider: "openai",
+        displayName: "OpenAI GPT-4o Mini",
+        modelId: "gpt-4o-mini",
+        configured: Boolean(process.env.OPENAI_API_KEY?.trim()),
+        status: !process.env.OPENAI_API_KEY?.trim()
+          ? "NOT_CONFIGURED"
+          : modelsActuallyResponded.has("openai") || modelsActuallyResponded.has("gpt-4o-mini")
+          ? "ACTIVE"
+          : "QUOTA_EXHAUSTED",
+        message: !process.env.OPENAI_API_KEY?.trim()
+          ? "OPENAI_API_KEY not configured"
+          : modelsActuallyResponded.has("openai") || modelsActuallyResponded.has("gpt-4o-mini")
+          ? "Juror evaluation active and verified"
+          : "OpenAI provider quota limit reached",
+      },
+      {
+        provider: "anthropic",
+        displayName: "Anthropic Claude 3.5 Haiku",
+        modelId: "claude-3-5-haiku-20241022",
+        configured: Boolean(process.env.ANTHROPIC_API_KEY?.trim()),
+        status: !process.env.ANTHROPIC_API_KEY?.trim()
+          ? "NOT_CONFIGURED"
+          : modelsActuallyResponded.has("anthropic") || modelsActuallyResponded.has("claude-3-5-haiku-20241022")
+          ? "ACTIVE"
+          : "CREDITS_LOW",
+        message: !process.env.ANTHROPIC_API_KEY?.trim()
+          ? "ANTHROPIC_API_KEY not configured"
+          : modelsActuallyResponded.has("anthropic") || modelsActuallyResponded.has("claude-3-5-haiku-20241022")
+          ? "Juror evaluation active and verified"
+          : "Anthropic credit balance depleted",
+      },
+    ];
+
     return {
       participatingModels,
       totalModelsParticipating: participatingModels.length,
@@ -872,6 +931,7 @@ Respond ONLY with valid JSON having keys:
       disagreementSummary,
       sharedEvidenceSummary: sharedMetrics,
       modelVerdicts,
+      providerStatuses,
       claimsConsensus: claimConsensusList,
       evaluatedAt,
     };

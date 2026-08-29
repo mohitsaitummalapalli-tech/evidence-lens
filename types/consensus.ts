@@ -75,6 +75,15 @@ export interface ClaimConsensusDetail {
   evaluations: ModelClaimEvaluation[];
 }
 
+export interface AIProviderStatus {
+  provider: AIModelProvider;
+  displayName: string;
+  modelId: string;
+  configured: boolean;
+  status: "ACTIVE" | "QUOTA_EXHAUSTED" | "CREDITS_LOW" | "RATE_LIMITED" | "API_ERROR" | "NOT_CONFIGURED";
+  message?: string;
+}
+
 export interface MultiAIConsensusResult {
   participatingModels: AIProviderModelInfo[];
   totalModelsParticipating: number;
@@ -87,6 +96,7 @@ export interface MultiAIConsensusResult {
   disagreementSummary?: string;
   sharedEvidenceSummary?: SharedEvidenceMetrics;
   modelVerdicts?: ModelJuryVerdict[];
+  providerStatuses?: AIProviderStatus[];
   claimsConsensus: ClaimConsensusDetail[];
   evaluatedAt: string;
 }
