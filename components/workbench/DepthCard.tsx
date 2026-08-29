@@ -97,7 +97,7 @@ export const DepthCard: React.FC<DepthCardProps> = ({
       onMouseLeave={handleMouseLeave}
       className={`relative transition-all duration-300 ease-out will-change-transform ${floatingClass} ${
         glowOnHover && isHovered
-          ? "shadow-[0_12px_36px_-8px_rgba(0,0,0,0.8),0_0_24px_rgba(212,175,55,0.12)]"
+          ? "shadow-[0_12px_36px_-8px_rgba(0,0,0,0.8),0_0_15px_rgba(255,255,255,0.03)]"
           : "shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6)]"
       } ${className}`}
       style={{
@@ -106,9 +106,9 @@ export const DepthCard: React.FC<DepthCardProps> = ({
     >
       {/* Specular subtle edge highlight */}
       <div
-        className="absolute inset-0 pointer-events-none rounded-2xl border border-[#D4AF37]/15 z-10 transition-opacity duration-300"
+        className="absolute inset-0 pointer-events-none rounded-2xl border border-white/5 z-10 transition-opacity duration-300"
         style={{
-          boxShadow: isHovered ? "inset 0 1px 1px rgba(255, 247, 214, 0.08)" : "none",
+          boxShadow: isHovered ? "inset 0 1px 1px rgba(255, 255, 255, 0.05)" : "none",
         }}
       />
       {children}

@@ -15,7 +15,7 @@ import {
 
 interface AtomicClaimCardProps {
   claim: AtomicClaim;
-  index: number;
+  index?: number;
 }
 
 const CATEGORY_STYLES: Record<
@@ -24,51 +24,51 @@ const CATEGORY_STYLES: Record<
 > = {
   event: {
     label: "EVENT",
-    bg: "bg-blue-500/10",
+    bg: "bg-blue-950/40",
     text: "text-blue-400",
-    border: "border-blue-500/30",
+    border: "border-blue-700/40",
     icon: Flame,
   },
   time: {
     label: "TEMPORAL",
-    bg: "bg-purple-500/10",
+    bg: "bg-purple-950/40",
     text: "text-purple-400",
-    border: "border-purple-500/30",
+    border: "border-purple-700/40",
     icon: Clock,
   },
   location: {
     label: "LOCATION",
-    bg: "bg-emerald-500/10",
+    bg: "bg-emerald-950/40",
     text: "text-emerald-400",
-    border: "border-emerald-500/30",
+    border: "border-emerald-700/40",
     icon: MapPin,
   },
   identity: {
     label: "IDENTITY / ENTITY",
-    bg: "bg-[#D4AF37]/10",
-    text: "text-[#E2C15C]",
-    border: "border-[#D4AF37]/30",
+    bg: "bg-red-950/40",
+    text: "text-red-400",
+    border: "border-red-700/40",
     icon: User,
   },
   media_context: {
     label: "MEDIA PROVENANCE",
-    bg: "bg-amber-500/10",
+    bg: "bg-amber-950/40",
     text: "text-amber-400",
-    border: "border-amber-500/30",
+    border: "border-amber-700/40",
     icon: Camera,
   },
   causal: {
     label: "CAUSAL LINK",
-    bg: "bg-rose-500/10",
+    bg: "bg-rose-950/40",
     text: "text-rose-400",
-    border: "border-rose-500/30",
+    border: "border-rose-700/40",
     icon: GitFork,
   },
   other: {
     label: "OTHER",
-    bg: "bg-stone-500/10",
-    text: "text-stone-400",
-    border: "border-stone-500/30",
+    bg: "bg-stone-900",
+    text: "text-[#94A3B8]",
+    border: "border-stone-700",
     icon: HelpCircle,
   },
 };
@@ -79,15 +79,15 @@ const CHECKABILITY_BADGES: Record<
 > = {
   high: {
     label: "HIGH CHECKABILITY",
-    class: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+    class: "bg-emerald-950/50 text-emerald-400 border-emerald-700/40",
   },
   medium: {
     label: "MED CHECKABILITY",
-    class: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+    class: "bg-[#161B24] text-[#CBD5E1] border-stone-700",
   },
   low: {
     label: "LOW CHECKABILITY",
-    class: "bg-stone-500/10 text-stone-400 border-stone-500/30",
+    class: "bg-stone-900 text-stone-400 border-stone-800",
   },
 };
 
@@ -97,11 +97,11 @@ export const AtomicClaimCard: React.FC<AtomicClaimCardProps> = ({ claim }) => {
   const checkBadge = CHECKABILITY_BADGES[claim.checkability] || CHECKABILITY_BADGES.medium;
 
   return (
-    <div className="bg-[#08090C] border border-[#D4AF37]/20 hover:border-[#D4AF37]/45 rounded-xl p-4.5 space-y-3.5 transition-all shadow-md group">
+    <div className="bg-[#0B0D11] border border-stone-800 hover:border-stone-700 rounded-xl p-4.5 space-y-3.5 transition-all shadow-md group">
       {/* Card Header: Claim ID + Category Tag + Checkability */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-stone-800">
         <div className="flex items-center gap-2">
-          <span className="h-6 px-2.5 rounded bg-[#131720] border border-[#D4AF37]/40 text-[#E2C15C] font-mono font-bold text-xs flex items-center justify-center shadow-inner">
+          <span className="h-6 px-2.5 rounded bg-[#161B24] border border-stone-700 text-[#F8F9FA] font-mono font-bold text-xs flex items-center justify-center shadow-inner">
             {claim.id}
           </span>
           <span
@@ -129,14 +129,14 @@ export const AtomicClaimCard: React.FC<AtomicClaimCardProps> = ({ claim }) => {
         {/* Entities */}
         {claim.entities && claim.entities.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] text-[#64748B] flex items-center gap-1">
+            <span className="text-[10px] text-stone-500 flex items-center gap-1">
               <Tag className="h-3 w-3" />
               ENTITIES:
             </span>
             {claim.entities.map((entity, idx) => (
               <span
                 key={idx}
-                className="px-1.5 py-0.5 rounded bg-[#131720] border border-stone-800 text-[#C2C9D6] text-[11px]"
+                className="px-1.5 py-0.5 rounded bg-[#161B24] border border-stone-800 text-[#CBD5E1] text-[11px]"
               >
                 {entity}
               </span>
@@ -168,12 +168,12 @@ export const AtomicClaimCard: React.FC<AtomicClaimCardProps> = ({ claim }) => {
       </div>
 
       {/* Status Footer */}
-      <div className="flex items-center justify-between text-[10px] font-mono text-[#64748B] pt-2 border-t border-stone-900">
-        <span className="flex items-center gap-1 text-[#E2C15C]">
-          <Sparkles className="h-3 w-3" />
-          Atomic Unit Extracted
+      <div className="flex items-center justify-between text-[10px] font-sans text-stone-500 pt-2 border-t border-stone-900">
+        <span className="flex items-center gap-1 text-[#94A3B8]">
+          <Sparkles className="h-3 w-3 text-red-400" />
+          Unit Extracted
         </span>
-        <span className="text-[#94A3B8]">Connected to Evidence Retrieval</span>
+        <span className="text-[#94A3B8]">Evidence stance connected</span>
       </div>
     </div>
   );

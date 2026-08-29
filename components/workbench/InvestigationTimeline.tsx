@@ -179,15 +179,15 @@ export const InvestigationTimeline: React.FC<InvestigationTimelineProps> = ({
 
     if (isReplaying && replayStep !== null) {
       const statuses: Record<string, TimelineStageStatus> = {};
-      TIMELINE_STAGES.forEach((stage, idx) => {
-        if (stage.id === "image_provenance" && !hasProvenance) {
-          statuses[stage.id] = "SKIPPED";
+      TIMELINE_STAGES.forEach((s, idx) => {
+        if (s.id === "image_provenance" && !hasProvenance) {
+          statuses[s.id] = "SKIPPED";
         } else if (idx < replayStep) {
-          statuses[stage.id] = "COMPLETED";
+          statuses[s.id] = "COMPLETED";
         } else if (idx === replayStep) {
-          statuses[stage.id] = "ACTIVE";
+          statuses[s.id] = "ACTIVE";
         } else {
-          statuses[stage.id] = "PENDING";
+          statuses[s.id] = "PENDING";
         }
       });
       return statuses;
@@ -199,54 +199,38 @@ export const InvestigationTimeline: React.FC<InvestigationTimelineProps> = ({
         claims_decomposed: "ACTIVE",
         evidence_retrieved: "ACTIVE",
         evidence_linked: "PENDING",
-        image_provenance: hasProvenance ? "PENDING" : "SKIPPED",
+        image_provenance: hasProvenance ? "ACTIVE" : "SKIPPED",
         stance_analysis: "PENDING",
         verdict_synthesis: "PENDING",
         investigation_complete: "PENDING",
       };
     }
 
-    if (isComplete && apiResponse) {
+    if (isComplete) {
       return {
         input_received: "COMPLETED",
-        claims_decomposed: apiResponse.extraction ? "COMPLETED" : "SKIPPED",
-        evidence_retrieved: apiResponse.evidence ? "COMPLETED" : "SKIPPED",
-        evidence_linked: apiResponse.evidence ? "COMPLETED" : "SKIPPED",
-        image_provenance: apiResponse.imageProvenance
-          ? "COMPLETED"
-          : hasProvenance
-          ? "COMPLETED"
-          : "SKIPPED",
-        stance_analysis: apiResponse.verification ? "COMPLETED" : "SKIPPED",
-        verdict_synthesis: apiResponse.verification ? "COMPLETED" : "SKIPPED",
+        claims_decomposed: "COMPLETED",
+        evidence_retrieved: "COMPLETED",
+        evidence_linked: "COMPLETED",
+        image_provenance: hasProvenance ? "COMPLETED" : "SKIPPED",
+        stance_analysis: "COMPLETED",
+        verdict_synthesis: "COMPLETED",
         investigation_complete: "COMPLETED",
       };
     }
 
-    // IDLE or READY
     return {
-      input_received: claimText && claimText.trim().length >= 5 ? "COMPLETED" : "PENDING",
+      input_received: "PENDING",
       claims_decomposed: "PENDING",
       evidence_retrieved: "PENDING",
       evidence_linked: "PENDING",
-      image_provenance: hasProvenance ? "PENDING" : "SKIPPED",
+      image_provenance: "PENDING",
       stance_analysis: "PENDING",
       verdict_synthesis: "PENDING",
       investigation_complete: "PENDING",
     };
-  }, [isReplaying, replayStep, isSubmitting, isComplete, apiResponse, claimText, hasMedia]);
+  }, [isSubmitting, isComplete, isReplaying, replayStep, hasMedia, apiResponse?.imageProvenance]);
 
-  // Derive unique domains from actual retrieved evidence
-  const uniqueDomains = useMemo(() => {
-    if (!apiResponse?.evidence?.allSources) return [];
-    const domains = new Set<string>();
-    apiResponse.evidence.allSources.forEach((s) => {
-      if (s.domain) domains.add(s.domain);
-    });
-    return Array.from(domains);
-  }, [apiResponse]);
-
-  // Stance tallies from verification breakdown
   const stanceTallies = useMemo(() => {
     if (!apiResponse?.verification?.claimVerifications) {
       return { supports: 0, contradicts: 0, other: 0 };
@@ -269,29 +253,29 @@ export const InvestigationTimeline: React.FC<InvestigationTimelineProps> = ({
   return (
     <div
       id="investigation-timeline-panel"
-      className="bg-[#0D1017]/95 border border-[#D4AF37]/30 rounded-2xl p-6 shadow-2xl shadow-black/80 space-y-6 animate-in fade-in duration-300 relative overflow-hidden"
+      className="bg-[#11141A] border border-stone-800 rounded-xl p-5 sm:p-6 shadow-2xl space-y-6 animate-in fade-in duration-300 relative overflow-hidden"
     >
       {/* Background ambient accent */}
-      <div className="absolute top-0 right-0 w-80 h-80 bg-radial from-[#D4AF37]/05 to-transparent pointer-events-none blur-2xl" />
+      <div className="absolute top-0 right-0 w-80 h-80 bg-radial from-red-950/10 to-transparent pointer-events-none blur-2xl" />
 
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-[#D4AF37]/20 gap-4 relative z-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-stone-800 gap-4 relative z-10">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#131720] border border-[#D4AF37]/30 text-[#D4AF37] shadow-sm">
+          <div className="p-2.5 rounded-xl bg-[#161B24] border border-stone-800 text-red-400 shadow-sm">
             <Clock className="h-5 w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">
-              <h3 className="text-base font-bold text-[#F8F9FA] font-mono tracking-wide">
-                FORENSIC INVESTIGATION TIMELINE
+              <h3 className="text-base font-bold text-[#F8F9FA] tracking-wide">
+                Investigation Timeline
               </h3>
               <span
                 className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full border font-semibold tracking-wider uppercase ${
                   isSubmitting
-                    ? "bg-[#D4AF37]/15 text-[#E2C15C] border-[#D4AF37]/40 animate-pulse"
+                    ? "bg-red-950/40 text-red-300 border-red-500/40 animate-pulse"
                     : isComplete
                     ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/40"
-                    : "bg-[#131720] text-[#94A3B8] border-stone-800"
+                    : "bg-[#161B24] text-[#94A3B8] border-stone-800"
                 }`}
               >
                 {isSubmitting
@@ -314,42 +298,42 @@ export const InvestigationTimeline: React.FC<InvestigationTimelineProps> = ({
               type="button"
               onClick={startReplay}
               disabled={isReplaying}
-              className="px-3 py-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] border border-[#D4AF37]/30 text-xs font-mono flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm"
+              className="px-3 py-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-red-400 border border-stone-700 text-xs font-sans flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm"
               title="Replay sequential lifecycle animation"
             >
               <RotateCcw className={`h-3 w-3 ${isReplaying ? "animate-spin" : ""}`} />
-              <span>{isReplaying ? "REPLAYING..." : "REPLAY LIFECYCLE"}</span>
+              <span>{isReplaying ? "Replaying..." : "Replay Timeline"}</span>
             </button>
           )}
 
           <button
             type="button"
             onClick={handleExpandAll}
-            className="px-2.5 py-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#94A3B8] hover:text-[#F8F9FA] border border-stone-800 text-xs font-mono flex items-center gap-1 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-[#94A3B8] hover:text-[#F8F9FA] border border-stone-800 text-xs font-sans flex items-center gap-1 transition-colors"
             title="Expand all stage details"
           >
             <Maximize2 className="h-3 w-3" />
-            <span className="hidden sm:inline">EXPAND</span>
+            <span className="hidden sm:inline">Expand</span>
           </button>
 
           <button
             type="button"
             onClick={handleCollapseAll}
-            className="px-2.5 py-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#94A3B8] hover:text-[#F8F9FA] border border-stone-800 text-xs font-mono flex items-center gap-1 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-[#94A3B8] hover:text-[#F8F9FA] border border-stone-800 text-xs font-sans flex items-center gap-1 transition-colors"
             title="Collapse all stage details"
           >
             <Minimize2 className="h-3 w-3" />
-            <span className="hidden sm:inline">COLLAPSE</span>
+            <span className="hidden sm:inline">Collapse</span>
           </button>
         </div>
       </div>
 
       {/* Main Vertical Timeline */}
-      <div className="relative pl-6 sm:pl-10 space-y-6 before:absolute before:left-3 sm:before:left-5 before:top-3 before:bottom-3 before:w-0.5 before:bg-gradient-to-b before:from-[#D4AF37]/40 before:via-[#E2C15C]/20 before:to-[#10B981]/40">
+      <div className="relative pl-6 sm:pl-10 space-y-6 before:absolute before:left-3 sm:before:left-5 before:top-3 before:bottom-3 before:w-0.5 before:bg-gradient-to-b before:from-red-600/40 before:via-red-500/20 before:to-emerald-500/40">
         {/* Traveling Comet Particle along active timeline */}
         {isSubmitting && (
           <div
-            className="absolute left-2 sm:left-4 w-2.5 h-2.5 rounded-full bg-[#E2C15C] shadow-[0_0_10px_#D4AF37] pointer-events-none animate-bounce"
+            className="absolute left-2 sm:left-4 w-2.5 h-2.5 rounded-full bg-red-400 shadow-[0_0_10px_#EF4444] pointer-events-none animate-bounce"
             style={{ top: "30%" }}
           />
         )}
@@ -369,18 +353,18 @@ export const InvestigationTimeline: React.FC<InvestigationTimelineProps> = ({
               <div
                 className={`absolute -left-6 sm:-left-10 top-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center border transition-all duration-300 z-10 ${
                   isNodeCompleted
-                    ? "bg-[#0D1017] border-emerald-500/80 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.35)]"
+                    ? "bg-[#0B0D11] border-emerald-500/80 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.35)]"
                     : isNodeActive
-                    ? "bg-[#0D1017] border-[#D4AF37] text-[#E2C15C] shadow-[0_0_14px_rgba(212,175,55,0.45)] animate-pulse"
+                    ? "bg-[#0B0D11] border-red-500 text-red-400 shadow-[0_0_14px_rgba(239,68,68,0.45)] animate-pulse"
                     : isNodeSkipped
-                    ? "bg-[#08090C] border-stone-800 text-stone-600"
-                    : "bg-[#08090C] border-stone-800 text-stone-600"
+                    ? "bg-[#0B0D11] border-stone-800 text-stone-600"
+                    : "bg-[#0B0D11] border-stone-800 text-stone-600"
                 }`}
               >
                 {isNodeCompleted ? (
                   <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 ) : isNodeActive ? (
-                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin text-[#E2C15C]" />
+                  <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin text-red-400" />
                 ) : isNodeSkipped ? (
                   <Ban className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-stone-600" />
                 ) : (
@@ -395,12 +379,12 @@ export const InvestigationTimeline: React.FC<InvestigationTimelineProps> = ({
                 onClick={() => toggleStage(stage.id)}
                 className={`p-4 rounded-xl border transition-all cursor-pointer select-none flex items-center justify-between gap-3 ${
                   isNodeCompleted
-                    ? "bg-[#0D1017]/80 hover:bg-[#131720] border-emerald-900/30 hover:border-[#D4AF37]/40 shadow-md"
+                    ? "bg-[#11141A] hover:bg-[#161B24] border-stone-800 hover:border-stone-700 shadow-md"
                     : isNodeActive
-                    ? "bg-[#131720] border-[#D4AF37]/50 shadow-[0_0_20px_rgba(212,175,55,0.15)]"
+                    ? "bg-[#161B24] border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)]"
                     : isNodeSkipped
-                    ? "bg-[#08090C]/50 border-stone-900 opacity-60"
-                    : "bg-[#08090C]/70 hover:bg-[#0D1017] border-stone-900"
+                    ? "bg-[#0B0D11]/50 border-stone-900 opacity-60"
+                    : "bg-[#0B0D11]/70 hover:bg-[#11141A] border-stone-900"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -409,8 +393,8 @@ export const InvestigationTimeline: React.FC<InvestigationTimelineProps> = ({
                       isNodeCompleted
                         ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
                         : isNodeActive
-                        ? "bg-[#131720] border-[#D4AF37]/40 text-[#E2C15C]"
-                        : "bg-[#131720] border-stone-800 text-stone-500"
+                        ? "bg-[#161B24] border-red-500/40 text-red-400"
+                        : "bg-[#161B24] border-stone-800 text-stone-500"
                     }`}
                   >
                     <StageIcon className="h-4 w-4" />
@@ -422,7 +406,7 @@ export const InvestigationTimeline: React.FC<InvestigationTimelineProps> = ({
                           isNodeCompleted
                             ? "text-[#F8F9FA]"
                             : isNodeActive
-                            ? "text-[#E2C15C]"
+                            ? "text-red-400"
                             : "text-[#94A3B8]"
                         }`}
                       >
@@ -434,10 +418,10 @@ export const InvestigationTimeline: React.FC<InvestigationTimelineProps> = ({
                           isNodeCompleted
                             ? "bg-emerald-950/60 text-emerald-300 border border-emerald-800/40"
                             : isNodeActive
-                            ? "bg-[#D4AF37]/20 text-[#E2C15C] border border-[#D4AF37]/40 animate-pulse"
+                            ? "bg-red-950/40 text-red-300 border border-red-500/40 animate-pulse"
                             : isNodeSkipped
                             ? "bg-stone-900 text-stone-500 border border-stone-800"
-                            : "bg-[#131720] text-stone-500 border border-stone-800"
+                            : "bg-[#161B24] text-stone-500 border border-stone-800"
                         }`}
                       >
                         {status}
@@ -449,325 +433,279 @@ export const InvestigationTimeline: React.FC<InvestigationTimelineProps> = ({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  {stage.targetAnchorId && isNodeCompleted && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        scrollToAnchor(stage.targetAnchorId);
-                      }}
-                      className="p-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] border border-[#D4AF37]/30 text-[11px] font-mono hidden md:flex items-center gap-1 transition-colors"
-                      title="Jump to corresponding workbench section"
-                    >
-                      <span>VIEW SECTION</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </button>
-                  )}
-
-                  <div className="p-1 text-stone-400 group-hover:text-stone-200 transition-colors">
-                    {isExpanded ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
+                <div className="flex items-center gap-2">
+                  <div className="p-1 rounded text-[#94A3B8] hover:text-white">
+                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </div>
                 </div>
               </div>
 
-              {/* Stage Collapsible Content Body */}
+              {/* Stage Expanded Details Body */}
               {isExpanded && (
-                <div className="mt-2 ml-2 sm:ml-4 p-4 rounded-xl bg-[#08090C] border border-[#D4AF37]/15 space-y-3 text-xs font-sans animate-in slide-in-from-top-2 duration-200 shadow-inner">
-                  {/* STAGE 1: INPUT RECEIVED */}
+                <div className="mt-2 p-4 rounded-xl bg-[#0B0D11] border border-stone-800 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* Stage 1: Input Received */}
                   {stage.id === "input_received" && (
-                    <div className="space-y-2">
-                      <div className="text-[#94A3B8]">
-                        <span className="font-mono text-[#E2C15C] font-semibold">Target Claim: </span>
-                        <span className="text-[#F8F9FA]">
-                          {claimText?.trim() || apiResponse?.input.claim || "No claim provided yet"}
+                    <div className="space-y-2 text-xs">
+                      <div className="p-3 rounded-lg bg-[#11141A] border border-stone-800 space-y-1">
+                        <span className="text-[10px] text-stone-500 uppercase font-mono block">
+                          Ingested Assertion
                         </span>
+                        <p className="text-[#F8F9FA] italic">
+                          &ldquo;{claimText || apiResponse?.input?.claim || "Target assertion under verification"}&rdquo;
+                        </p>
                       </div>
-                      <div className="flex items-center gap-4 text-[11px] font-mono text-[#94A3B8] pt-1">
-                        <span className="flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-[#D4AF37]" />
-                          Media:{" "}
-                          <strong className="text-[#E2C15C]">
-                            {hasMedia || apiResponse?.input.mediaReceived
-                              ? `Uploaded (${apiResponse?.input.media?.filename || "attached"})`
-                              : "Text-only claim"}
-                          </strong>
-                        </span>
-                        {apiResponse?.input.contextUrl && (
-                          <span className="flex items-center gap-1 truncate max-w-xs">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#38BDF8]" />
-                            Context: <span className="text-stone-300">{apiResponse.input.contextUrl}</span>
+
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono text-[#94A3B8]">
+                        <span>CHAR LENGTH: {(claimText || apiResponse?.input?.claim || "").length}</span>
+                        {hasMedia && (
+                          <span className="text-red-400">
+                            • MULTIMODAL ATTACHMENT PRESENT
                           </span>
                         )}
                       </div>
                     </div>
                   )}
 
-                  {/* STAGE 2: CLAIMS DECOMPOSED */}
+                  {/* Stage 2: Claims Decomposed */}
                   {stage.id === "claims_decomposed" && (
-                    <div className="space-y-2">
-                      {apiResponse?.extraction ? (
-                        <>
-                          <div className="flex items-center justify-between text-[11px] font-mono">
-                            <span className="text-[#94A3B8]">
-                              Deconstructed into{" "}
-                              <strong className="text-[#E2C15C]">
-                                {apiResponse.extraction.claims.length}
-                              </strong>{" "}
-                              atomic verifiable assertions:
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-1 gap-1.5 pt-1">
-                            {apiResponse.extraction.claims.map((claim) => (
+                    <div className="space-y-2 text-xs">
+                      {apiResponse?.extraction?.claims && apiResponse.extraction.claims.length > 0 ? (
+                        <div className="space-y-2">
+                          <span className="text-[11px] font-mono text-stone-400 block">
+                            EXTRACTED {apiResponse.extraction.claims.length} ATOMIC UNITS:
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {apiResponse.extraction.claims.map((c) => (
                               <div
-                                key={claim.id}
-                                className="flex items-start gap-2 p-2 rounded-lg bg-[#0D1017] border border-stone-800"
+                                key={c.id}
+                                onClick={() => onInspectClaim?.(c.id)}
+                                className="p-2.5 rounded-lg bg-[#11141A] border border-stone-800 hover:border-stone-700 space-y-1 text-xs cursor-pointer transition-colors"
+                                title="Click to inspect this claim"
                               >
-                                <span className="px-1.5 py-0.5 rounded bg-[#131720] border border-[#D4AF37]/30 text-[10px] font-mono text-[#E2C15C] font-bold">
-                                  {claim.id}
-                                </span>
-                                <span className="text-[#F8F9FA] text-xs flex-1">
-                                  {claim.text}
-                                </span>
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-stone-900 text-stone-400 uppercase">
-                                  {claim.category}
-                                </span>
+                                <div className="flex items-center justify-between text-[10px] font-mono">
+                                  <span className="text-red-400 font-bold">{c.id}</span>
+                                  <span className="text-stone-500 uppercase">{c.category}</span>
+                                </div>
+                                <p className="text-[#F8F9FA] text-[11px] line-clamp-2">
+                                  {c.text}
+                                </p>
                               </div>
                             ))}
                           </div>
-                        </>
+                        </div>
                       ) : (
-                        <p className="text-stone-500 italic">
-                          Awaiting claim deconstruction execution...
+                        <p className="text-stone-500 text-xs italic">
+                          {isSubmitting ? "Deconstructing compound statement into atomic claims..." : "Claims pending extraction."}
                         </p>
                       )}
                     </div>
                   )}
 
-                  {/* STAGE 3: WEB EVIDENCE RETRIEVED */}
+                  {/* Stage 3: Web Evidence Retrieved */}
                   {stage.id === "evidence_retrieved" && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-xs">
                       {apiResponse?.evidence ? (
-                        <>
-                          <div className="flex items-center justify-between text-[11px] font-mono">
-                            <span className="text-[#94A3B8]">
-                              Retrieved{" "}
-                              <strong className="text-[#38BDF8]">
+                        <div className="space-y-2 font-mono text-[11px]">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div className="p-2 rounded bg-[#11141A] border border-stone-800">
+                              <span className="text-stone-500 block text-[9px]">TOTAL SOURCES</span>
+                              <span className="text-[#F8F9FA] font-bold text-sm">
                                 {apiResponse.evidence.totalSourcesFound}
-                              </strong>{" "}
-                              primary web citations across{" "}
-                              <strong className="text-[#E2C15C]">{uniqueDomains.length}</strong> unique
-                              domains
-                            </span>
+                              </span>
+                            </div>
+                            <div className="p-2 rounded bg-[#11141A] border border-stone-800">
+                              <span className="text-stone-500 block text-[9px]">UNIQUE DOMAINS</span>
+                              <span className="text-emerald-400 font-bold text-sm">
+                                {new Set(apiResponse.evidence.allSources?.map((s) => s.domain) || []).size}
+                              </span>
+                            </div>
+                            <div className="p-2 rounded bg-[#11141A] border border-stone-800">
+                              <span className="text-stone-500 block text-[9px]">WEB RETRIEVALS</span>
+                              <span className="text-red-400 font-bold text-sm">
+                                {apiResponse.evidence.allSources?.filter((s) => s.sourceType === "web").length || 0}
+                              </span>
+                            </div>
+                            <div className="p-2 rounded bg-[#11141A] border border-stone-800">
+                              <span className="text-stone-500 block text-[9px]">VIDEO / YOUTUBE</span>
+                              <span className="text-red-400 font-bold text-sm">
+                                {apiResponse.evidence.allSources?.filter((s) => s.sourceType === "youtube").length || 0}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex flex-wrap gap-1.5 pt-1">
-                            {uniqueDomains.map((dom) => (
+                        </div>
+                      ) : (
+                        <p className="text-stone-500 text-xs italic">
+                          {isSubmitting ? "Executing multi-source web search..." : "Evidence retrieval pending."}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Stage 4: Evidence Linked */}
+                  {stage.id === "evidence_linked" && (
+                    <div className="space-y-2 text-xs">
+                      {apiResponse?.evidence?.allSources ? (
+                        <div className="space-y-2">
+                          <p className="text-[#CBD5E1] text-[11px]">
+                            {apiResponse.evidence.allSources.length} primary sources linked across {apiResponse.extraction?.claims?.length || 0} claims.
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {apiResponse.evidence.allSources.slice(0, 6).map((src) => (
                               <span
-                                key={dom}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#131720] border border-[#38BDF8]/30 text-[11px] font-mono text-[#38BDF8]"
+                                key={src.id}
+                                className="px-2 py-0.5 rounded bg-[#11141A] border border-stone-800 text-[10px] font-mono text-[#CBD5E1]"
                               >
-                                <Globe className="h-2.5 w-2.5" />
-                                {dom}
+                                {src.domain}
                               </span>
                             ))}
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-stone-500 italic">
-                          Awaiting web retrieval execution...
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* STAGE 4: EVIDENCE LINKED */}
-                  {stage.id === "evidence_linked" && (
-                    <div className="space-y-2">
-                      {apiResponse?.evidence ? (
-                        <div className="grid grid-cols-3 gap-2 text-center pt-1 font-mono">
-                          <div className="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300">
-                            <div className="text-base font-bold">{stanceTallies.supports}</div>
-                            <div className="text-[10px] text-emerald-400/80">SUPPORTS</div>
-                          </div>
-                          <div className="p-2 rounded-lg bg-rose-950/40 border border-rose-500/30 text-rose-300">
-                            <div className="text-base font-bold">{stanceTallies.contradicts}</div>
-                            <div className="text-[10px] text-rose-400/80">CONTRADICTS</div>
-                          </div>
-                          <div className="p-2 rounded-lg bg-stone-900/60 border border-stone-800 text-stone-300">
-                            <div className="text-base font-bold">{stanceTallies.other}</div>
-                            <div className="text-[10px] text-stone-400">INSUFFICIENT</div>
+                            {apiResponse.evidence.allSources.length > 6 && (
+                              <span className="px-2 py-0.5 rounded bg-[#11141A] border border-stone-800 text-[10px] font-mono text-stone-500">
+                                +{apiResponse.evidence.allSources.length - 6} more
+                              </span>
+                            )}
                           </div>
                         </div>
                       ) : (
-                        <p className="text-stone-500 italic">
-                          Awaiting evidence linkage and stance evaluation...
+                        <p className="text-stone-500 text-xs italic">
+                          {isSubmitting ? "Linking evidence to atomic assertions..." : "Relational linking pending."}
                         </p>
                       )}
                     </div>
                   )}
 
-                  {/* STAGE 5: IMAGE PROVENANCE */}
+                  {/* Stage 5: Image Provenance Search */}
                   {stage.id === "image_provenance" && (
-                    <div className="space-y-2">
-                      {apiResponse?.imageProvenance ? (
-                        <div className="space-y-2">
-                          <div className="text-[11px] font-mono text-[#94A3B8]">
-                            Discovered{" "}
-                            <strong className="text-[#22D3EE]">
-                              {apiResponse.imageProvenance.totalCandidatesFound}
-                            </strong>{" "}
-                            reverse provenance candidates:
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                            {apiResponse.imageProvenance.candidates.slice(0, 4).map((cand) => (
-                              <div
-                                key={cand.id}
-                                className="p-2 rounded-lg bg-[#0D1017] border border-cyan-900/40 flex items-center justify-between gap-2"
-                              >
-                                <div className="truncate">
-                                  <div className="font-semibold text-cyan-200 truncate">
-                                    {cand.title}
-                                  </div>
-                                  <div className="text-[10px] font-mono text-cyan-400">
-                                    {cand.domain}
-                                  </div>
-                                </div>
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-700/50">
-                                  {cand.matchType}
-                                </span>
-                              </div>
-                            ))}
+                    <div className="space-y-2 text-xs">
+                      {status === "SKIPPED" ? (
+                        <p className="text-stone-500 text-xs italic">
+                          Stage skipped — no image or multimodal attachment was provided for this investigation.
+                        </p>
+                      ) : apiResponse?.imageProvenance ? (
+                        <div className="space-y-2 font-mono text-[11px]">
+                          <div className="grid grid-cols-3 gap-2">
+                            <div className="p-2 rounded bg-[#11141A] border border-stone-800">
+                              <span className="text-stone-500 block text-[9px]">MATCH STATUS</span>
+                              <span className="text-emerald-400 font-bold text-xs">
+                                {apiResponse.imageProvenance.candidates.length > 0 ? "MATCH LOCATED" : "NO DIRECT MATCH"}
+                              </span>
+                            </div>
+                            <div className="p-2 rounded bg-[#11141A] border border-stone-800">
+                              <span className="text-stone-500 block text-[9px]">CANDIDATES</span>
+                              <span className="text-[#F8F9FA] font-bold text-sm">
+                                {apiResponse.imageProvenance.totalCandidatesFound}
+                              </span>
+                            </div>
+                            <div className="p-2 rounded bg-[#11141A] border border-stone-800">
+                              <span className="text-stone-500 block text-[9px]">SOURCE DOMAINS</span>
+                              <span className="text-red-400 font-bold text-sm">
+                                {apiResponse.imageProvenance.uniqueDomains?.length || 0}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       ) : (
-                        <p className="text-stone-500 italic">
-                          {hasMedia
-                            ? "Image uploaded. Awaiting reverse provenance search..."
-                            : "No image uploaded for this session — stage bypassed."}
+                        <p className="text-stone-500 text-xs italic">
+                          {isSubmitting ? "Querying visual match and provenance candidates..." : "Provenance pending."}
                         </p>
                       )}
                     </div>
                   )}
 
-                  {/* STAGE 6: STANCE ANALYSIS */}
+                  {/* Stage 6: Stance Analysis */}
                   {stage.id === "stance_analysis" && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-xs">
                       {apiResponse?.verification ? (
-                        <div className="space-y-1.5 pt-1">
-                          {apiResponse.verification.claimVerifications.map((c) => (
-                            <div
-                              key={c.claimId}
-                              className="flex items-center justify-between p-2 rounded-lg bg-[#0D1017] border border-stone-800 text-xs"
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono font-bold text-[#E2C15C]">
-                                  {c.claimId}:
-                                </span>
-                                <span className="text-[#F8F9FA] truncate max-w-sm">
-                                  {c.claimText}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span
-                                  className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
-                                    c.verdict === "TRUE"
-                                      ? "bg-emerald-950 text-emerald-300 border border-emerald-700"
-                                      : c.verdict === "FALSE"
-                                      ? "bg-rose-950 text-rose-300 border border-rose-700"
-                                      : c.verdict === "MIXED"
-                                      ? "bg-amber-950 text-amber-300 border border-amber-700"
-                                      : "bg-stone-900 text-stone-400 border border-stone-700"
-                                  }`}
-                                >
-                                  {c.verdict}
-                                </span>
-                                {onInspectClaim && (
-                                  <button
-                                    type="button"
-                                    onClick={() => onInspectClaim(c.claimId)}
-                                    className="text-[10px] font-mono text-[#D4AF37] hover:underline"
-                                  >
-                                    WHY?
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          ))}
+                        <div className="grid grid-cols-3 gap-2 font-mono text-center">
+                          <div className="p-2 rounded bg-[#11141A] border border-emerald-800/40">
+                            <span className="text-[9px] text-stone-400 block">SUPPORTS</span>
+                            <span className="text-emerald-400 font-bold text-sm">
+                              {stanceTallies.supports}
+                            </span>
+                          </div>
+                          <div className="p-2 rounded bg-[#11141A] border border-red-800/40">
+                            <span className="text-[9px] text-stone-400 block">CONTRADICTS</span>
+                            <span className="text-red-400 font-bold text-sm">
+                              {stanceTallies.contradicts}
+                            </span>
+                          </div>
+                          <div className="p-2 rounded bg-[#11141A] border border-stone-800">
+                            <span className="text-[9px] text-stone-400 block">NEUTRAL/OTHER</span>
+                            <span className="text-amber-400 font-bold text-sm">
+                              {stanceTallies.other}
+                            </span>
+                          </div>
                         </div>
                       ) : (
-                        <p className="text-stone-500 italic">
-                          Awaiting claim-level stance evaluations...
+                        <p className="text-stone-500 text-xs italic">
+                          {isSubmitting ? "Classifying supporting and contradicting stance per claim..." : "Stance analysis pending."}
                         </p>
                       )}
                     </div>
                   )}
 
-                  {/* STAGE 7: VERDICT SYNTHESIS */}
+                  {/* Stage 7: Verdict Synthesis */}
                   {stage.id === "verdict_synthesis" && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-xs">
                       {apiResponse?.verification ? (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between p-3 rounded-xl bg-[#0D1017] border border-[#D4AF37]/30">
-                            <div>
-                              <div className="text-[10px] font-mono text-[#94A3B8]">
-                                SYNTHESIZED OVERALL VERDICT
-                              </div>
-                              <div
-                                className={`text-sm sm:text-base font-extrabold font-mono tracking-wide ${
-                                  apiResponse.verification.overallVerdict === "VERIFIED"
-                                    ? "text-emerald-400"
-                                    : apiResponse.verification.overallVerdict === "FALSE"
-                                    ? "text-rose-400"
-                                    : apiResponse.verification.overallVerdict === "MIXED"
-                                    ? "text-amber-400"
-                                    : "text-stone-300"
-                                }`}
-                              >
-                                {apiResponse.verification.overallVerdict}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-[10px] font-mono text-[#94A3B8]">CONFIDENCE</div>
-                              <div className="text-xs font-mono font-bold text-[#E2C15C]">
-                                {apiResponse.verification.overallConfidence}
-                              </div>
-                            </div>
+                        <div className="p-3 rounded-lg bg-[#11141A] border border-stone-800 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-[10px] text-stone-400">
+                              OVERALL SYNTHESIS VERDICT:
+                            </span>
+                            <span className="font-mono font-bold text-xs px-2 py-0.5 rounded bg-red-950/40 text-red-300 border border-red-500/40">
+                              {apiResponse.verification.overallVerdict}
+                            </span>
                           </div>
-
-                          <p className="text-xs text-[#C2C9D6] leading-relaxed">
+                          <p className="text-[#CBD5E1] font-sans text-xs">
                             {apiResponse.verification.overallSummary}
                           </p>
                         </div>
                       ) : (
-                        <p className="text-stone-500 italic">
-                          Awaiting multi-claim aggregation and synthesis...
+                        <p className="text-stone-500 text-xs italic">
+                          {isSubmitting ? "Synthesizing deterministic verdict from evidence stances..." : "Synthesis pending."}
                         </p>
                       )}
                     </div>
                   )}
 
-                  {/* STAGE 8: INVESTIGATION COMPLETE */}
+                  {/* Stage 8: Investigation Complete */}
                   {stage.id === "investigation_complete" && (
                     <div className="space-y-2 text-xs">
-                      {isComplete ? (
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 font-mono">
+                      {apiResponse?.verification ? (
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-3 rounded-lg bg-[#11141A] border border-emerald-800/40">
                           <div className="flex items-center gap-2">
                             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                            <span>Forensic audit session finalized successfully.</span>
+                            <span className="text-[#F8F9FA] font-medium">
+                              Full evidence dossier ready for inspection.
+                            </span>
                           </div>
-                          <div className="text-[11px] text-[#94A3B8]">
-                            Session ID: {apiResponse?.sessionId?.slice(0, 14)}...
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => scrollToAnchor(stage.targetAnchorId)}
+                            className="px-3 py-1 rounded bg-[#161B24] hover:bg-[#1E2430] text-red-400 border border-stone-700 text-[11px] font-sans transition-colors"
+                          >
+                            Explore in Evidence Map ↗
+                          </button>
                         </div>
                       ) : (
-                        <p className="text-stone-500 italic">
-                          Lifecycle terminates when all atomic assertions are verified and synthesized.
+                        <p className="text-stone-500 text-xs italic">
+                          {isSubmitting ? "Finalizing investigation report..." : "Awaiting investigation completion."}
                         </p>
                       )}
+                    </div>
+                  )}
+
+                  {/* Quick Anchor Link */}
+                  {stage.targetAnchorId && isComplete && (
+                    <div className="pt-2 border-t border-stone-900 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => scrollToAnchor(stage.targetAnchorId)}
+                        className="text-[10px] font-sans text-red-400 hover:text-white flex items-center gap-1 transition-colors"
+                      >
+                        <span>Jump to section</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </button>
                     </div>
                   )}
                 </div>

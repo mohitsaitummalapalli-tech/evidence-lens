@@ -212,15 +212,15 @@ export const EvidenceLensWorkbench: React.FC = () => {
 
         {/* Progressive Disclosure Section Navigation (Visible once results are ready) */}
         {uiState === "INPUT_RECEIVED" && apiResponse && (
-          <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-[#0D1017] border border-stone-800 shadow-lg">
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-[#11141A] border border-stone-800 shadow-lg">
             <div className="flex flex-wrap items-center gap-1 text-xs">
               <button
                 type="button"
                 onClick={() => setActiveViewTab("ALL")}
                 className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                   activeViewTab === "ALL"
-                    ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
-                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                    ? "bg-[#161B24] text-white border border-stone-700 font-semibold shadow-sm"
+                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
                 }`}
               >
                 All Sections
@@ -230,8 +230,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
                 onClick={() => setActiveViewTab("WHY_RESULT")}
                 className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                   activeViewTab === "WHY_RESULT"
-                    ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
-                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                    ? "bg-red-600 text-white font-semibold shadow-sm"
+                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
                 }`}
               >
                 Why this result?
@@ -241,8 +241,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
                 onClick={() => setActiveViewTab("SOURCES")}
                 className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                   activeViewTab === "SOURCES"
-                    ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
-                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                    ? "bg-red-600 text-white font-semibold shadow-sm"
+                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
                 }`}
               >
                 Sources ({apiResponse.evidence?.totalSourcesFound || 0})
@@ -253,8 +253,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
                   onClick={() => setActiveViewTab("MEDIA")}
                   className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                     activeViewTab === "MEDIA"
-                      ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
-                      : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                      ? "bg-red-600 text-white font-semibold shadow-sm"
+                      : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
                   }`}
                 >
                   Media Matches ({apiResponse.imageProvenance.totalCandidatesFound})
@@ -266,11 +266,11 @@ export const EvidenceLensWorkbench: React.FC = () => {
                   onClick={() => setActiveViewTab("CONSENSUS")}
                   className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                     activeViewTab === "CONSENSUS"
-                      ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
-                      : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                      ? "bg-red-600 text-white font-semibold shadow-sm"
+                      : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
                   }`}
                 >
-                  AI Agreement ({apiResponse.consensus.overallAgreementRate}%)
+                  AI Jury ({apiResponse.consensus.overallAgreementRate}%)
                 </button>
               )}
               <button
@@ -278,8 +278,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
                 onClick={() => setActiveViewTab("MAP")}
                 className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                   activeViewTab === "MAP"
-                    ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
-                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                    ? "bg-red-600 text-white font-semibold shadow-sm"
+                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
                 }`}
               >
                 Evidence Map
@@ -289,8 +289,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
                 onClick={() => setActiveViewTab("TIMELINE")}
                 className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
                   activeViewTab === "TIMELINE"
-                    ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
-                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                    ? "bg-[#161B24] text-white border border-stone-700 font-semibold shadow-sm"
+                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#161B24]/50"
                 }`}
               >
                 Timeline

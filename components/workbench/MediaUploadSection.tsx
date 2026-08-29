@@ -124,18 +124,18 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
   };
 
   return (
-    <div className="bg-[#0D1017] border border-stone-800 rounded-xl p-5 shadow-xl shadow-black/40 space-y-3.5 transition-all">
+    <div className="bg-[#11141A] border border-stone-800 rounded-xl p-5 shadow-xl space-y-3.5 transition-all">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-[#131720] border border-stone-800 text-[#E2C15C]">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-lg bg-[#161B24] border border-stone-800 text-red-400">
             <UploadCloud className="h-4 w-4" />
           </div>
           <h2 className="text-sm font-semibold text-[#F8F9FA] tracking-normal font-sans">
-            Image or Video Upload <span className="text-[#94A3B8] font-normal">(Optional)</span>
+            2. Add Photo or Video <span className="text-[#94A3B8] font-normal">(Optional)</span>
           </h2>
         </div>
-        <span className="text-[11px] font-sans px-2.5 py-0.5 rounded-full bg-[#131720] text-[#E2C15C] border border-stone-800">
-          Photo / Video Proof
+        <span className="text-[11px] font-sans px-2.5 py-0.5 rounded-full bg-[#161B24] text-[#CBD5E1] border border-stone-800">
+          Media Match Search
         </span>
       </div>
 
@@ -153,10 +153,10 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
 
       {/* Media Present: Render Interactive Preview */}
       {media ? (
-        <div className="border border-[#D4AF37]/25 bg-[#08090C] rounded-lg p-4 space-y-3 shadow-inner">
-          <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#D4AF37]/15">
+        <div className="border border-stone-800 bg-[#0B0D11] rounded-xl p-4 space-y-3 shadow-inner">
+          <div className="flex items-center justify-between gap-2 pb-2 border-b border-stone-800">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="p-1.5 rounded bg-[#131720] border border-[#D4AF37]/30 text-[#D4AF37] shrink-0">
+              <div className="p-1.5 rounded-lg bg-[#161B24] border border-stone-800 text-red-400 shrink-0">
                 {media.type === "image" ? (
                   <ImageIcon className="h-4 w-4" />
                 ) : (
@@ -179,7 +179,7 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
                 onClick={handleReplaceClick}
                 disabled={disabled}
                 title="Replace Media"
-                className="p-1.5 rounded-md bg-[#131720] hover:bg-[#1C2230] text-[#D4AF37] border border-[#D4AF37]/30 transition-colors disabled:opacity-50"
+                className="p-1.5 rounded-lg bg-[#161B24] hover:bg-[#1C222E] text-[#CBD5E1] hover:text-[#F8F9FA] border border-stone-800 transition-colors disabled:opacity-50"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
               </button>
@@ -188,7 +188,7 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
                 onClick={handleRemove}
                 disabled={disabled}
                 title="Remove Media"
-                className="p-1.5 rounded-md bg-[#131720] hover:bg-rose-950/50 text-[#94A3B8] hover:text-rose-400 border border-stone-800 transition-colors disabled:opacity-50"
+                className="p-1.5 rounded-lg bg-[#161B24] hover:bg-rose-950/50 text-[#94A3B8] hover:text-rose-400 border border-stone-800 transition-colors disabled:opacity-50"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
@@ -196,12 +196,12 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
           </div>
 
           {/* Visual Display Container */}
-          <div className="flex items-center justify-center bg-[#050608] rounded border border-stone-900 overflow-hidden max-h-[220px]">
+          <div className="flex items-center justify-center bg-[#050608] rounded-lg border border-stone-900 overflow-hidden max-h-[220px]">
             {media.type === "image" ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={media.previewUrl}
-                alt="Selected claim artifact"
+                alt="Selected claim media artifact"
                 className="max-h-[220px] w-auto object-contain rounded"
               />
             ) : (
@@ -215,12 +215,12 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
             )}
           </div>
 
-          <div className="flex items-center justify-between text-[11px] font-mono text-[#94A3B8] pt-1">
-            <span className="flex items-center gap-1 text-emerald-400">
+          <div className="flex items-center justify-between text-[11px] font-sans text-[#94A3B8] pt-1">
+            <span className="flex items-center gap-1 text-emerald-400 font-medium">
               <FileCheck className="h-3.5 w-3.5" />
-              Client preview loaded
+              Media attached
             </span>
-            <span className="text-[#E2C15C]">Ready for investigation dispatch</span>
+            <span className="text-[#CBD5E1]">Will check online matches & provenance</span>
           </div>
         </div>
       ) : (
@@ -231,47 +231,35 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
           onDragOver={handleDrag}
           onDrop={handleDrop}
           onClick={handleReplaceClick}
-          className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+          className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
             dragActive
-              ? "border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_15px_rgba(212,175,55,0.2)]"
-              : "border-stone-800 bg-[#08090C]/60 hover:border-[#D4AF37]/40 hover:bg-[#0D1017]"
+              ? "border-red-500 bg-red-950/10 shadow-[0_0_15px_rgba(239,68,68,0.15)]"
+              : "border-stone-800 bg-[#0B0D11]/60 hover:border-red-500/40 hover:bg-[#11141A]"
           } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
         >
           <div className="flex items-center gap-3 mb-3 text-[#94A3B8]">
-            <div className="p-2 rounded-md bg-[#131720] border border-[#D4AF37]/20">
-              <ImageIcon className="h-5 w-5 text-[#D4AF37]" />
+            <div className="p-2 rounded-lg bg-[#161B24] border border-stone-800 text-red-400">
+              <ImageIcon className="h-5 w-5" />
             </div>
-            <div className="p-2 rounded-md bg-[#131720] border border-[#D4AF37]/20">
-              <Video className="h-5 w-5 text-[#E2C15C]" />
+            <div className="p-2 rounded-lg bg-[#161B24] border border-stone-800 text-[#CBD5E1]">
+              <Video className="h-5 w-5" />
             </div>
           </div>
 
           <p className="text-sm font-medium text-[#F8F9FA]">
-            Click to upload or drag & drop claim media
+            Click to upload or drag & drop image or video
           </p>
-          <p className="text-xs text-[#94A3B8] mt-1 max-w-sm">
-            Attach an image (up to 15MB) or video (up to 50MB) associated with the assertion.
+          <p className="text-xs text-[#94A3B8] mt-1">
+            Supports {SUPPORTED_MEDIA_TYPES.images.slice(0, 3).join(", ")} up to 15MB • {SUPPORTED_MEDIA_TYPES.video.slice(0, 2).join(", ")} up to 50MB
           </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-1.5 mt-3 text-[10px] font-mono text-[#94A3B8]">
-            <span className="px-2 py-0.5 rounded bg-[#131720] border border-stone-800 text-[#C2C9D6]">
-              IMG: {SUPPORTED_MEDIA_TYPES.images.join(", ")}
-            </span>
-            <span className="px-2 py-0.5 rounded bg-[#131720] border border-stone-800 text-[#C2C9D6]">
-              VID: {SUPPORTED_MEDIA_TYPES.video.join(", ")}
-            </span>
-          </div>
         </div>
       )}
 
-      {/* Error Alert */}
+      {/* Validation / Error Message */}
       {errorMessage && (
-        <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-800/60 flex items-start gap-2.5 text-xs text-rose-300">
-          <AlertTriangle className="h-4 w-4 text-rose-400 shrink-0 mt-0.5" />
-          <div className="space-y-0.5">
-            <p className="font-semibold text-rose-200">Media Validation Error</p>
-            <p className="text-rose-300/90">{errorMessage}</p>
-          </div>
+        <div className="flex items-start gap-2 p-3 bg-rose-950/30 border border-rose-500/40 rounded-xl text-xs text-rose-300">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-rose-400" />
+          <p className="leading-relaxed">{errorMessage}</p>
         </div>
       )}
     </div>

@@ -2,25 +2,24 @@
 
 @layer base {
   :root {
-    --background: #08090c;
+    --background: #0b0d11;
     --foreground: #f8f9fa;
-    --surface-card: #0d0f15;
-    --surface-elevated: #131720;
-    --surface-overlay: #181d28;
+    --surface-card: #11141a;
+    --surface-elevated: #161b24;
+    --surface-overlay: #1c222e;
 
-    --gold-300: #f3e5b8;
-    --gold-400: #e2c15c;
-    --gold-500: #d4af37;
-    --gold-600: #b38f24;
-    --gold-700: #8c6d17;
+    /* Professional Restrained Metallic Crimson & Silver Accents */
+    --accent-red-400: #f87171;
+    --accent-red-500: #ef4444;
+    --accent-red-600: #dc2626;
+    --accent-red-700: #b91c1c;
 
-    --amber-400: #fbbf24;
-    --amber-500: #f59e0b;
-    --amber-600: #d97706;
+    --silver-300: #e2e8f0;
+    --silver-400: #cbd5e1;
+    --silver-500: #94a3b8;
 
-    --gold-border: rgba(212, 175, 55, 0.18);
-    --gold-border-active: rgba(212, 175, 55, 0.4);
-    --gold-glow: 0 0 25px rgba(212, 175, 55, 0.15);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-accent: rgba(239, 68, 68, 0.35);
   }
 
   body {
@@ -28,115 +27,39 @@
     color: var(--foreground);
     color-scheme: dark;
     background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212, 175, 55, 0.07), transparent 70%),
-      linear-gradient(to bottom, rgba(8, 9, 12, 0.8), rgba(8, 9, 12, 1));
+      radial-gradient(ellipse 90% 50% at 50% -10%, rgba(220, 38, 38, 0.05), transparent 60%),
+      linear-gradient(to bottom, rgba(11, 13, 17, 0.95), rgba(11, 13, 17, 1));
     background-attachment: fixed;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Forensic Subtle Grid Background Overlay */
-.forensic-grid {
-  background-size: 32px 32px;
-  background-image:
-    linear-gradient(to right, rgba(212, 175, 55, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(212, 175, 55, 0.03) 1px, transparent 1px);
-}
-
-/* Metallic Gold Accent Gradient */
-.gold-gradient-text {
-  background: linear-gradient(135deg, #fff7d6 0%, #d4af37 50%, #c49a31 100%);
+/* Clean Editorial Text Gradient */
+.brand-gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 40%, #e2e8f0 70%, #f87171 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.gold-gradient-bg {
-  background: linear-gradient(135deg, #f5e4ab 0%, #d4af37 50%, #a47d28 100%);
+.accent-crimson-gradient {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #991b1b 100%);
 }
 
-.gold-gradient-border {
-  border-color: rgba(212, 175, 55, 0.25);
-}
-
-/* Custom Scrollbar for Forensic Telemetry & Workspace Panels */
+/* Custom Clean Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(13, 15, 21, 0.8);
+  background: #0b0d11;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.25);
+  background: #272f3d;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.45);
-}
-
-/* Phase 7B: 3D Forensic Floating Phases */
-@keyframes forensic-float-1 {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-@keyframes forensic-float-2 {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-7px);
-  }
-}
-
-@keyframes forensic-float-3 {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-4px);
-  }
-}
-
-.floating-card-1 {
-  animation: forensic-float-1 7s ease-in-out infinite;
-}
-
-.floating-card-2 {
-  animation: forensic-float-2 8.5s ease-in-out infinite;
-  animation-delay: 1.2s;
-}
-
-.floating-card-3 {
-  animation: forensic-float-3 6.2s ease-in-out infinite;
-  animation-delay: 2.5s;
-}
-
-/* 3D Depth Card Specular Effects */
-.depth-surface {
-  transform-style: preserve-3d;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.8),
-              0 0 1px 1px rgba(212, 175, 55, 0.15);
-}
-
-/* Accessibility: Strict Reduced Motion Overrides */
-@media (prefers-reduced-motion: reduce) {
-  .floating-card-1,
-  .floating-card-2,
-  .floating-card-3 {
-    animation: none !important;
-    transform: none !important;
-  }
-
-  .depth-surface,
-  [data-depth-card] {
-    transform: none !important;
-    transition: none !important;
-  }
+  background: #3b4759;
 }

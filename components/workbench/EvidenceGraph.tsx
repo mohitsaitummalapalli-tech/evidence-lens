@@ -22,7 +22,6 @@ import {
   HelpCircle,
   Play,
   FastForward,
-  Activity,
   CheckCircle2,
   Loader2,
 } from "lucide-react";
@@ -78,7 +77,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     screenY: number;
   } | null>(null);
 
-  const rawClaimText = originalClaim || extraction?.originalClaim || "Target Compound Claim Assertion";
+  const rawClaimText = originalClaim || extraction?.originalClaim || "Target Claim to Verify";
   const claims = useMemo(() => extraction?.claims || [], [extraction?.claims]);
   const allSources = useMemo(() => evidence?.allSources || [], [evidence?.allSources]);
   const provCandidates = useMemo(
@@ -90,23 +89,38 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     [verification?.claimVerifications]
   );
 
-  // 1. Construct Complete Layout Geometry (Nodes and Edges)
+  // 1. Construct Layout Geometry with Wide Whitespace
   const { nodes, edges, bounds } = useMemo(() => {
     const nodesList: GraphNodeData[] = [];
     const edgesList: GraphEdgeData[] = [];
 
-    const numClaims = Math.max(claims.length, 1);
     const hasImageProv = provCandidates.length > 0;
-    const claimSpacing = 380;
-    const totalClaimsWidth = numClaims * claimSpacing + (hasImageProv ? 420 : 0);
-    const canvasWidth = Math.max(totalClaimsWidth + 500, 1400);
+
+    // Group evidence by claimId
+    const evidenceByClaim: Record<string, typeof allSources> = {};
+    allSources.forEach((src) => {
+      if (!evidenceByClaim[src.claimId]) {
+        evidenceByClaim[src.claimId] = [];
+      }
+      evidenceByClaim[src.claimId].push(src);
+    });
+
+    // Dynamic horizontal spacing per claim column
+    const claimColumnWidths = claims.map((c) => {
+      const srcCount = (evidenceByClaim[c.id] || []).length;
+      const cols = Math.min(Math.max(srcCount, 1), 3);
+      return Math.max(cols * 290, 360);
+    });
+
+    const totalClaimsWidth = claimColumnWidths.reduce((sum, w) => sum + w, 0) + (hasImageProv ? 420 : 0);
+    const canvasWidth = Math.max(totalClaimsWidth + 600, 1500);
     const centerX = canvasWidth / 2;
 
-    // Root Node
-    const rootWidth = 400;
+    // Root Node (Tier 1: Top Center)
+    const rootWidth = 420;
     const rootHeight = 110;
     const rootX = centerX - rootWidth / 2;
-    const rootY = 40;
+    const rootY = 50;
 
     const rootNode: GraphNodeData = {
       id: "node-root",
@@ -120,20 +134,19 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     };
     nodesList.push(rootNode);
 
-    // Atomic Claims Tier (Y = 240)
-    const claimWidth = 300;
+    // Atomic Claims Tier (Tier 2: Y = 260)
+    const claimWidth = 320;
     const claimHeight = 115;
-    const claimY = 240;
-    const startClaimX =
-      centerX - (numClaims * claimSpacing) / 2 + (claimSpacing - claimWidth) / 2 + (hasImageProv ? 140 : 0);
+    const claimY = 260;
 
+    let currentClaimX = centerX - (totalClaimsWidth / 2) + (hasImageProv ? 380 : 0);
     const claimPositions: Record<string, { x: number; y: number; width: number; height: number }> = {};
 
     claims.forEach((claim, idx) => {
-      const claimX = startClaimX + idx * claimSpacing;
+      const colWidth = claimColumnWidths[idx] || 360;
+      const claimX = currentClaimX + (colWidth - claimWidth) / 2;
       claimPositions[claim.id] = { x: claimX, y: claimY, width: claimWidth, height: claimHeight };
 
-      // Find verification status for this claim if available
       const verObj = claimVerifications.find((v) => v.claimId === claim.id);
 
       const claimNode: GraphNodeData = {
@@ -170,15 +183,17 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
         pathD: `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`,
         type: "root_to_claim",
       });
+
+      currentClaimX += colWidth + 40;
     });
 
-    let maxY = 450;
+    let maxY = 500;
 
-    // Image Provenance Branch (Phase 6B)
+    // Image Provenance / Media Matches Branch (Left Column)
     if (hasImageProv) {
-      const imgWidth = 240;
+      const imgWidth = 260;
       const imgHeight = 105;
-      const imgX = Math.max(40, startClaimX - 320);
+      const imgX = Math.max(60, centerX - (totalClaimsWidth / 2));
       const imgY = claimY;
 
       const imgNode: GraphNodeData = {
@@ -188,12 +203,12 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
         y: imgY,
         width: imgWidth,
         height: imgHeight,
-        label: "IMAGE ARTIFACT",
-        title: imageProvenance?.mediaFilename || "Uploaded Image Artifact",
+        label: "UPLOADED MEDIA",
+        title: imageProvenance?.mediaFilename || "Uploaded Media",
       };
       nodesList.push(imgNode);
 
-      // Edge from Root -> Image Artifact
+      // Edge from Root -> Media
       const startX = rootX + rootWidth / 2;
       const startY = rootY + rootHeight;
       const endX = imgX + imgWidth / 2;
@@ -212,14 +227,14 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
         type: "root_to_claim",
       });
 
-      // Candidate Provenance Sources
-      provCandidates.slice(0, 3).forEach((cand, cIdx) => {
-        const candWidth = 220;
-        const candHeight = 90;
-        const candX = imgX + (cIdx % 2) * 230 - 20;
-        const candY = 400 + Math.floor(cIdx / 2) * 110;
+      // Candidate Media Matches Tier (Y = 480+)
+      provCandidates.slice(0, 4).forEach((cand, cIdx) => {
+        const candWidth = 250;
+        const candHeight = 95;
+        const candX = imgX + (cIdx % 2) * 270 - 20;
+        const candY = 480 + Math.floor(cIdx / 2) * 135;
 
-        maxY = Math.max(maxY, candY + candHeight + 80);
+        maxY = Math.max(maxY, candY + candHeight + 100);
 
         const candNode: GraphNodeData = {
           id: `cand-${cand.id}`,
@@ -228,7 +243,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
           y: candY,
           width: candWidth,
           height: candHeight,
-          label: `PROV • ${cand.id}`,
+          label: `MATCH • ${cand.id}`,
           title: cand.title,
           domain: cand.domain,
           url: cand.url,
@@ -238,7 +253,6 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
         };
         nodesList.push(candNode);
 
-        // Edge from Image Artifact -> Candidate (IMAGE -> WEB SOURCE)
         const sX = imgX + imgWidth / 2;
         const sY = imgY + imgHeight;
         const eX = candX + candWidth / 2;
@@ -259,19 +273,10 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       });
     }
 
-    // Evidence Sources Tier (Y = 420+)
-    const evidenceWidth = 230;
-    const evidenceHeight = 95;
-    const evidenceSpacing = 260;
-
-    // Group evidence by claimId
-    const evidenceByClaim: Record<string, typeof allSources> = {};
-    allSources.forEach((src) => {
-      if (!evidenceByClaim[src.claimId]) {
-        evidenceByClaim[src.claimId] = [];
-      }
-      evidenceByClaim[src.claimId].push(src);
-    });
+    // Evidence Sources Tier (Tier 3: Y = 480+)
+    const evidenceWidth = 260;
+    const evidenceHeight = 100;
+    const evidenceSpacing = 280;
 
     claims.forEach((claim) => {
       const claimPos = claimPositions[claim.id];
@@ -283,17 +288,18 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       if (sourcesCount === 0) return;
 
       sourcesForClaim.forEach((source, sIdx) => {
-        const rowOffset = Math.floor(sIdx / 3) * 125;
+        const rowOffset = Math.floor(sIdx / 3) * 140;
         const colInRow = sIdx % 3;
+        const cols = Math.min(sourcesCount, 3);
         const sourceX =
           claimPos.x +
           claimPos.width / 2 -
-          (Math.min(sourcesCount, 3) * evidenceSpacing) / 2 +
+          (cols * evidenceSpacing) / 2 +
           colInRow * evidenceSpacing +
           (evidenceSpacing - evidenceWidth) / 2;
-        const sourceY = 420 + rowOffset;
+        const sourceY = 480 + rowOffset;
 
-        maxY = Math.max(maxY, sourceY + evidenceHeight + 100);
+        maxY = Math.max(maxY, sourceY + evidenceHeight + 120);
 
         const evNode: GraphNodeData = {
           id: `ev-${source.id}`,
@@ -306,6 +312,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
           title: source.title,
           domain: source.domain,
           url: source.url,
+          sourceType: source.sourceType,
           stance: source.stance,
           rawEvidence: source,
         };
@@ -337,8 +344,8 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       nodes: nodesList,
       edges: edgesList,
       bounds: {
-        width: Math.max(canvasWidth, 1300),
-        height: Math.max(maxY, 650),
+        width: Math.max(canvasWidth, 1400),
+        height: Math.max(maxY, 700),
       },
     };
   }, [claims, allSources, provCandidates, imageProvenance?.mediaFilename, claimVerifications, rawClaimText]);
@@ -348,7 +355,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     const updateSize = () => {
       if (containerRef.current) {
         setContainerSize({
-          width: containerRef.current.clientWidth,
+          width: containerRef.current.clientWidth || 900,
           height: containerRef.current.clientHeight || 550,
         });
       }
@@ -358,93 +365,73 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  // 3. Progressive Animation Sequence Chain
+  // 3. Progressive Animation Sequence
   useEffect(() => {
     let isCancelled = false;
     const timeouts: NodeJS.Timeout[] = [];
 
-    // Reset initial state asynchronously
-    const tInit = setTimeout(() => {
-      if (isCancelled) return;
-      setVisibleNodeIds(new Set());
-      setVisibleEdgeIds(new Set());
-      setVerdictsRevealed(false);
-      setAnimationStage("INITIALIZING");
-    }, 0);
-    timeouts.push(tInit);
-
-    if (isInitializing) {
+    // If initializing or empty, show static view
+    if (isInitializing || (claims.length === 0 && allSources.length === 0)) {
+      const tStatic = setTimeout(() => {
+        if (isCancelled) return;
+        setVisibleNodeIds(new Set(nodes.map((n) => n.id)));
+        setVisibleEdgeIds(new Set(edges.map((e) => e.id)));
+        setVerdictsRevealed(true);
+        setAnimationStage("COMPLETE");
+      }, 0);
+      timeouts.push(tStatic);
       return () => {
-        timeouts.forEach(clearTimeout);
+        isCancelled = true;
+        clearTimeout(tStatic);
       };
     }
 
-    const claimDelay = Math.max(120, Math.min(240, 700 / (claims.length || 1)));
-    const evidenceDelay = Math.max(80, Math.min(180, 1200 / ((allSources.length + provCandidates.length) || 1)));
-
-    // Step 1: Reveal Root Node at t = 100ms
-    const t0 = setTimeout(() => {
+    // Step 1: Root Revealed
+    const tRoot = setTimeout(() => {
       if (isCancelled) return;
-      setVisibleNodeIds(new Set(["node-root"]));
       setAnimationStage("ROOT_REVEALED");
-    }, 100);
-    timeouts.push(t0);
+      setVisibleNodeIds(new Set(["node-root"]));
+      setVisibleEdgeIds(new Set());
+      setVerdictsRevealed(false);
+    }, 0);
+    timeouts.push(tRoot);
 
-    // Step 2: Sequentially reveal claims, image artifact node + root edges
-    let cumulativeTime = 250;
-    claims.forEach((claim, idx) => {
-      const claimNodeId = `claim-${claim.id}`;
-      const rootEdgeId = `edge-root-${claim.id}`;
+    let cumulativeTime = 350;
 
-      const t = setTimeout(() => {
-        if (isCancelled) return;
-        setAnimationStage("BUILDING_CLAIMS");
-        setVisibleNodeIds((prev) => new Set([...prev, claimNodeId]));
-        setVisibleEdgeIds((prev) => new Set([...prev, rootEdgeId]));
-      }, cumulativeTime + idx * claimDelay);
-      timeouts.push(t);
-    });
+    // Step 2: Populate Claims
+    const tClaims = setTimeout(() => {
+      if (isCancelled) return;
+      setAnimationStage("BUILDING_CLAIMS");
+      const currentNodes = new Set(["node-root"]);
+      const currentEdges = new Set<string>();
 
-    if (provCandidates.length > 0) {
-      const tImg = setTimeout(() => {
-        if (isCancelled) return;
-        setVisibleNodeIds((prev) => new Set([...prev, "node-image-artifact"]));
-        setVisibleEdgeIds((prev) => new Set([...prev, "edge-root-image"]));
-      }, cumulativeTime + claims.length * claimDelay);
-      timeouts.push(tImg);
-    }
+      claims.forEach((c) => currentNodes.add(`claim-${c.id}`));
+      edges.filter((e) => e.type === "root_to_claim").forEach((e) => currentEdges.add(e.id));
 
-    cumulativeTime += claims.length * claimDelay + 100;
+      if (provCandidates.length > 0) {
+        currentNodes.add("node-image-artifact");
+        currentEdges.add("edge-root-image");
+      }
 
-    // Step 3: Sequentially reveal evidence nodes & provenance candidates
-    allSources.forEach((source, sIdx) => {
-      const evNodeId = `ev-${source.id}`;
-      const edgeId = `edge-${source.claimId}-${source.id}`;
+      setVisibleNodeIds(currentNodes);
+      setVisibleEdgeIds(currentEdges);
+    }, cumulativeTime);
+    timeouts.push(tClaims);
 
-      const t = setTimeout(() => {
-        if (isCancelled) return;
-        setAnimationStage("CONNECTING_EVIDENCE");
-        setVisibleNodeIds((prev) => new Set([...prev, evNodeId]));
-        setVisibleEdgeIds((prev) => new Set([...prev, edgeId]));
-      }, cumulativeTime + sIdx * evidenceDelay);
-      timeouts.push(t);
-    });
+    cumulativeTime += 450;
 
-    provCandidates.slice(0, 3).forEach((cand, pIdx) => {
-      const candNodeId = `cand-${cand.id}`;
-      const edgeId = `edge-img-${cand.id}`;
+    // Step 3: Connect Evidence
+    const tEvidence = setTimeout(() => {
+      if (isCancelled) return;
+      setAnimationStage("CONNECTING_EVIDENCE");
+      setVisibleNodeIds(new Set(nodes.map((n) => n.id)));
+      setVisibleEdgeIds(new Set(edges.map((e) => e.id)));
+    }, cumulativeTime);
+    timeouts.push(tEvidence);
 
-      const t = setTimeout(() => {
-        if (isCancelled) return;
-        setVisibleNodeIds((prev) => new Set([...prev, candNodeId]));
-        setVisibleEdgeIds((prev) => new Set([...prev, edgeId]));
-      }, cumulativeTime + (allSources.length + pIdx) * evidenceDelay);
-      timeouts.push(t);
-    });
+    cumulativeTime += 450;
 
-    cumulativeTime += (allSources.length + provCandidates.length) * evidenceDelay + 150;
-
-    // Step 4: Synthesize verdicts & complete
+    // Step 4: Synthesize Verdicts
     const tVerdicts = setTimeout(() => {
       if (isCancelled) return;
       setAnimationStage("SYNTHESIZING_VERDICTS");
@@ -457,7 +444,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       setAnimationStage("COMPLETE");
       setVisibleNodeIds(new Set(nodes.map((n) => n.id)));
       setVisibleEdgeIds(new Set(edges.map((e) => e.id)));
-    }, cumulativeTime + 300);
+    }, cumulativeTime + 250);
     timeouts.push(tComplete);
 
     return () => {
@@ -598,45 +585,18 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     const set = new Set<string>();
     set.add(selectedNodeId);
 
-    if (selectedNodeId === "node-root") {
-      nodes.forEach((n) => set.add(n.id));
-      return set;
-    }
-
-    if (selectedNodeId === "node-image-artifact") {
-      set.add("node-root");
-      nodes.forEach((n) => {
-        if (n.type === "provenance") set.add(n.id);
-      });
-      return set;
-    }
-
-    if (selectedNodeId.startsWith("cand-")) {
-      set.add("node-image-artifact");
-      set.add("node-root");
-      return set;
-    }
-
-    if (selectedNodeId.startsWith("claim-")) {
-      const claimId = selectedNodeId.replace("claim-", "");
-      set.add("node-root");
-      nodes.forEach((n) => {
-        if (n.type === "evidence" && n.rawEvidence?.claimId === claimId) {
-          set.add(n.id);
-        }
-      });
-    } else if (selectedNodeId.startsWith("ev-")) {
-      const evNode = nodes.find((n) => n.id === selectedNodeId);
-      if (evNode?.rawEvidence?.claimId) {
-        set.add(`claim-${evNode.rawEvidence.claimId}`);
-        set.add("node-root");
+    edges.forEach((edge) => {
+      if (edge.fromId === selectedNodeId) {
+        set.add(edge.toId);
+      } else if (edge.toId === selectedNodeId) {
+        set.add(edge.fromId);
       }
-    }
+    });
 
     return set;
-  }, [selectedNodeId, nodes]);
+  }, [selectedNodeId, edges]);
 
-  // Selected node details object for inspector panel
+  // Selected Node Details
   const selectedNodeDetails = useMemo(() => {
     if (!selectedNodeId) return null;
     return nodes.find((n) => n.id === selectedNodeId) || null;
@@ -656,74 +616,69 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
     <div
       id="evidence-graph-panel"
       ref={containerRef}
-      className={`bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl shadow-2xl shadow-black/70 flex flex-col transition-all duration-300 relative overflow-hidden ${
+      className={`bg-[#11141A] border border-stone-800 rounded-xl shadow-2xl flex flex-col transition-all duration-300 relative overflow-hidden ${
         isFullscreen
-          ? "fixed inset-4 z-50 rounded-2xl bg-[#08090C] border-[#D4AF37]/50"
+          ? "fixed inset-4 z-50 rounded-2xl bg-[#0B0D11] border-stone-700"
           : "min-h-[580px] w-full"
       }`}
     >
       {/* Top Header & Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-[#D4AF37]/15 bg-[#08090C]/80 backdrop-blur-sm z-10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-stone-800 bg-[#0B0D11]/80 backdrop-blur-sm z-10">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-[#131720] border border-[#D4AF37]/30 text-[#D4AF37] shadow-sm">
+          <div className="p-2 rounded-xl bg-[#161B24] border border-stone-800 text-red-400 shadow-sm">
             <Network className="h-5 w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-[#F8F9FA] tracking-wide">
-                Live Forensic Evidence Graph
+                Interactive Evidence Map
               </h3>
 
-              {/* Real-time Status Badge */}
+              {/* Status Badge */}
               <span
                 className={`text-[10px] font-mono px-2.5 py-0.5 rounded-full font-semibold uppercase border flex items-center gap-1.5 ${
                   animationStage === "COMPLETE"
                     ? "bg-emerald-950/60 text-emerald-300 border-emerald-700/50"
                     : isBuilding
-                    ? "bg-[#D4AF37]/15 text-[#E2C15C] border-[#D4AF37]/40 animate-pulse"
-                    : "bg-[#131720] text-[#94A3B8] border-stone-800"
+                    ? "bg-red-950/40 text-red-300 border-red-500/40 animate-pulse"
+                    : "bg-[#161B24] text-[#94A3B8] border-stone-800"
                 }`}
               >
-                {isBuilding && <Loader2 className="h-3 w-3 animate-spin text-[#D4AF37]" />}
+                {isBuilding && <Loader2 className="h-3 w-3 animate-spin text-red-400" />}
                 {animationStage === "COMPLETE" && <CheckCircle2 className="h-3 w-3 text-emerald-400" />}
                 <span>
                   {animationStage === "COMPLETE"
-                    ? "STATUS: ANALYSIS COMPLETE"
+                    ? "COMPLETE"
                     : animationStage === "BUILDING_CLAIMS"
-                    ? "POPULATING ATOMIC CLAIMS..."
+                    ? "POPULATING CLAIMS..."
                     : animationStage === "CONNECTING_EVIDENCE"
-                    ? "CONNECTING EVIDENCE CITATIONS..."
+                    ? "CONNECTING SOURCES..."
                     : animationStage === "SYNTHESIZING_VERDICTS"
                     ? "CALCULATING VERDICTS..."
-                    : "INITIALIZING FORENSIC GRAPH..."}
+                    : "INITIALIZING..."}
                 </span>
               </span>
             </div>
 
-            {/* Live Progress Telemetry Line */}
+            {/* Counts Line */}
             <div className="flex items-center gap-3 text-[11px] text-[#94A3B8] font-mono mt-1">
-              <span className="text-[#E2C15C] font-semibold">
+              <span className="text-[#F8F9FA] font-semibold">
                 CLAIMS: {visibleClaimsCount}/{claims.length}
               </span>
               <span className="text-stone-700">•</span>
-              <span className="text-[#E2C15C] font-semibold">
-                EVIDENCE: {visibleEvidenceCount}/{allSources.length}
+              <span className="text-[#F8F9FA] font-semibold">
+                SOURCES: {visibleEvidenceCount}/{allSources.length}
               </span>
               {provCandidates.length > 0 && (
                 <>
                   <span className="text-stone-700">•</span>
-                  <span className="text-cyan-400 font-semibold">
-                    PROVENANCE: {provCandidates.length}
+                  <span className="text-red-400 font-semibold">
+                    MEDIA: {provCandidates.length}
                   </span>
                 </>
               )}
               <span className="text-stone-700">•</span>
-              <span>RELATIONSHIPS: {visibleEdgeIds.size}/{edges.length}</span>
-              <span className="text-stone-700">•</span>
-              <span className="text-emerald-400 flex items-center gap-1">
-                <Activity className="h-3 w-3" />
-                Live Comet Streams
-              </span>
+              <span>RELATIONS: {visibleEdgeIds.size}/{edges.length}</span>
             </div>
           </div>
         </div>
@@ -735,45 +690,45 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             <button
               type="button"
               onClick={skipAnimation}
-              title="Fast Forward to Complete Graph"
-              className="px-2.5 py-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] border border-[#D4AF37]/30 text-xs font-mono flex items-center gap-1.5 transition-colors shadow-sm"
+              title="Skip Animation"
+              className="px-2.5 py-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-red-400 border border-stone-800 text-xs font-mono flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <FastForward className="h-3.5 w-3.5" />
               <span>Skip</span>
             </button>
           )}
 
-          {/* Replay Graph Animation */}
+          {/* Replay */}
           {animationStage === "COMPLETE" && (
             <button
               type="button"
               onClick={replayAnimation}
-              title="Replay Progressive Graph Ingestion"
-              className="px-2.5 py-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] border border-[#D4AF37]/20 text-xs font-mono flex items-center gap-1.5 transition-colors shadow-sm"
+              title="Replay Map Ingestion"
+              className="px-2.5 py-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-[#CBD5E1] hover:text-white border border-stone-800 text-xs font-sans flex items-center gap-1.5 transition-colors shadow-sm"
             >
-              <Play className="h-3.5 w-3.5 fill-current" />
+              <Play className="h-3.5 w-3.5 fill-current text-red-400" />
               <span>Replay</span>
             </button>
           )}
 
           {/* Zoom Controls */}
-          <div className="flex items-center p-0.5 rounded-lg bg-[#131720] border border-[#D4AF37]/20">
+          <div className="flex items-center p-0.5 rounded-lg bg-[#161B24] border border-stone-800">
             <button
               type="button"
               onClick={() => handleZoom("out")}
               title="Zoom Out"
-              className="p-1.5 rounded hover:bg-[#1C2230] text-[#94A3B8] hover:text-[#F8F9FA] transition-colors"
+              className="p-1.5 rounded hover:bg-[#1E2430] text-[#94A3B8] hover:text-[#F8F9FA] transition-colors"
             >
               <ZoomOut className="h-3.5 w-3.5" />
             </button>
-            <span className="px-2 text-[10px] font-mono text-[#E2C15C]">
+            <span className="px-2 text-[10px] font-mono text-[#CBD5E1]">
               {Math.round(transform.scale * 100)}%
             </span>
             <button
               type="button"
               onClick={() => handleZoom("in")}
               title="Zoom In"
-              className="p-1.5 rounded hover:bg-[#1C2230] text-[#94A3B8] hover:text-[#F8F9FA] transition-colors"
+              className="p-1.5 rounded hover:bg-[#1E2430] text-[#94A3B8] hover:text-[#F8F9FA] transition-colors"
             >
               <ZoomIn className="h-3.5 w-3.5" />
             </button>
@@ -783,10 +738,10 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
           <button
             type="button"
             onClick={fitGraph}
-            title="Fit Graph to View"
-            className="px-2.5 py-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] border border-[#D4AF37]/20 text-xs font-mono flex items-center gap-1 transition-colors shadow-sm"
+            title="Fit Map to View"
+            className="px-2.5 py-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-[#CBD5E1] hover:text-white border border-stone-800 text-xs font-sans flex items-center gap-1 transition-colors shadow-sm"
           >
-            <Focus className="h-3.5 w-3.5" />
+            <Focus className="h-3.5 w-3.5 text-red-400" />
             <span className="hidden sm:inline">Fit</span>
           </button>
 
@@ -794,7 +749,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             type="button"
             onClick={resetView}
             title="Reset View"
-            className="p-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#94A3B8] hover:text-[#F8F9FA] border border-stone-800 transition-colors"
+            className="p-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-[#94A3B8] hover:text-[#F8F9FA] border border-stone-800 transition-colors"
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
@@ -803,11 +758,11 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
           <button
             type="button"
             onClick={() => setShowLegend(!showLegend)}
-            title="Toggle Relationship Legend"
-            className={`px-2.5 py-1.5 rounded-lg border text-xs font-mono flex items-center gap-1 transition-colors ${
+            title="Toggle Legend"
+            className={`px-2.5 py-1.5 rounded-lg border text-xs font-sans flex items-center gap-1 transition-colors ${
               showLegend
-                ? "bg-[#D4AF37]/20 text-[#F3E5B8] border-[#D4AF37]/40 font-semibold"
-                : "bg-[#131720] text-[#94A3B8] border-stone-800"
+                ? "bg-red-950/40 text-red-300 border-red-500/40 font-semibold"
+                : "bg-[#161B24] text-[#94A3B8] border-stone-800"
             }`}
           >
             <HelpCircle className="h-3.5 w-3.5" />
@@ -819,7 +774,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             type="button"
             onClick={() => setIsFullscreen(!isFullscreen)}
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen View"}
-            className="p-1.5 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#D4AF37] border border-[#D4AF37]/30 transition-colors"
+            className="p-1.5 rounded-lg bg-[#161B24] hover:bg-[#1E2430] text-[#CBD5E1] hover:text-white border border-stone-800 transition-colors"
           >
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>
@@ -838,21 +793,13 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
           ref={svgRef}
           className="w-full h-full min-h-[480px]"
           style={{
-            backgroundImage: "radial-gradient(circle at 1px 1px, rgba(212, 175, 55, 0.08) 1px, transparent 0)",
-            backgroundSize: "24px 24px",
+            backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0)",
+            backgroundSize: "28px 28px",
           }}
         >
-          {/* Defs for Glow Filters */}
-          <defs>
-            <filter id="gold-glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
           {/* Zoom & Pan Main Transformation Group */}
           <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}>
-            {/* 1. Render Edges with Animated Comets */}
+            {/* 1. Render Edges */}
             <g className="edges-layer">
               {edges.map((edge) => {
                 if (!visibleEdgeIds.has(edge.id)) return null;
@@ -911,23 +858,23 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
         {/* Floating Compact Tooltip on Hover */}
         {hoveredNode && !selectedNodeId && (
           <div
-            className="absolute z-30 pointer-events-none p-3 rounded-xl bg-[#08090C]/95 border border-[#D4AF37]/35 shadow-2xl shadow-black max-w-xs text-xs space-y-1.5 animate-in fade-in zoom-in-95 duration-150"
+            className="absolute z-30 pointer-events-none p-3 rounded-xl bg-[#0B0D11]/95 border border-stone-800 shadow-2xl max-w-xs text-xs space-y-1.5 animate-in fade-in zoom-in-95 duration-150"
             style={{
               left: `${Math.min(hoveredNode.screenX + 15, containerSize.width - 280)}px`,
               top: `${Math.min(hoveredNode.screenY + 15, containerSize.height - 180)}px`,
             }}
           >
             <div className="flex items-center justify-between gap-2 border-b border-stone-800 pb-1">
-              <span className="font-mono font-bold text-[#E2C15C] text-[11px]">
+              <span className="font-mono font-bold text-[#F8F9FA] text-[11px]">
                 {hoveredNode.node.label}
               </span>
               {hoveredNode.node.stance && (
-                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/30">
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#161B24] text-[#CBD5E1] border border-stone-800">
                   {hoveredNode.node.stance}
                 </span>
               )}
               {hoveredNode.node.matchType && (
-                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-950 text-cyan-300 border border-cyan-700">
+                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-300 border border-emerald-700">
                   {hoveredNode.node.matchType}
                 </span>
               )}
@@ -949,35 +896,29 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             )}
 
             {hoveredNode.node.rawProvenance?.snippet && (
-              <div className="p-2 rounded bg-[#050608] border border-cyan-900/40 text-[10px] text-[#94A3B8] font-sans line-clamp-3">
+              <div className="p-2 rounded bg-[#050608] border border-stone-800 text-[10px] text-[#94A3B8] font-sans line-clamp-3">
                 &ldquo;{hoveredNode.node.rawProvenance.snippet}&rdquo;
               </div>
             )}
 
-            {hoveredNode.node.rawEvidence?.stanceExplanation && (
-              <p className="text-[10px] text-[#E2C15C] font-mono italic">
-                AI: {hoveredNode.node.rawEvidence.stanceExplanation}
-              </p>
-            )}
-
             {hoveredNode.node.url && (
-              <p className="text-[10px] text-[#94A3B8] font-mono truncate">
-                Double-click to open source
+              <p className="text-[10px] text-red-400 font-sans truncate">
+                Double-click to open link ↗
               </p>
             )}
           </div>
         )}
 
-        {/* Selected Node Forensic Inspector Drawer */}
+        {/* Selected Node Details Drawer */}
         {selectedNodeDetails && (
-          <div className="absolute bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-md z-20 p-4 rounded-xl bg-[#08090C]/95 border border-[#D4AF37]/40 shadow-2xl shadow-black space-y-2.5 backdrop-blur-md animate-in slide-in-from-bottom-3 duration-200">
+          <div className="absolute bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:max-w-md z-20 p-4 rounded-xl bg-[#0B0D11]/95 border border-stone-700 shadow-2xl space-y-2.5 backdrop-blur-md animate-in slide-in-from-bottom-3 duration-200">
             <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-stone-800">
-              <div className="flex items-center gap-2 font-mono text-xs">
-                <span className="px-2 py-0.5 rounded bg-[#131720] border border-[#D4AF37]/40 text-[#E2C15C] font-bold">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="px-2 py-0.5 rounded bg-[#161B24] border border-stone-800 text-[#F8F9FA] font-bold font-mono">
                   {selectedNodeDetails.label}
                 </span>
                 <span className="text-[#94A3B8] uppercase text-[10px]">
-                  {selectedNodeDetails.type} Node
+                  {selectedNodeDetails.type}
                 </span>
               </div>
 
@@ -987,7 +928,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
                     href={selectedNodeDetails.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1 rounded hover:bg-[#131720] text-[#E2C15C] hover:text-white border border-[#D4AF37]/20 transition-colors"
+                    className="p-1 rounded hover:bg-[#161B24] text-red-400 hover:text-white border border-stone-800 transition-colors"
                     title="Open Source Link"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -996,9 +937,9 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedNodeId(null)}
-                  className="text-xs font-mono text-[#94A3B8] hover:text-white px-1.5 py-0.5 rounded bg-[#131720]"
+                  className="text-xs font-sans text-[#94A3B8] hover:text-white px-1.5 py-0.5 rounded bg-[#161B24]"
                 >
-                  ✕ Clear
+                  ✕ Close
                 </button>
               </div>
             </div>
@@ -1008,28 +949,28 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             </p>
 
             {selectedNodeDetails.rawEvidence?.snippet && (
-              <div className="p-2.5 rounded-lg bg-[#050608] border border-stone-800 text-[11px] text-[#C2C9D6] leading-relaxed max-h-24 overflow-y-auto">
-                <span className="text-[10px] text-[#D4AF37] font-bold block uppercase mb-0.5 font-mono">
-                  Raw Snippet:
+              <div className="p-2.5 rounded-lg bg-[#11141A] border border-stone-800 text-[11px] text-[#CBD5E1] leading-relaxed max-h-24 overflow-y-auto">
+                <span className="text-[10px] text-red-400 font-bold block uppercase mb-0.5">
+                  Source Excerpt:
                 </span>
                 &ldquo;{selectedNodeDetails.rawEvidence.snippet}&rdquo;
               </div>
             )}
 
             {selectedNodeDetails.rawProvenance?.snippet && (
-              <div className="p-2.5 rounded-lg bg-[#050608] border border-cyan-900/40 text-[11px] text-[#C2C9D6] leading-relaxed max-h-24 overflow-y-auto">
-                <span className="text-[10px] text-cyan-400 font-bold block uppercase mb-0.5 font-mono">
-                  Provenance Snippet:
+              <div className="p-2.5 rounded-lg bg-[#11141A] border border-stone-800 text-[11px] text-[#CBD5E1] leading-relaxed max-h-24 overflow-y-auto">
+                <span className="text-[10px] text-red-400 font-bold block uppercase mb-0.5">
+                  Match Excerpt:
                 </span>
                 &ldquo;{selectedNodeDetails.rawProvenance.snippet}&rdquo;
               </div>
             )}
 
             {selectedNodeDetails.rawClaim?.entities && (
-              <div className="flex flex-wrap gap-1 text-[10px] font-mono text-[#94A3B8]">
+              <div className="flex flex-wrap gap-1 text-[10px] text-[#94A3B8]">
                 <span>Entities:</span>
                 {selectedNodeDetails.rawClaim.entities.map((e, idx) => (
-                  <span key={idx} className="px-1.5 py-0.2 rounded bg-[#131720] text-[#E2C15C]">
+                  <span key={idx} className="px-1.5 py-0.2 rounded bg-[#161B24] text-[#CBD5E1]">
                     {e}
                   </span>
                 ))}
@@ -1038,52 +979,48 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
           </div>
         )}
 
-        {/* Interactive Relationship Legend */}
+        {/* Relationship Legend */}
         {showLegend && (
-          <div className="absolute top-4 left-4 z-20 p-3 rounded-xl bg-[#08090C]/90 border border-[#D4AF37]/20 shadow-xl backdrop-blur-sm text-[10px] font-mono space-y-2 hidden sm:block">
+          <div className="absolute top-4 left-4 z-20 p-3 rounded-xl bg-[#0B0D11]/90 border border-stone-800 shadow-xl backdrop-blur-sm text-[10px] space-y-2 hidden sm:block">
             <span className="text-[#94A3B8] font-bold block pb-1 border-b border-stone-800">
-              RELATIONSHIP COMET LEGEND
+              MAP LEGEND
             </span>
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34D399]" />
-                <span className="text-emerald-300 font-semibold">SUPPORTS (Green Comet)</span>
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="text-emerald-300 font-medium">Supports Claim (Green)</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-rose-400 shadow-[0_0_6px_#F87171]" />
-                <span className="text-rose-300 font-semibold">CONTRADICTS (Red Comet)</span>
+                <span className="h-2 w-2 rounded-full bg-red-400" />
+                <span className="text-red-300 font-medium">Contradicts / Refutes (Red)</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-amber-400 shadow-[0_0_6px_#FCD34D]" />
-                <span className="text-amber-300 font-semibold">MIXED (Amber Comet)</span>
+                <span className="h-2 w-2 rounded-full bg-amber-400" />
+                <span className="text-amber-300 font-medium">Mixed / Partial (Amber)</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-stone-400 shadow-[0_0_6px_#A8A29E]" />
-                <span className="text-stone-300 font-semibold">INSUFFICIENT (Dim Comet)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#22D3EE]" />
-                <span className="text-cyan-300 font-semibold">IMAGE → WEB SOURCE (Cyan)</span>
+                <span className="h-2 w-2 rounded-full bg-stone-400" />
+                <span className="text-stone-300 font-medium">Insufficient / Neutral (Slate)</span>
               </div>
               <div className="flex items-center gap-2 pt-1 border-t border-stone-800">
-                <span className="h-2 w-2 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
-                <span className="text-[#E2C15C] font-semibold">CLAIM DECOMPOSITION</span>
+                <span className="h-2 w-2 rounded-full bg-red-500" />
+                <span className="text-[#CBD5E1] font-medium">Claim Relationship</span>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Bottom Forensic Bar */}
-      <div className="p-3 border-t border-stone-800/80 bg-[#08090C]/90 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono text-[#94A3B8] z-10">
-        <div className="flex items-center gap-2 text-[#E2C15C]">
-          <Shield className="h-3.5 w-3.5 text-[#D4AF37]" />
-          <span>Interactive Forensic Evidence Topology</span>
+      {/* Bottom Bar */}
+      <div className="p-3 border-t border-stone-800 bg-[#0B0D11]/90 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#94A3B8] z-10">
+        <div className="flex items-center gap-2 text-[#CBD5E1]">
+          <Shield className="h-3.5 w-3.5 text-red-400" />
+          <span>Interactive Multimodal Evidence Map</span>
         </div>
         <div className="flex items-center gap-4 text-[11px]">
           <span>Drag to Pan • Scroll to Zoom</span>
           <span className="text-stone-700">|</span>
-          <span className="text-[#D4AF37]">Click node to inspect lineage</span>
+          <span>Click node to inspect details</span>
         </div>
       </div>
     </div>

@@ -25,14 +25,14 @@ export const ClaimInputSection: React.FC<ClaimInputSectionProps> = ({
   const isTooLong = charCount > INPUT_VALIDATION.maxClaimLength;
 
   return (
-    <div id="claim-input-section" className="bg-[#0D1017] border border-stone-800 rounded-xl p-5 shadow-xl shadow-black/40 space-y-3.5 transition-all">
+    <div id="claim-input-section" className="bg-[#11141A] border border-stone-800 rounded-xl p-5 shadow-xl space-y-3.5 transition-all">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-[#131720] border border-stone-800 text-[#E2C15C]">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-lg bg-[#161B24] border border-stone-800 text-red-400">
             <FileText className="h-4 w-4" />
           </div>
           <h2 className="text-sm font-semibold text-[#F8F9FA] tracking-normal font-sans">
-            Target Claim or Text to Verify <span className="text-[#E2C15C]">*</span>
+            1. Enter Claim or Statement to Verify <span className="text-red-400">*</span>
           </h2>
         </div>
         <div className="flex items-center gap-2 text-xs font-mono">
@@ -59,14 +59,14 @@ export const ClaimInputSection: React.FC<ClaimInputSectionProps> = ({
           value={claimText}
           onChange={(e) => setClaimText(e.target.value)}
           disabled={disabled}
-          placeholder="Paste a claim, breaking news statement, social media post, or assertion to investigate..."
-          rows={4}
-          className={`w-full bg-[#08090C] border rounded-xl p-3.5 text-sm text-[#F8F9FA] placeholder:text-[#64748B] focus:outline-none transition-all font-sans leading-relaxed resize-none disabled:opacity-60 disabled:cursor-not-allowed shadow-inner ${
+          placeholder="Type or paste any claim, news headline, quote, or question here to verify..."
+          rows={3}
+          className={`w-full bg-[#0B0D11] border rounded-xl p-3.5 text-sm text-[#F8F9FA] placeholder:text-[#64748B] focus:outline-none transition-all font-sans leading-relaxed resize-none disabled:opacity-60 disabled:cursor-not-allowed shadow-inner ${
             isTooLong
               ? "border-rose-500/80 focus:ring-1 focus:ring-rose-500"
               : isTooShort
               ? "border-amber-500/60 focus:ring-1 focus:ring-amber-500"
-              : "border-stone-800 focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/30"
+              : "border-stone-800 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20"
           }`}
         />
         {isTooShort && (
@@ -89,10 +89,10 @@ export const ClaimInputSection: React.FC<ClaimInputSectionProps> = ({
           type="button"
           disabled={disabled}
           onClick={() => setShowContext(!showContext)}
-          className="text-xs text-[#E2C15C] hover:text-[#F3E5B8] flex items-center gap-1.5 transition-colors disabled:opacity-50 font-medium"
+          className="text-xs text-[#CBD5E1] hover:text-[#F8F9FA] flex items-center gap-1.5 transition-colors disabled:opacity-50 font-medium"
         >
-          <AlignLeft className="h-3.5 w-3.5" />
-          <span>{showContext ? "Hide Source Link / Context" : "+ Add Source Link or Context (Optional)"}</span>
+          <AlignLeft className="h-3.5 w-3.5 text-red-400" />
+          <span>{showContext ? "Hide Context / Source Link" : "+ Add Source Link or Context (Optional)"}</span>
         </button>
 
         {showContext && (
@@ -106,8 +106,8 @@ export const ClaimInputSection: React.FC<ClaimInputSectionProps> = ({
               value={contextText}
               onChange={(e) => setContextText(e.target.value)}
               disabled={disabled}
-              placeholder="e.g. https://example.com/article, broadcast on Aug 2026..."
-              className="w-full bg-[#08090C] border border-stone-800 rounded-xl px-3.5 py-2 text-xs text-[#F8F9FA] placeholder:text-[#64748B] focus:outline-none focus:border-[#D4AF37]/60 focus:ring-1 focus:ring-[#D4AF37]/30 transition-all font-sans disabled:opacity-60 disabled:cursor-not-allowed shadow-inner"
+              placeholder="e.g. https://example.com/news-story or contextual detail..."
+              className="w-full bg-[#0B0D11] border border-stone-800 rounded-xl px-3.5 py-2 text-xs text-[#F8F9FA] placeholder:text-[#64748B] focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 transition-all font-sans disabled:opacity-60 disabled:cursor-not-allowed shadow-inner"
             />
           </div>
         )}

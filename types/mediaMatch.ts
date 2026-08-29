@@ -31,14 +31,17 @@ export interface MediaMatchResult {
 
 export interface MultimodalMediaMatchSummary {
   hasMedia: boolean;
-  mediaType: "image" | "video" | "none";
+  mediaType?: "image" | "video" | "none";
   mediaFilename?: string;
   status: MediaMatchStatus;
   primaryMatch?: MediaMatchResult | null;
-  candidates: MediaMatchResult[];
+  candidates?: MediaMatchResult[];
+  allMatches?: MediaMatchResult[];
   exactMatchCount: number;
   similarMatchCount: number;
-  totalEvaluated: number;
-  summary: string;
-  matchedAt: string;
+  relatedMatchCount?: number;
+  totalEvaluated?: number;
+  summary?: string;
+  summaryText?: string;
+  matchedAt?: string;
 }

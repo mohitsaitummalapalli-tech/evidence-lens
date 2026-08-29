@@ -34,7 +34,7 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
     provenance?.mediaMimeType?.startsWith("video/") ||
     /\.(mp4|webm|mov|avi|mkv)$/i.test(provenance?.mediaFilename || "");
 
-  // Helper for match type styling (Strict Honesty Rule: Never claim EXACT MATCH)
+  // Helper for match type styling
   const getMatchBadgeStyle = (matchType: ImageProvenanceMatchType, candidateSourceType?: string) => {
     const isCandidateVideo = candidateSourceType === "youtube" || candidateSourceType === "video";
 
@@ -65,21 +65,21 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
     <section
       id="image-provenance-panel"
       aria-label="Web & Media Provenance Discovery"
-      className="bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl p-5 shadow-2xl shadow-black/60 relative overflow-hidden my-6"
+      className="bg-[#11141A] border border-stone-800 rounded-xl p-5 shadow-2xl relative overflow-hidden my-6"
     >
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#D4AF37]/15">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-800">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-[#131720] border border-[#D4AF37]/30 text-[#D4AF37] shadow-sm">
+          <div className="p-2 rounded-xl bg-[#161B24] border border-stone-800 text-red-400 shadow-sm">
             {isVideo ? <VideoIcon className="h-5 w-5" /> : <ImageIcon className="h-5 w-5" />}
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-[#F8F9FA] tracking-wide">
-                {isVideo ? "MEDIA & VIDEO PROVENANCE" : "WEB IMAGE & MEDIA PROVENANCE"}
+                {isVideo ? "Media & Video Provenance" : "Web Image & Media Provenance"}
               </h3>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#D4AF37]/10 text-[#E2C15C] border border-[#D4AF37]/30 font-semibold uppercase">
-                {isVideo ? "Video / YouTube Discovery" : "Multimodal Discovery"}
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#161B24] text-[#CBD5E1] border border-stone-800 font-semibold uppercase">
+                {isVideo ? "Video Discovery" : "Multimodal Discovery"}
               </span>
             </div>
             <p className="text-xs text-[#94A3B8] font-sans mt-0.5">
@@ -93,9 +93,9 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
         {/* Telemetry Status Line */}
         {provenance && (
           <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-            <div className="px-2.5 py-1 rounded bg-[#131720] border border-[#D4AF37]/20 text-[#94A3B8]">
+            <div className="px-2.5 py-1 rounded bg-[#161B24] border border-stone-800 text-[#94A3B8]">
               STATUS:{" "}
-              <span className="text-[#E2C15C] font-semibold">
+              <span className="text-[#F8F9FA] font-semibold">
                 {provenance.searchStatus === "SUCCESS"
                   ? "CANDIDATES DISCOVERED"
                   : provenance.searchStatus === "NO_CANDIDATES"
@@ -103,15 +103,15 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
                   : provenance.searchStatus}
               </span>
             </div>
-            <div className="px-2.5 py-1 rounded bg-[#131720] border border-[#D4AF37]/20 text-[#94A3B8]">
+            <div className="px-2.5 py-1 rounded bg-[#161B24] border border-stone-800 text-[#94A3B8]">
               CANDIDATES:{" "}
-              <span className="text-[#E2C15C] font-semibold">
+              <span className="text-red-400 font-semibold">
                 {provenance.totalCandidatesFound}
               </span>
             </div>
-            <div className="px-2.5 py-1 rounded bg-[#131720] border border-[#D4AF37]/20 text-[#94A3B8]">
+            <div className="px-2.5 py-1 rounded bg-[#161B24] border border-stone-800 text-[#94A3B8]">
               DOMAINS:{" "}
-              <span className="text-[#E2C15C] font-semibold">
+              <span className="text-emerald-400 font-semibold">
                 {provenance.uniqueDomains?.length || 0}
               </span>
             </div>
@@ -123,14 +123,14 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
       <div className="mt-4">
         {isLoading ? (
           <div className="py-12 flex flex-col items-center justify-center gap-3 text-xs font-mono text-[#94A3B8]">
-            <Search className="h-6 w-6 text-[#D4AF37] animate-spin" />
-            <p className="text-[#E2C15C] animate-pulse">
-              {isVideo ? "SEARCHING VIDEO & YOUTUBE PROVENANCE..." : "SEARCHING WEB PROVENANCE..."}
+            <Search className="h-6 w-6 text-red-400 animate-spin" />
+            <p className="text-[#CBD5E1] animate-pulse">
+              {isVideo ? "Searching video & YouTube provenance..." : "Searching web provenance..."}
             </p>
           </div>
         ) : !provenance || provenance.candidates.length === 0 ? (
-          <div className="py-8 px-4 rounded-xl bg-[#08090C] border border-stone-800 text-center space-y-2">
-            <Shield className="h-8 w-8 text-[#D4AF37]/60 mx-auto" />
+          <div className="py-8 px-4 rounded-xl bg-[#0B0D11] border border-stone-800 text-center space-y-2">
+            <Shield className="h-8 w-8 text-stone-500 mx-auto" />
             <h4 className="text-xs font-bold font-mono text-[#F8F9FA] uppercase tracking-wide">
               NO PROVENANCE CANDIDATES FOUND
             </h4>
@@ -147,7 +147,7 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
                 {provenance.queriesExecuted.map((q, idx) => (
                   <span
                     key={idx}
-                    className="px-2 py-0.5 rounded bg-[#131720] border border-stone-800 text-[#C2C9D6]"
+                    className="px-2 py-0.5 rounded bg-[#161B24] border border-stone-800 text-[#CBD5E1]"
                   >
                     &ldquo;{q}&rdquo;
                   </span>
@@ -171,7 +171,7 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
                 return (
                   <div
                     key={candidate.id}
-                    className="p-4 rounded-xl bg-[#08090C] border border-[#D4AF37]/20 hover:border-[#D4AF37]/45 transition-all duration-200 shadow-md flex flex-col justify-between space-y-3 group"
+                    className="p-4 rounded-xl bg-[#0B0D11] border border-stone-800 hover:border-stone-700 transition-all duration-200 shadow-md flex flex-col justify-between space-y-3 group"
                   >
                     <div className="space-y-2">
                       {/* Top Line: Badge + Domain */}
@@ -183,54 +183,54 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
                           {style.label}
                         </span>
 
-                        <div className="flex items-center gap-1 text-[11px] font-mono text-[#E2C15C] truncate">
+                        <div className="flex items-center gap-1 text-[11px] font-mono text-[#CBD5E1] truncate">
                           {isCandidateYouTube ? (
-                            <VideoIcon className="h-3 w-3 text-rose-400" />
+                            <VideoIcon className="h-3 w-3 text-red-400" />
                           ) : (
-                            <Globe className="h-3 w-3 text-[#D4AF37]" />
+                            <Globe className="h-3 w-3 text-[#94A3B8]" />
                           )}
                           <span className="truncate">{candidate.domain}</span>
                         </div>
                       </div>
 
                       {/* Candidate Title */}
-                      <h4 className="text-xs font-bold text-[#F8F9FA] line-clamp-2 leading-snug group-hover:text-[#F3E5B8] transition-colors">
+                      <h4 className="text-xs font-bold text-[#F8F9FA] line-clamp-2 leading-snug group-hover:text-red-300 transition-colors">
                         {candidate.title}
                       </h4>
 
                       {/* Snippet Excerpt */}
                       {candidate.snippet && (
-                        <p className="text-[11px] text-[#94A3B8] font-sans line-clamp-3 leading-relaxed">
+                        <p className="text-[11px] text-[#CBD5E1] font-sans line-clamp-3 leading-relaxed">
                           &ldquo;{candidate.snippet}&rdquo;
                         </p>
                       )}
                     </div>
 
                     {/* Bottom Metadata & Action */}
-                    <div className="pt-2 border-t border-stone-800/80 flex items-center justify-between gap-2 text-[10px] font-mono">
+                    <div className="pt-2 border-t border-stone-800 flex items-center justify-between gap-2 text-[10px] font-mono">
                       <div className="text-stone-400 flex items-center gap-1.5">
                         <span>SEARCH RELEVANCE:</span>
-                        <span className="text-[#E2C15C] font-semibold">{relevancePct}%</span>
+                        <span className="text-[#F8F9FA] font-semibold">{relevancePct}%</span>
                       </div>
 
                       <a
                         href={candidate.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`px-2.5 py-1 rounded transition-colors flex items-center gap-1 font-semibold ${
+                        className={`px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-semibold text-xs ${
                           isCandidateYouTube
-                            ? "bg-rose-950/70 hover:bg-rose-900/80 text-rose-200 border border-rose-600/40 hover:border-rose-500"
-                            : "bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] hover:text-white border border-[#D4AF37]/30"
+                            ? "bg-red-950/70 hover:bg-red-900/80 text-red-200 border border-red-600/40 hover:border-red-500"
+                            : "bg-[#161B24] hover:bg-[#1E2430] text-[#CBD5E1] hover:text-white border border-stone-700"
                         }`}
                       >
                         {isCandidateYouTube ? (
                           <>
-                            <Play className="h-3 w-3 fill-rose-400 text-rose-400" />
-                            <span>WATCH VIDEO</span>
+                            <Play className="h-3 w-3 fill-red-400 text-red-400" />
+                            <span>Watch video ↗</span>
                           </>
                         ) : (
                           <>
-                            <span>OPEN SOURCE</span>
+                            <span>Open source ↗</span>
                             <ExternalLink className="h-3 w-3" />
                           </>
                         )}
@@ -245,9 +245,9 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
       </div>
 
       {/* Footer Info */}
-      <div className="mt-4 pt-3 border-t border-stone-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] font-mono text-[#94A3B8]">
+      <div className="mt-4 pt-3 border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] font-mono text-[#94A3B8]">
         <div className="flex items-center gap-1.5 text-stone-400">
-          <Clock className="h-3 w-3 text-[#D4AF37]" />
+          <Clock className="h-3 w-3 text-red-400" />
           <span>
             Discovered:{" "}
             {provenance?.discoveredAt
@@ -257,7 +257,7 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
         </div>
         <div className="flex items-center gap-1 text-stone-500">
           <Shield className="h-3 w-3" />
-          <span>Web & Video Artifact Search Discovery • Contextual Signals (Not Exact Pixel Match)</span>
+          <span>Web & Video Artifact Search Discovery • Contextual Signals</span>
         </div>
       </div>
     </section>

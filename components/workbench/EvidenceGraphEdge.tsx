@@ -24,58 +24,42 @@ interface EvidenceGraphEdgeProps {
 
 const STANCE_EDGE_COLORS: Record<
   EvidenceStance,
-  { stroke: string; glow: string; comet: string; speed: string }
+  { stroke: string; glow: string }
 > = {
   SUPPORTS: {
     stroke: "#10B981", // emerald
-    glow: "rgba(16, 185, 129, 0.4)",
-    comet: "#34D399",
-    speed: "2.8s",
+    glow: "rgba(16, 185, 129, 0.2)",
   },
   CONTRADICTS: {
     stroke: "#EF4444", // crimson
-    glow: "rgba(239, 68, 68, 0.4)",
-    comet: "#F87171",
-    speed: "2.4s",
+    glow: "rgba(239, 68, 68, 0.2)",
   },
   MIXED: {
     stroke: "#F59E0B", // amber
-    glow: "rgba(245, 158, 11, 0.4)",
-    comet: "#FCD34D",
-    speed: "3.2s",
+    glow: "rgba(245, 158, 11, 0.2)",
   },
   INSUFFICIENT: {
-    stroke: "#78716C", // stone
-    glow: "rgba(120, 113, 108, 0.3)",
-    comet: "#A8A29E",
-    speed: "4.5s",
+    stroke: "#475569", // slate
+    glow: "rgba(71, 85, 105, 0.15)",
   },
   NEUTRAL: {
-    stroke: "#94A3B8", // slate
-    glow: "rgba(148, 163, 184, 0.3)",
-    comet: "#CBD5E1",
-    speed: "3.8s",
+    stroke: "#64748B", // slate
+    glow: "rgba(100, 116, 139, 0.15)",
   },
   UNCERTAIN: {
-    stroke: "#D4AF37", // metallic gold
-    glow: "rgba(212, 175, 55, 0.3)",
-    comet: "#E2C15C",
-    speed: "4.0s",
+    stroke: "#475569",
+    glow: "rgba(71, 85, 105, 0.15)",
   },
 };
 
 const ROOT_EDGE_COLOR = {
-  stroke: "#D4AF37", // metallic gold
-  glow: "rgba(212, 175, 55, 0.45)",
-  comet: "#F3E5B8",
-  speed: "3.5s",
+  stroke: "#EF4444",
+  glow: "rgba(239, 68, 68, 0.2)",
 };
 
 const IMAGE_PROVENANCE_EDGE_COLOR = {
-  stroke: "#06B6D4", // cyan provenance
-  glow: "rgba(6, 182, 212, 0.45)",
-  comet: "#67E8F9",
-  speed: "2.9s",
+  stroke: "#EF4444",
+  glow: "rgba(239, 68, 68, 0.2)",
 };
 
 export const EvidenceGraphEdge: React.FC<EvidenceGraphEdgeProps> = ({
@@ -92,23 +76,24 @@ export const EvidenceGraphEdge: React.FC<EvidenceGraphEdgeProps> = ({
     ? IMAGE_PROVENANCE_EDGE_COLOR
     : STANCE_EDGE_COLORS[edge.stance || "UNCERTAIN"] || STANCE_EDGE_COLORS.UNCERTAIN;
 
-  const baseStrokeWidth = isHighlighted ? 3.5 : isRootEdge || isProvenanceEdge ? 2.5 : 2;
-  const glowStrokeWidth = isHighlighted ? 9 : 6;
-  const opacity = isDimmed ? "opacity-15" : isHighlighted ? "opacity-100" : "opacity-75";
+  const baseStrokeWidth = isHighlighted ? 2.5 : 1.5;
+  const opacity = isDimmed ? "opacity-15" : isHighlighted ? "opacity-100" : "opacity-60";
 
   return (
     <g className={`transition-opacity duration-300 ${opacity}`}>
-      {/* Background Glow Layer */}
-      <path
-        d={edge.pathD}
-        fill="none"
-        stroke={colorConfig.glow}
-        strokeWidth={glowStrokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {/* Subtle Shadow/Glow Line */}
+      {isHighlighted && (
+        <path
+          d={edge.pathD}
+          fill="none"
+          stroke={colorConfig.glow}
+          strokeWidth={6}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
 
-      {/* Main Core Vector Path */}
+      {/* Main Vector Path */}
       <path
         id={`edge-path-${edge.id}`}
         d={edge.pathD}
@@ -119,31 +104,6 @@ export const EvidenceGraphEdge: React.FC<EvidenceGraphEdgeProps> = ({
         strokeLinejoin="round"
         className="transition-all duration-200"
       />
-
-      {/* Travelling Animated Comet Particle (Continuous SVG Motion) */}
-      {!isDimmed && (
-        <g className="comet-particle">
-          {/* Outer Comet Glow */}
-          <circle r={6} fill={colorConfig.comet} opacity={0.4}>
-            <animateMotion
-              dur={colorConfig.speed}
-              repeatCount="indefinite"
-              path={edge.pathD}
-              rotate="auto"
-            />
-          </circle>
-
-          {/* Core Luminous Comet Head */}
-          <circle r={3} fill="#FFFFFF">
-            <animateMotion
-              dur={colorConfig.speed}
-              repeatCount="indefinite"
-              path={edge.pathD}
-              rotate="auto"
-            />
-          </circle>
-        </g>
-      )}
     </g>
   );
 };

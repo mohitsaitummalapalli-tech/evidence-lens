@@ -43,9 +43,9 @@ const STATUS_CONFIG: Record<
   },
   MAJORITY: {
     label: "MAJORITY JURY VERDICT",
-    bg: "bg-cyan-950/70",
-    text: "text-cyan-300",
-    border: "border-cyan-700/60",
+    bg: "bg-red-950/50",
+    text: "text-red-300",
+    border: "border-red-600/50",
     icon: ShieldCheck,
   },
   SPLIT: {
@@ -58,8 +58,8 @@ const STATUS_CONFIG: Record<
   SINGLE_MODEL: {
     label: "SINGLE MODEL EVALUATION",
     bg: "bg-stone-900/90",
-    text: "text-[#E2C15C]",
-    border: "border-[#D4AF37]/35",
+    text: "text-[#CBD5E1]",
+    border: "border-stone-700",
     icon: Cpu,
   },
   INSUFFICIENT: {
@@ -88,7 +88,6 @@ const VERDICT_COLORS: Record<string, { bg: string; text: string; border: string 
 
 export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ consensus, evidence }) => {
   const [expandedModelId, setExpandedModelId] = useState<string | null>(null);
-  const [showClaimBreakdown, setShowClaimBreakdown] = useState(false);
 
   if (!consensus || consensus.totalModelsParticipating === 0) {
     return null;
@@ -138,12 +137,12 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
   return (
     <div
       id="multi-ai-consensus-panel"
-      className="bg-[#0D1017] border border-stone-800 rounded-xl p-5 sm:p-6 shadow-2xl space-y-6 animate-in fade-in duration-300"
+      className="bg-[#11141A] border border-stone-800 rounded-xl p-5 sm:p-6 shadow-2xl space-y-6 animate-in fade-in duration-300"
     >
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-stone-800 gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#131720] border border-stone-800 text-[#E2C15C] shadow-sm">
+          <div className="p-2.5 rounded-xl bg-[#161B24] border border-stone-800 text-red-400 shadow-sm">
             <Scale className="h-5 w-5" />
           </div>
           <div>
@@ -161,16 +160,16 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
               </span>
             </div>
             <p className="text-xs text-[#94A3B8] mt-0.5">
-              Independent evaluations across {totalModels} AI models acting as impartial judges on one shared evidence dataset.
+              {agreeCount} of {totalModels} models agree • All models evaluate the exact same shared evidence bundle.
             </p>
           </div>
         </div>
 
         {/* Final Jury Verdict Callout */}
-        <div className="flex items-center gap-3 bg-[#08090C] border border-stone-800 px-3.5 py-2 rounded-xl">
+        <div className="flex items-center gap-3 bg-[#0B0D11] border border-stone-800 px-3.5 py-2 rounded-xl">
           <div className="text-right">
-            <span className="text-[10px] font-mono text-[#94A3B8] uppercase block">
-              Jury Verdict
+            <span className="text-[10px] uppercase font-semibold text-[#94A3B8] block">
+              Majority Verdict
             </span>
             <span className="text-sm font-bold text-[#F8F9FA]">
               {majorityVerdict}
@@ -178,10 +177,10 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
           </div>
           <div className="h-6 w-px bg-stone-800" />
           <div className="text-left">
-            <span className="text-[10px] font-mono text-[#94A3B8] uppercase block">
+            <span className="text-[10px] uppercase font-semibold text-[#94A3B8] block">
               Confidence
             </span>
-            <span className="text-sm font-semibold text-[#E2C15C]">
+            <span className="text-sm font-semibold text-red-400">
               {majorityConfidence}
             </span>
           </div>
@@ -189,51 +188,51 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
       </div>
 
       {/* Shared Evidence Grounding Notice */}
-      <div className="bg-[#131720]/80 border border-stone-800/80 rounded-xl p-4 space-y-2.5">
+      <div className="bg-[#161B24]/70 border border-stone-800/80 rounded-xl p-4 space-y-2.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-[#E2C15C]" />
-            <span className="text-xs font-semibold text-[#F8F9FA]">
-              EVIDENCE USED BY ALL MODELS
+            <Layers className="h-4 w-4 text-red-400" />
+            <span className="text-xs font-semibold text-[#F8F9FA] tracking-wide uppercase">
+              Shared Evidence Bundle
             </span>
           </div>
-          <span className="text-xs font-mono text-[#E2C15C]">
-            {agreeCount} / {totalModels} MODELS AGREE ({consensus.overallAgreementRate}%)
+          <span className="text-xs font-medium text-[#CBD5E1]">
+            {agreeCount} / {totalModels} models agree ({consensus.overallAgreementRate}% consensus)
           </span>
         </div>
 
-        <p className="text-xs text-[#C2C9D6]">
+        <p className="text-xs text-[#CBD5E1]">
           {sharedSummary.sharedNotice || `All models evaluated the exact same ${sharedSummary.totalSources} retrieved sources.`}
         </p>
 
         {/* Evidence Counts Breakdown */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
-          <div className="bg-[#0D1017] border border-stone-800/80 rounded-lg p-2.5 text-center">
+          <div className="bg-[#0B0D11] border border-stone-800/80 rounded-lg p-2.5 text-center">
             <span className="text-[10px] font-mono text-[#94A3B8] block uppercase">Total Sources</span>
             <span className="text-sm font-bold text-[#F8F9FA]">{sharedSummary.totalSources}</span>
           </div>
-          <div className="bg-[#0D1017] border border-stone-800/80 rounded-lg p-2.5 text-center flex items-center justify-center gap-2">
+          <div className="bg-[#0B0D11] border border-stone-800/80 rounded-lg p-2.5 text-center flex items-center justify-center gap-2">
             <Globe className="h-3.5 w-3.5 text-blue-400 shrink-0" />
             <div>
               <span className="text-[10px] font-mono text-[#94A3B8] block uppercase">Web</span>
               <span className="text-sm font-bold text-[#F8F9FA]">{sharedSummary.webSourcesCount}</span>
             </div>
           </div>
-          <div className="bg-[#0D1017] border border-stone-800/80 rounded-lg p-2.5 text-center flex items-center justify-center gap-2">
+          <div className="bg-[#0B0D11] border border-stone-800/80 rounded-lg p-2.5 text-center flex items-center justify-center gap-2">
             <Play className="h-3.5 w-3.5 text-red-400 fill-current shrink-0" />
             <div>
               <span className="text-[10px] font-mono text-[#94A3B8] block uppercase">YouTube</span>
               <span className="text-sm font-bold text-[#F8F9FA]">{sharedSummary.youtubeSourcesCount}</span>
             </div>
           </div>
-          <div className="bg-[#0D1017] border border-stone-800/80 rounded-lg p-2.5 text-center flex items-center justify-center gap-2">
+          <div className="bg-[#0B0D11] border border-stone-800/80 rounded-lg p-2.5 text-center flex items-center justify-center gap-2">
             <GraduationCap className="h-3.5 w-3.5 text-purple-400 shrink-0" />
             <div>
               <span className="text-[10px] font-mono text-[#94A3B8] block uppercase">Academic</span>
               <span className="text-sm font-bold text-[#F8F9FA]">{sharedSummary.academicSourcesCount}</span>
             </div>
           </div>
-          <div className="bg-[#0D1017] border border-stone-800/80 rounded-lg p-2.5 text-center">
+          <div className="bg-[#0B0D11] border border-stone-800/80 rounded-lg p-2.5 text-center">
             <span className="text-[10px] font-mono text-[#94A3B8] block uppercase">Domains</span>
             <span className="text-sm font-bold text-[#F8F9FA]">{sharedSummary.uniqueDomainsCount}</span>
           </div>
@@ -251,7 +250,7 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
       {/* Model Scoreboard Table */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-xs font-bold text-[#E2C15C] uppercase tracking-wider">
+          <h4 className="text-xs font-bold text-[#F8F9FA] uppercase tracking-wider">
             Model Verdict Scoreboard
           </h4>
           <span className="text-[11px] text-[#94A3B8]">
@@ -259,21 +258,21 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
           </span>
         </div>
 
-        <div className="border border-stone-800 rounded-xl overflow-hidden divide-y divide-stone-800/80 bg-[#08090C]">
+        <div className="border border-stone-800 rounded-xl overflow-hidden divide-y divide-stone-800/80 bg-[#0B0D11]">
           {modelVerdicts.length > 0 ? (
             modelVerdicts.map((mv) => {
               const isExpanded = expandedModelId === mv.modelId;
               const vColor = VERDICT_COLORS[mv.overallVerdict] || VERDICT_COLORS.UNVERIFIED;
 
               return (
-                <div key={mv.modelId} className="transition-colors hover:bg-[#131720]/40">
+                <div key={mv.modelId} className="transition-colors hover:bg-[#161B24]/40">
                   {/* Row Summary */}
                   <div
                     onClick={() => toggleModelExpand(mv.modelId)}
                     className="p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-[#131720] border border-stone-800 text-[#E2C15C]">
+                      <div className="p-2 rounded-lg bg-[#161B24] border border-stone-800 text-red-400">
                         <Cpu className="h-4 w-4" />
                       </div>
                       <div>
@@ -281,7 +280,7 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
                           <span className="text-sm font-semibold text-[#F8F9FA]">
                             {mv.modelDisplayName}
                           </span>
-                          <span className="text-[10px] font-mono text-[#94A3B8] bg-[#131720] px-2 py-0.5 rounded border border-stone-800">
+                          <span className="text-[10px] font-mono text-[#94A3B8] bg-[#161B24] px-2 py-0.5 rounded border border-stone-800">
                             {mv.modelId}
                           </span>
                         </div>
@@ -298,7 +297,7 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
                       >
                         {mv.overallVerdict}
                       </span>
-                      <span className="text-xs font-medium text-[#C2C9D6] bg-[#131720] px-2.5 py-1 rounded-lg border border-stone-800">
+                      <span className="text-xs font-medium text-[#CBD5E1] bg-[#161B24] px-2.5 py-1 rounded-lg border border-stone-800">
                         {mv.overallConfidence} ({mv.quantitativeScore}%)
                       </span>
                       {isExpanded ? (
@@ -311,10 +310,10 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
 
                   {/* Expanded Detail View */}
                   {isExpanded && (
-                    <div className="p-4 bg-[#0D1017] border-t border-stone-800 space-y-4 animate-in slide-in-from-top-1 duration-200">
+                    <div className="p-4 bg-[#11141A] border-t border-stone-800 space-y-4 animate-in slide-in-from-top-1 duration-200">
                       {/* Claim Evaluations by this model */}
                       <div className="space-y-3">
-                        <span className="text-xs font-semibold text-[#E2C15C] uppercase block">
+                        <span className="text-xs font-semibold text-red-400 uppercase block">
                           Claim Evaluations & Grounded Citations
                         </span>
 
@@ -332,7 +331,7 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
                           return (
                             <div
                               key={cv.claimId}
-                              className="p-3.5 bg-[#08090C] border border-stone-800 rounded-xl space-y-3"
+                              className="p-3.5 bg-[#0B0D11] border border-stone-800 rounded-xl space-y-3"
                             >
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-mono text-[#94A3B8]">
@@ -345,7 +344,7 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
                                 </span>
                               </div>
 
-                              <p className="text-xs text-[#C2C9D6] leading-relaxed">
+                              <p className="text-xs text-[#CBD5E1] leading-relaxed">
                                 {cv.reasoning}
                               </p>
 
@@ -362,7 +361,7 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
                                         href={src.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center justify-between p-2 rounded-lg bg-[#131720] border border-stone-800/80 hover:border-emerald-500/40 text-xs text-[#F8F9FA] group transition-all"
+                                        className="flex items-center justify-between p-2 rounded-lg bg-[#161B24] border border-stone-800/80 hover:border-emerald-500/40 text-xs text-[#F8F9FA] group transition-all"
                                       >
                                         <div className="flex items-center gap-2 truncate pr-2">
                                           {src.sourceType === "youtube" ? (
@@ -370,14 +369,14 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
                                           ) : (
                                             <Globe className="h-3.5 w-3.5 text-blue-400 shrink-0" />
                                           )}
-                                          <span className="truncate group-hover:text-[#E2C15C]">
+                                          <span className="truncate group-hover:text-red-400">
                                             {src.title}
                                           </span>
                                           <span className="text-[10px] text-[#94A3B8] font-mono">
                                             ({src.domain})
                                           </span>
                                         </div>
-                                        <ExternalLink className="h-3 w-3 text-[#94A3B8] shrink-0 group-hover:text-[#E2C15C]" />
+                                        <ExternalLink className="h-3 w-3 text-[#94A3B8] shrink-0 group-hover:text-red-400" />
                                       </a>
                                     ))}
                                   </div>
@@ -397,18 +396,22 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
                                         href={src.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center justify-between p-2 rounded-lg bg-[#131720] border border-stone-800/80 hover:border-red-500/40 text-xs text-[#F8F9FA] group transition-all"
+                                        className="flex items-center justify-between p-2 rounded-lg bg-[#161B24] border border-stone-800/80 hover:border-red-500/40 text-xs text-[#F8F9FA] group transition-all"
                                       >
                                         <div className="flex items-center gap-2 truncate pr-2">
-                                          <Globe className="h-3.5 w-3.5 text-red-400 shrink-0" />
-                                          <span className="truncate group-hover:text-red-300">
+                                          {src.sourceType === "youtube" ? (
+                                            <Play className="h-3.5 w-3.5 text-red-400 fill-current shrink-0" />
+                                          ) : (
+                                            <Globe className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                                          )}
+                                          <span className="truncate group-hover:text-red-400">
                                             {src.title}
                                           </span>
                                           <span className="text-[10px] text-[#94A3B8] font-mono">
                                             ({src.domain})
                                           </span>
                                         </div>
-                                        <ExternalLink className="h-3 w-3 text-[#94A3B8] shrink-0 group-hover:text-red-300" />
+                                        <ExternalLink className="h-3 w-3 text-[#94A3B8] shrink-0 group-hover:text-red-400" />
                                       </a>
                                     ))}
                                   </div>
@@ -424,93 +427,11 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({ co
               );
             })
           ) : (
-            // Fallback for participating models without synthesized jury array
-            consensus.participatingModels.map((pm) => (
-              <div
-                key={pm.modelId}
-                className="p-3.5 flex items-center justify-between text-xs text-[#F8F9FA]"
-              >
-                <div className="flex items-center gap-2">
-                  <Cpu className="h-4 w-4 text-[#E2C15C]" />
-                  <span>{pm.displayName}</span>
-                </div>
-                <span className="font-mono text-emerald-400">PARTICIPATING</span>
-              </div>
-            ))
+            <div className="p-4 text-center text-xs text-[#94A3B8]">
+              No participating model evaluations recorded.
+            </div>
           )}
         </div>
-      </div>
-
-      {/* Claim-by-Claim Forensic Details Toggle */}
-      <div className="pt-2">
-        <button
-          type="button"
-          onClick={() => setShowClaimBreakdown(!showClaimBreakdown)}
-          className="text-xs font-semibold text-[#94A3B8] hover:text-[#F8F9FA] flex items-center gap-1.5 transition-colors"
-        >
-          {showClaimBreakdown ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-          <span>{showClaimBreakdown ? "Hide" : "Show"} Claim-by-Claim Consensus Breakdown ({consensus.claimsConsensus.length} Claims)</span>
-        </button>
-
-        {showClaimBreakdown && (
-          <div className="mt-3 space-y-3 animate-in fade-in duration-200">
-            {consensus.claimsConsensus.map((claimDetail) => {
-              const cStatus = STATUS_CONFIG[claimDetail.status] || STATUS_CONFIG.SINGLE_MODEL;
-              const vColor = VERDICT_COLORS[claimDetail.consensusVerdict] || VERDICT_COLORS.UNVERIFIED;
-
-              return (
-                <div
-                  key={claimDetail.claimId}
-                  className="bg-[#08090C] border border-stone-800 rounded-xl p-4 space-y-3"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <span className="text-xs font-mono text-[#E2C15C] font-semibold">
-                      Claim {claimDetail.claimId}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${vColor.bg} ${vColor.text} ${vColor.border}`}>
-                        {claimDetail.consensusVerdict}
-                      </span>
-                      <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${cStatus.bg} ${cStatus.text} ${cStatus.border}`}>
-                        {claimDetail.agreementCount}/{claimDetail.totalEvaluations} Agree
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-[#F8F9FA] font-medium leading-snug">
-                    &quot;{claimDetail.claimText}&quot;
-                  </p>
-
-                  {/* Individual Model Cards for this claim */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1">
-                    {claimDetail.evaluations.map((ev) => {
-                      const evColor = VERDICT_COLORS[ev.verdict] || VERDICT_COLORS.UNVERIFIED;
-
-                      return (
-                        <div
-                          key={`${claimDetail.claimId}-${ev.modelId}`}
-                          className="bg-[#0D1017] border border-stone-800/80 rounded-lg p-3 space-y-1.5 text-xs"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold text-[#F8F9FA]">
-                              {ev.modelDisplayName}
-                            </span>
-                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${evColor.bg} ${evColor.text} ${evColor.border}`}>
-                              {ev.verdict} • {ev.confidence}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-[#94A3B8] leading-relaxed">
-                            {ev.reasoning}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
     </div>
   );

@@ -36,23 +36,23 @@ const STANCE_CONFIG: Record<
   },
   CONTRADICTS: {
     label: "CONTRADICTS",
-    bg: "bg-rose-950/70",
-    text: "text-rose-300",
-    border: "border-rose-700/60",
+    bg: "bg-red-950/70",
+    text: "text-red-300",
+    border: "border-red-700/60",
     icon: XCircle,
   },
   MIXED: {
     label: "MIXED EVIDENCE",
-    bg: "bg-purple-950/70",
-    text: "text-purple-300",
-    border: "border-purple-700/60",
+    bg: "bg-amber-950/70",
+    text: "text-amber-300",
+    border: "border-amber-700/60",
     icon: MinusCircle,
   },
   INSUFFICIENT: {
     label: "INSUFFICIENT",
-    bg: "bg-amber-950/70",
-    text: "text-amber-300",
-    border: "border-amber-700/60",
+    bg: "bg-stone-900/90",
+    text: "text-[#94A3B8]",
+    border: "border-stone-700/60",
     icon: HelpCircle,
   },
   NEUTRAL: {
@@ -63,10 +63,10 @@ const STANCE_CONFIG: Record<
     icon: MinusCircle,
   },
   UNCERTAIN: {
-    label: "UNCERTAIN / UNVERIFIED",
-    bg: "bg-amber-950/50",
-    text: "text-amber-300",
-    border: "border-amber-700/50",
+    label: "UNCERTAIN",
+    bg: "bg-stone-900/90",
+    text: "text-[#94A3B8]",
+    border: "border-stone-700/50",
     icon: HelpCircle,
   },
 };
@@ -76,24 +76,24 @@ const QUALITY_CONFIG: Record<
   { label: string; bg: string; text: string; border: string; icon: React.ComponentType<{ className?: string }> }
 > = {
   HIGH: {
-    label: "HIGH QUALITY SOURCE",
-    bg: "bg-cyan-950/60",
-    text: "text-cyan-300",
-    border: "border-cyan-700/50",
+    label: "HIGH TRUST SOURCE",
+    bg: "bg-emerald-950/40",
+    text: "text-emerald-300",
+    border: "border-emerald-800/40",
     icon: ShieldCheck,
   },
   MEDIUM: {
-    label: "MEDIUM QUALITY SOURCE",
+    label: "STANDARD SOURCE",
     bg: "bg-stone-900/80",
     text: "text-[#CBD5E1]",
     border: "border-stone-700/50",
     icon: Shield,
   },
   LOW: {
-    label: "COMMUNITY / SOCIAL SOURCE",
-    bg: "bg-amber-950/50",
+    label: "COMMUNITY / SOCIAL POST",
+    bg: "bg-amber-950/40",
     text: "text-amber-300",
-    border: "border-amber-700/40",
+    border: "border-amber-800/40",
     icon: ShieldAlert,
   },
 };
@@ -131,42 +131,42 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
       : null;
 
   return (
-    <div className="bg-[#08090C] border border-stone-800 hover:border-[#D4AF37]/40 rounded-xl p-4.5 space-y-3.5 transition-all shadow-md flex flex-col justify-between group">
+    <div className="bg-[#11141A] border border-stone-800 hover:border-stone-700 rounded-xl p-4.5 space-y-3.5 transition-all shadow-md flex flex-col justify-between group">
       <div className="space-y-3">
         {/* Top Header: Linked Claim ID + Source Type Badge + Stance Pill */}
         <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-stone-800/80">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="px-2 py-0.5 rounded bg-[#131720] border border-[#D4AF37]/35 text-[#E2C15C] font-mono font-bold text-[11px] flex items-center gap-1 shadow-sm">
+            <span className="px-2 py-0.5 rounded bg-[#161B24] border border-stone-800 text-[#CBD5E1] font-mono font-bold text-[11px] flex items-center gap-1 shadow-sm">
               Claim {evidence.claimId}
             </span>
 
             {/* Source Type Tag */}
             {isYouTube ? (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950/70 text-rose-300 border border-rose-600/40 font-semibold flex items-center gap-1">
-                <Video className="h-3 w-3 text-rose-400" />
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-950/60 text-red-300 border border-red-800/40 font-semibold flex items-center gap-1">
+                <Video className="h-3 w-3 text-red-400" />
                 YOUTUBE
               </span>
             ) : isAcademic ? (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950/70 text-blue-300 border border-blue-600/40 font-semibold flex items-center gap-1">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950/60 text-blue-300 border border-blue-800/40 font-semibold flex items-center gap-1">
                 <BookOpen className="h-3 w-3 text-blue-400" />
                 ACADEMIC
               </span>
             ) : isVideoPortal ? (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950/70 text-purple-300 border border-purple-600/40 font-semibold flex items-center gap-1">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950/60 text-purple-300 border border-purple-800/40 font-semibold flex items-center gap-1">
                 <Video className="h-3 w-3 text-purple-400" />
                 VIDEO
               </span>
             ) : (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#131720] text-[#94A3B8] border border-stone-800 font-semibold flex items-center gap-1">
-                <Globe className="h-3 w-3 text-[#D4AF37]" />
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#161B24] text-[#CBD5E1] border border-stone-800 font-semibold flex items-center gap-1">
+                <Globe className="h-3 w-3 text-red-400" />
                 WEB
               </span>
             )}
 
             {/* Evidence Relevance */}
             {relevancePercentage !== null && (
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#131720] text-[#94A3B8] border border-stone-800 flex items-center gap-1" title="Search relevance score">
-                <Target className="h-3 w-3 text-[#D4AF37]" />
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#161B24] text-[#94A3B8] border border-stone-800 flex items-center gap-1" title="Search relevance score">
+                <Target className="h-3 w-3 text-red-400" />
                 {relevancePercentage}% rel
               </span>
             )}
@@ -186,15 +186,15 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
 
         {/* Source Title & Domain */}
         <div>
-          <h4 className="text-sm font-semibold text-[#F8F9FA] group-hover:text-[#E2C15C] transition-colors line-clamp-2 leading-snug">
+          <h4 className="text-sm font-semibold text-[#F8F9FA] group-hover:text-red-400 transition-colors line-clamp-2 leading-snug">
             {evidence.title}
           </h4>
           <div className="flex items-center gap-2 text-[11px] font-mono text-[#94A3B8] mt-1">
             <span className="flex items-center gap-1 text-[#94A3B8]">
               {isYouTube || isVideoPortal ? (
-                <Video className="h-3 w-3 text-rose-400" />
+                <Video className="h-3 w-3 text-red-400" />
               ) : (
-                <Globe className="h-3 w-3 text-[#D4AF37]/70" />
+                <Globe className="h-3 w-3 text-[#94A3B8]" />
               )}
               {evidence.domain}
             </span>
@@ -202,7 +202,7 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
               <>
                 <span className="text-stone-700">•</span>
                 <span className="flex items-center gap-1 text-[#94A3B8]">
-                  <Calendar className="h-3 w-3 text-[#D4AF37]/70" />
+                  <Calendar className="h-3 w-3 text-[#94A3B8]" />
                   {evidence.publishedDate}
                 </span>
               </>
@@ -210,47 +210,47 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
           </div>
         </div>
 
-        {/* Source Quality & Trust Intelligence Bar */}
-        <div className="bg-[#10141D] border border-stone-800 rounded-lg p-2.5 flex items-start gap-2 text-[11px] font-mono">
+        {/* Source Quality & Trust Bar */}
+        <div className="bg-[#0B0D11] border border-stone-800 rounded-lg p-2.5 flex items-start gap-2 text-[11px]">
           <QualityIcon className={`h-4 w-4 shrink-0 mt-0.5 ${qualityInfo.text}`} />
           <div className="space-y-0.5 flex-1">
             <div className="flex items-center justify-between gap-2">
               <span className={`text-[10px] font-bold ${qualityInfo.text}`}>
                 {qualityInfo.label}
               </span>
-              <span className="text-[9px] text-stone-500 uppercase">Deterministic Trust Signal</span>
+              <span className="text-[9px] text-stone-500 uppercase font-mono">Trust Signal</span>
             </div>
             <p className="text-[11px] text-[#94A3B8] font-sans leading-tight">
-              {evidence.qualityReason || "General web domain indexed by search provider."}
+              {evidence.qualityReason || "Indexed web source."}
             </p>
           </div>
         </div>
 
         {/* Retrieved Raw Snippet */}
-        <div className="bg-[#050608] border border-stone-800/80 rounded-lg p-3 space-y-1 relative shadow-inner">
-          <div className="flex items-center justify-between text-[10px] font-mono text-[#64748B] pb-1 border-b border-stone-900">
+        <div className="bg-[#0B0D11] border border-stone-800/80 rounded-lg p-3 space-y-1 relative shadow-inner">
+          <div className="flex items-center justify-between text-[10px] font-mono text-[#64748B] pb-1 border-b border-stone-800/60">
             <span className="flex items-center gap-1 text-[#94A3B8] font-semibold">
-              <Quote className="h-3 w-3 text-[#D4AF37]" />
+              <Quote className="h-3 w-3 text-red-400" />
               {isYouTube ? "VIDEO EXCERPT / DESCRIPTION" : "CITATION EXCERPT"}
             </span>
             <span>{isYouTube ? "YouTube Video" : "Web Citation"}</span>
           </div>
-          <p className="text-xs text-[#C2C9D6] font-sans leading-relaxed line-clamp-4 pt-1">
+          <p className="text-xs text-[#CBD5E1] font-sans leading-relaxed line-clamp-4 pt-1">
             {evidence.snippet || "No textual excerpt available from provider."}
           </p>
         </div>
 
         {/* Stance Explanation */}
         {evidence.stanceExplanation && (
-          <div className="text-[11px] text-[#94A3B8] font-sans px-2.5 py-1.5 bg-[#131720] rounded-lg border border-stone-800 flex items-start gap-1.5 leading-relaxed">
-            <Info className="h-3.5 w-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
+          <div className="text-[11px] text-[#94A3B8] font-sans px-2.5 py-1.5 bg-[#161B24] rounded-lg border border-stone-800 flex items-start gap-1.5 leading-relaxed">
+            <Info className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" />
             <span>Reasoning: {evidence.stanceExplanation}</span>
           </div>
         )}
       </div>
 
       {/* Footer: Open External Source / Watch Video */}
-      <div className="pt-3 border-t border-stone-900 flex items-center justify-between text-xs">
+      <div className="pt-3 border-t border-stone-800/80 flex items-center justify-between text-xs">
         <span className="text-[10px] font-mono text-[#64748B]">
           ID: {evidence.id}
         </span>
@@ -259,20 +259,20 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
           href={evidence.url}
           target="_blank"
           rel="noopener noreferrer"
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono text-xs font-semibold border transition-all shadow-sm ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-sans text-xs font-semibold border transition-all shadow-sm ${
             isYouTube
-              ? "bg-rose-950/70 hover:bg-rose-900/80 text-rose-200 border-rose-600/40 hover:border-rose-500"
-              : "bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] hover:text-white border-stone-800 hover:border-[#D4AF37]/50"
+              ? "bg-red-950/60 hover:bg-red-900/70 text-red-200 border-red-700/50 hover:border-red-500"
+              : "bg-[#161B24] hover:bg-[#1E2430] text-[#F8F9FA] hover:text-white border-stone-700 hover:border-stone-500"
           }`}
         >
           {isYouTube ? (
             <>
-              <Play className="h-3 w-3 fill-rose-400 text-rose-400" />
-              <span>Watch Video</span>
+              <Play className="h-3 w-3 fill-red-400 text-red-400" />
+              <span>Watch on YouTube ↗</span>
             </>
           ) : (
             <>
-              <span>Open Source</span>
+              <span>Open source ↗</span>
               <ExternalLink className="h-3 w-3" />
             </>
           )}

@@ -251,7 +251,7 @@ async function runPhase14Tests() {
   assert(imageSummary.primaryMatch?.type === "EXACT", "imageSummary primaryMatch is EXACT");
   assert(imageSummary.primaryMatch?.domain === "esa.int", "imageSummary primaryMatch domain is esa.int");
   assert(
-    imageSummary.summaryText.includes("esa.int"),
+    Boolean(imageSummary.summaryText?.includes("esa.int")),
     "Summary text references top matching domain"
   );
 
@@ -270,7 +270,7 @@ async function runPhase14Tests() {
   assert(videoSummary.status === "MATCH_FOUND", "videoSummary status is MATCH_FOUND");
   assert(videoSummary.primaryMatch?.sourceType === "youtube", "videoSummary primaryMatch is YouTube");
   assert(
-    videoSummary.summaryText.includes("YouTube video match found"),
+    Boolean(videoSummary.summaryText?.includes("YouTube video match found")),
     "Summary text highlights YouTube video match"
   );
 
@@ -302,7 +302,7 @@ async function runPhase14Tests() {
 
   assert(noMatchSummary.status === "NO_CANDIDATES", "Empty results yield NO_CANDIDATES status");
   assert(noMatchSummary.exactMatchCount === 0, "exactMatchCount is 0 for unindexed media");
-  assert(noMatchSummary.allMatches.length === 0, "No fabricated matches inserted");
+  assert((noMatchSummary.allMatches?.length || 0) === 0, "No fabricated matches inserted");
   assert(noMatchSummary.primaryMatch === null, "primaryMatch is null when no match found");
 
   const skippedSummary = await matchMultimodalMedia(
