@@ -106,6 +106,7 @@ export interface InvestigationInputPayload {
 
 import { ImageProvenanceResult } from "./imageProvenance";
 import { MultiAIConsensusResult } from "./consensus";
+import { MultimodalMediaMatchSummary } from "./mediaMatch";
 
 export interface InvestigationInputResponse {
   success: boolean;
@@ -131,5 +132,6 @@ export interface InvestigationInputResponse {
   verification?: InvestigationVerificationResult;
   imageProvenance?: ImageProvenanceResult;
   consensus?: MultiAIConsensusResult;
+  mediaMatch?: MultimodalMediaMatchSummary;
   nextStage: string;
 }

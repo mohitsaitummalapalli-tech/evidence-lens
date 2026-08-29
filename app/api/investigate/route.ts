@@ -4,6 +4,7 @@ import { geminiService } from "@/lib/ai/gemini";
 import { evidenceRetrievalService } from "@/lib/evidence/retrieval";
 import { verificationReasoningService } from "@/lib/verification/reasoning";
 import { imageProvenanceService } from "@/lib/evidence/imageProvenance";
+import { matchMultimodalMedia } from "@/lib/evidence/mediaMatcher";
 import { multiAIConsensusEngine } from "@/lib/ai/consensusEngine";
 import {
   AtomicClaim,
@@ -13,6 +14,7 @@ import {
   InvestigationVerificationResult,
   ImageProvenanceResult,
   MultiAIConsensusResult,
+  MultimodalMediaMatchSummary,
 } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -253,6 +255,7 @@ export async function POST(req: NextRequest) {
 
     // Step 4: Web & Media Provenance Discovery (if media artifact provided)
     let imageProvenanceResult: ImageProvenanceResult | undefined = undefined;
+    let mediaMatchResult: MultimodalMediaMatchSummary | undefined = undefined;
     if (mediaInfo) {
       try {
         imageProvenanceResult = await imageProvenanceService.discoverProvenance({
@@ -267,6 +270,21 @@ export async function POST(req: NextRequest) {
         });
       } catch (err: unknown) {
         console.warn("[API] Media provenance discovery error:", err);
+      }
+
+      // Step 4B: Exact & Highly Similar Multimodal Media Match (Phase 14)
+      try {
+        mediaMatchResult = await matchMultimodalMedia({
+          hasMedia: true,
+          mediaType: mediaInfo.type === "video" ? "video" : "image",
+          filename: mediaInfo.filename,
+          mimeType: mediaInfo.mimeType,
+          claimText: claim,
+          atomicClaims: extractionResult.claims,
+          contextUrl,
+        });
+      } catch (err: unknown) {
+        console.warn("[API] Multimodal media match error:", err);
       }
     }
 
@@ -312,7 +330,8 @@ export async function POST(req: NextRequest) {
       verification: verificationResult,
       imageProvenance: imageProvenanceResult,
       consensus: consensusResult,
-      nextStage: "Phase 12: Multi-AI Evidence Consensus Engine",
+      mediaMatch: mediaMatchResult,
+      nextStage: "Phase 14: Exact Multimodal Media Match",
     };
 
     return NextResponse.json(responseData, { status: 200 });

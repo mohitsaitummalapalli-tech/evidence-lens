@@ -259,10 +259,10 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       });
     }
 
-    // Evidence Sources Tier (Y = 400+)
-    const evidenceWidth = 220;
-    const evidenceHeight = 90;
-    const evidenceSpacing = 240;
+    // Evidence Sources Tier (Y = 420+)
+    const evidenceWidth = 230;
+    const evidenceHeight = 95;
+    const evidenceSpacing = 260;
 
     // Group evidence by claimId
     const evidenceByClaim: Record<string, typeof allSources> = {};
@@ -283,7 +283,7 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       if (sourcesCount === 0) return;
 
       sourcesForClaim.forEach((source, sIdx) => {
-        const rowOffset = Math.floor(sIdx / 3) * 110;
+        const rowOffset = Math.floor(sIdx / 3) * 125;
         const colInRow = sIdx % 3;
         const sourceX =
           claimPos.x +
@@ -291,9 +291,9 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
           (Math.min(sourcesCount, 3) * evidenceSpacing) / 2 +
           colInRow * evidenceSpacing +
           (evidenceSpacing - evidenceWidth) / 2;
-        const sourceY = 400 + rowOffset;
+        const sourceY = 420 + rowOffset;
 
-        maxY = Math.max(maxY, sourceY + evidenceHeight + 80);
+        maxY = Math.max(maxY, sourceY + evidenceHeight + 100);
 
         const evNode: GraphNodeData = {
           id: `ev-${source.id}`,

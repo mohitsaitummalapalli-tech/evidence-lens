@@ -10,6 +10,7 @@ import { VerificationResultPanel } from "./VerificationResultPanel";
 import { EvidenceGraph } from "./EvidenceGraph";
 import { ConfidenceCometGraph } from "./ConfidenceCometGraph";
 import { ImageProvenancePanel } from "./ImageProvenancePanel";
+import { MediaMatchPanel } from "./MediaMatchPanel";
 import { VerdictInspector } from "./VerdictInspector";
 import { InvestigationTimeline } from "./InvestigationTimeline";
 import { InvestigationHistory } from "./InvestigationHistory";
@@ -301,10 +302,13 @@ export const EvidenceLensWorkbench: React.FC = () => {
           </div>
         )}
 
-        {/* 2. MULTI-AI EVIDENCE CONSENSUS (Phase 12) */}
+        {/* 2. MULTI-AI EVIDENCE CONSENSUS (Phase 12 / 14 AI Evidence Jury) */}
         {uiState === "INPUT_RECEIVED" && apiResponse?.consensus && (activeViewTab === "ALL" || activeViewTab === "CONSENSUS") && (
           <DepthCard floatingPhase="none" enableTilt={false}>
-            <MultiAIConsensusPanel consensus={apiResponse.consensus} />
+            <MultiAIConsensusPanel
+              consensus={apiResponse.consensus}
+              evidence={apiResponse.evidence}
+            />
           </DepthCard>
         )}
 
@@ -315,7 +319,19 @@ export const EvidenceLensWorkbench: React.FC = () => {
           </DepthCard>
         )}
 
-        {/* 4. MULTIMODAL MEDIA & IMAGE PROVENANCE (Phase 6B / 10) */}
+        {/* 4. EXACT MULTIMODAL MEDIA MATCH (Phase 14) */}
+        {((uiState === "SUBMITTING" && Boolean(selectedMedia)) || (uiState === "INPUT_RECEIVED" && apiResponse?.mediaMatch)) &&
+          (activeViewTab === "ALL" || activeViewTab === "MEDIA") && (
+            <DepthCard floatingPhase="none" enableTilt={false}>
+              <MediaMatchPanel
+                mediaMatch={apiResponse?.mediaMatch}
+                uploadedPreviewUrl={selectedMedia?.previewUrl}
+                isLoading={uiState === "SUBMITTING" && Boolean(selectedMedia)}
+              />
+            </DepthCard>
+        )}
+
+        {/* 4B. MULTIMODAL MEDIA & IMAGE PROVENANCE (Phase 6B / 10) */}
         {((uiState === "SUBMITTING" && Boolean(selectedMedia)) || (uiState === "INPUT_RECEIVED" && apiResponse?.imageProvenance)) &&
           (activeViewTab === "ALL" || activeViewTab === "MEDIA") && (
             <DepthCard floatingPhase="none" enableTilt={false}>
