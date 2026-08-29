@@ -65,6 +65,40 @@ export class EvidenceRetrievalService {
   }
 
   /**
+   * Identifies the specific source type (e.g. YouTube video vs standard web publication).
+   */
+  public detectSourceType(url: string, domain: string): "youtube" | "web" | "academic" | "social" | "video_portal" {
+    const lowerUrl = url.toLowerCase();
+    const lowerDomain = domain.toLowerCase();
+
+    if (
+      lowerDomain.includes("youtube.com") ||
+      lowerDomain.includes("youtu.be") ||
+      lowerUrl.includes("youtube.com/watch") ||
+      lowerUrl.includes("youtu.be/")
+    ) {
+      return "youtube";
+    }
+
+    if (lowerDomain.includes("vimeo.com") || lowerDomain.includes("dailymotion.com") || lowerDomain.includes("tiktok.com")) {
+      return "video_portal";
+    }
+
+    if (
+      lowerDomain.includes("arxiv.org") ||
+      lowerDomain.includes("nature.com") ||
+      lowerDomain.includes("ncbi.nlm.nih.gov") ||
+      lowerDomain.includes("sciencedirect.com") ||
+      lowerDomain.includes("springer.com") ||
+      lowerDomain.includes("cell.com")
+    ) {
+      return "academic";
+    }
+
+    return "web";
+  }
+
+  /**
    * Retrieves web evidence for a set of atomic claims concurrently using Tavily.
    * Deduplicates URLs, keeps top 3 results per claim, and links each result strictly to its claimId.
    */
@@ -110,17 +144,19 @@ export class EvidenceRetrievalService {
 
             const evidenceId = `ev_${claim.id}_${resIdx + 1}`;
             const domain = this.extractDomain(cleanUrl);
+            const sourceType = this.detectSourceType(cleanUrl, domain);
 
             const item: EvidenceItem = {
               id: evidenceId,
               claimId: claim.id,
-              title: res.title || domain,
+              title: res.title || (sourceType === "youtube" ? "YouTube Video" : domain),
               url: cleanUrl,
               domain,
               publishedDate: res.published_date || undefined,
               snippet: res.content || "",
               relevanceScore: typeof res.score === "number" ? res.score : undefined,
               stance: "UNCERTAIN", // Initial stance is UNCERTAIN as required
+              sourceType,
               retrievedAt,
             };
 

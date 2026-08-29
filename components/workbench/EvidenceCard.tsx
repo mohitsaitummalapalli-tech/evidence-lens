@@ -1,16 +1,18 @@
 import React from "react";
 import { EvidenceItem, EvidenceStance } from "@/types";
-import { 
-  Globe, 
-  Calendar, 
-  ExternalLink, 
-  CheckCircle2, 
-  XCircle, 
-  MinusCircle, 
+import {
+  Globe,
+  Calendar,
+  ExternalLink,
+  CheckCircle2,
+  XCircle,
+  MinusCircle,
   HelpCircle,
   Quote,
   Sparkles,
-  Target
+  Target,
+  Video,
+  Play
 } from "lucide-react";
 
 interface EvidenceCardProps {
@@ -69,6 +71,18 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
   const stanceInfo = STANCE_CONFIG[evidence.stance] || STANCE_CONFIG.UNCERTAIN;
   const StanceIcon = stanceInfo.icon;
 
+  const isYouTube =
+    evidence.sourceType === "youtube" ||
+    evidence.domain.toLowerCase().includes("youtube.com") ||
+    evidence.domain.toLowerCase().includes("youtu.be") ||
+    evidence.url.toLowerCase().includes("youtube.com") ||
+    evidence.url.toLowerCase().includes("youtu.be");
+
+  const isVideoPortal =
+    evidence.sourceType === "video_portal" ||
+    evidence.domain.toLowerCase().includes("vimeo.com") ||
+    evidence.domain.toLowerCase().includes("dailymotion.com");
+
   const relevancePercentage =
     typeof evidence.relevanceScore === "number"
       ? Math.round(evidence.relevanceScore * 100)
@@ -83,6 +97,17 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
             <span className="px-2 py-0.5 rounded bg-[#131720] border border-[#D4AF37]/40 text-[#E2C15C] font-mono font-bold text-[11px] flex items-center gap-1 shadow-sm">
               Linked: {evidence.claimId}
             </span>
+            {isYouTube ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950/70 text-rose-300 border border-rose-600/40 font-bold flex items-center gap-1">
+                <Video className="h-3 w-3 text-rose-400" />
+                YOUTUBE
+              </span>
+            ) : isVideoPortal ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950/70 text-purple-300 border border-purple-600/40 font-bold flex items-center gap-1">
+                <Video className="h-3 w-3 text-purple-400" />
+                VIDEO
+              </span>
+            ) : null}
             {relevancePercentage !== null && (
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#131720] text-[#94A3B8] border border-stone-800 flex items-center gap-1">
                 <Target className="h-3 w-3 text-[#D4AF37]" />
@@ -113,7 +138,11 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
           </h4>
           <div className="flex items-center gap-2 text-[11px] font-mono text-[#94A3B8] mt-1">
             <span className="flex items-center gap-1 text-[#94A3B8]">
-              <Globe className="h-3 w-3 text-[#D4AF37]/70" />
+              {isYouTube || isVideoPortal ? (
+                <Video className="h-3 w-3 text-rose-400" />
+              ) : (
+                <Globe className="h-3 w-3 text-[#D4AF37]/70" />
+              )}
               {evidence.domain}
             </span>
             {evidence.publishedDate && (
@@ -133,9 +162,9 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
           <div className="flex items-center justify-between text-[10px] font-mono text-[#64748B] pb-1 border-b border-stone-900">
             <span className="flex items-center gap-1 text-[#94A3B8] font-semibold">
               <Quote className="h-3 w-3 text-[#D4AF37]" />
-              RETRIEVED CITATION EXCERPT
+              {isYouTube ? "VIDEO EXCERPT & DESCRIPTION" : "RETRIEVED CITATION EXCERPT"}
             </span>
-            <span>Web Source</span>
+            <span>{isYouTube ? "YouTube Video" : "Web Source"}</span>
           </div>
           <p className="text-xs text-[#C2C9D6] font-sans leading-relaxed line-clamp-4 pt-1">
             {evidence.snippet || "No textual excerpt available from provider."}
@@ -151,7 +180,7 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
         )}
       </div>
 
-      {/* Footer: Open External Source */}
+      {/* Footer: Open External Source / Watch Video */}
       <div className="pt-3 border-t border-stone-900 flex items-center justify-between text-xs">
         <span className="text-[10px] font-mono text-[#64748B]">
           Source ID: {evidence.id}
@@ -161,10 +190,23 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
           href={evidence.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] hover:text-white font-mono text-xs border border-[#D4AF37]/20 hover:border-[#D4AF37]/50 transition-all shadow-sm"
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono text-xs font-bold border transition-all shadow-sm ${
+            isYouTube
+              ? "bg-rose-950/70 hover:bg-rose-900/80 text-rose-200 border-rose-600/40 hover:border-rose-500"
+              : "bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] hover:text-white border-[#D4AF37]/20 hover:border-[#D4AF37]/50"
+          }`}
         >
-          <span>Open Source</span>
-          <ExternalLink className="h-3 w-3" />
+          {isYouTube ? (
+            <>
+              <Play className="h-3 w-3 fill-rose-400 text-rose-400" />
+              <span>Watch Video</span>
+            </>
+          ) : (
+            <>
+              <span>Open Source</span>
+              <ExternalLink className="h-3 w-3" />
+            </>
+          )}
         </a>
       </div>
     </div>

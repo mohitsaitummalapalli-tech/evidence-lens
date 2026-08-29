@@ -249,12 +249,14 @@ export async function POST(req: NextRequest) {
       };
     }
 
-    // Step 4: Web Image Provenance Discovery (if media artifact provided)
+    // Step 4: Web & Media Provenance Discovery (if media artifact provided)
     let imageProvenanceResult: ImageProvenanceResult | undefined = undefined;
     if (mediaInfo) {
       try {
         imageProvenanceResult = await imageProvenanceService.discoverProvenance({
-          hasImage: true,
+          hasImage: mediaInfo.type === "image",
+          hasMedia: true,
+          mediaType: mediaInfo.type === "video" ? "video" : "image",
           filename: mediaInfo.filename,
           mimeType: mediaInfo.mimeType,
           claimText: claim,
@@ -262,7 +264,7 @@ export async function POST(req: NextRequest) {
           contextUrl,
         });
       } catch (err: unknown) {
-        console.warn("[API] Image provenance discovery error:", err);
+        console.warn("[API] Media provenance discovery error:", err);
       }
     }
 

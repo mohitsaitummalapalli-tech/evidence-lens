@@ -16,6 +16,8 @@ export type Stance = "supports" | "refutes" | "neutral" | "unrelated";
 
 export type EvidenceStance = "SUPPORTS" | "CONTRADICTS" | "MIXED" | "INSUFFICIENT" | "NEUTRAL" | "UNCERTAIN";
 
+export type EvidenceSourceType = "web" | "youtube" | "academic" | "social" | "video_portal" | "other";
+
 export interface EvidenceItem {
   id: string;
   claimId: string;
@@ -28,6 +30,8 @@ export interface EvidenceItem {
   relevanceScore?: number;
   stance: EvidenceStance;
   stanceExplanation?: string;
+  sourceType?: EvidenceSourceType;
+  channelOrAuthor?: string;
   retrievedAt: string;
 }
 

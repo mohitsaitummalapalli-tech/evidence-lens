@@ -57,21 +57,21 @@ export const FloatingParticleField: React.FC = () => {
       resizeObserver.observe(canvas.parentElement);
     }
 
-    // Initialize sparse particles (35-45 particles max for elite performance)
-    const particleCount = Math.min(42, Math.max(20, Math.floor((width * height) / 35000)));
+    // Initialize sparse, subtle particles (15-20 particles max for calm forensic ambiance)
+    const particleCount = Math.min(22, Math.max(12, Math.floor((width * height) / 60000)));
     const particles: Particle[] = [];
 
     for (let i = 0; i < particleCount; i++) {
-      const maxOp = 0.2 + Math.random() * 0.45;
+      const maxOp = 0.12 + Math.random() * 0.22; // Restrained opacity
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        size: 0.8 + Math.random() * 1.8,
-        speedX: (Math.random() - 0.5) * 0.25,
-        speedY: -0.1 - Math.random() * 0.35, // Slow upward drift
+        size: 0.7 + Math.random() * 1.3,
+        speedX: (Math.random() - 0.5) * 0.15,
+        speedY: -0.05 - Math.random() * 0.2, // Very calm upward drift
         opacity: Math.random() * maxOp,
         maxOpacity: maxOp,
-        opacityDelta: (Math.random() * 0.008 + 0.003) * (Math.random() > 0.5 ? 1 : -1),
+        opacityDelta: (Math.random() * 0.004 + 0.002) * (Math.random() > 0.5 ? 1 : -1),
         color: GOLD_PALETTES[Math.floor(Math.random() * GOLD_PALETTES.length)],
       });
     }

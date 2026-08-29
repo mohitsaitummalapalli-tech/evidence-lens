@@ -197,7 +197,41 @@ export const EvidenceLensWorkbench: React.FC = () => {
           />
         </DepthCard>
 
-        {/* Forensic Investigation Lifecycle Timeline (Phase 8) */}
+        {/* 1. PRIMARY RESULT & VERDICT (Phase 5 / 7A) */}
+        {uiState === "INPUT_RECEIVED" && apiResponse?.verification && (
+          <DepthCard floatingPhase="none" enableTilt={false}>
+            <VerificationResultPanel
+              verification={apiResponse.verification}
+              onInspectClaim={(claimId) => setInspectingClaimId(claimId)}
+            />
+          </DepthCard>
+        )}
+
+        {/* 2. UNIVERSAL WEB & YOUTUBE SOURCES (Phase 4B / 10) */}
+        {uiState === "INPUT_RECEIVED" && apiResponse?.evidence && (
+          <DepthCard floatingPhase="none" enableTilt={false}>
+            <EvidencePanel evidence={apiResponse.evidence} />
+          </DepthCard>
+        )}
+
+        {/* 3. MULTIMODAL MEDIA & IMAGE PROVENANCE (Phase 6B / 10) */}
+        {(uiState === "SUBMITTING" && Boolean(selectedMedia)) || (uiState === "INPUT_RECEIVED" && apiResponse?.imageProvenance) ? (
+          <DepthCard floatingPhase="none" enableTilt={false}>
+            <ImageProvenancePanel
+              provenance={apiResponse?.imageProvenance}
+              isLoading={uiState === "SUBMITTING" && Boolean(selectedMedia)}
+            />
+          </DepthCard>
+        ) : null}
+
+        {/* 4. ATOMIC CLAIM DECOMPOSITION (Phase 3) */}
+        {uiState === "INPUT_RECEIVED" && apiResponse?.extraction && (
+          <DepthCard floatingPhase="none" enableTilt={false}>
+            <ClaimExtractionPanel extraction={apiResponse.extraction} />
+          </DepthCard>
+        )}
+
+        {/* 5. FORENSIC INVESTIGATION LIFECYCLE TIMELINE (Phase 8) */}
         <DepthCard floatingPhase="none" enableTilt={false}>
           <InvestigationTimeline
             uiState={uiState}
@@ -214,7 +248,7 @@ export const EvidenceLensWorkbench: React.FC = () => {
           />
         </DepthCard>
 
-        {/* Live Forensic Evidence Graph (During Submitting or Result Present) */}
+        {/* 6. LIVE FORENSIC EVIDENCE GRAPH */}
         {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse && (apiResponse.extraction || apiResponse.evidence))) && (
           <DepthCard floatingPhase="none" enableTilt={false}>
             <EvidenceGraph
@@ -228,7 +262,7 @@ export const EvidenceLensWorkbench: React.FC = () => {
           </DepthCard>
         )}
 
-        {/* Forensic Confidence Trajectory Comet Graph */}
+        {/* 7. CONFIDENCE TRAJECTORY COMET GRAPH */}
         {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse?.verification)) && (
           <DepthCard floatingPhase="none" enableTilt={false}>
             <ConfidenceCometGraph
@@ -238,44 +272,11 @@ export const EvidenceLensWorkbench: React.FC = () => {
           </DepthCard>
         )}
 
-        {/* Web Image Provenance Discovery Panel (Phase 6B) */}
-        {(uiState === "SUBMITTING" && Boolean(selectedMedia)) || (uiState === "INPUT_RECEIVED" && apiResponse?.imageProvenance) ? (
-          <DepthCard floatingPhase={3} enableTilt={false}>
-            <ImageProvenancePanel
-              provenance={apiResponse?.imageProvenance}
-              isLoading={uiState === "SUBMITTING" && Boolean(selectedMedia)}
-            />
-          </DepthCard>
-        ) : null}
-
-        {/* Investigation Initialized Server Response Panel */}
+        {/* Server Response Diagnostics */}
         {uiState === "INPUT_RECEIVED" && apiResponse && (
-          <>
-            <DepthCard floatingPhase="none" enableTilt={false}>
-              <InvestigationResultPanel response={apiResponse} />
-            </DepthCard>
-
-            {apiResponse.verification && (
-              <DepthCard floatingPhase="none" enableTilt={false}>
-                <VerificationResultPanel
-                  verification={apiResponse.verification}
-                  onInspectClaim={(claimId) => setInspectingClaimId(claimId)}
-                />
-              </DepthCard>
-            )}
-
-            {apiResponse.extraction && (
-              <DepthCard floatingPhase="none" enableTilt={false}>
-                <ClaimExtractionPanel extraction={apiResponse.extraction} />
-              </DepthCard>
-            )}
-
-            {apiResponse.evidence && (
-              <DepthCard floatingPhase="none" enableTilt={false}>
-                <EvidencePanel evidence={apiResponse.evidence} />
-              </DepthCard>
-            )}
-          </>
+          <DepthCard floatingPhase="none" enableTilt={false}>
+            <InvestigationResultPanel response={apiResponse} />
+          </DepthCard>
         )}
 
         {/* Forensic "Why This Verdict?" Inspector Drawer (Phase 7A) */}

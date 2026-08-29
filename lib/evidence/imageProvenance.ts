@@ -1,6 +1,6 @@
 /**
- * EvidenceLens - Web Image Provenance Discovery Service
- * Phase 6B: Multimodal Web Artifact & Media Provenance Analysis
+ * EvidenceLens - Universal Web & Media Provenance Discovery Service
+ * Phase 6B & Phase 10: Multimodal Web Artifact, Video & Image Provenance Analysis
  */
 
 import { TavilySearchClient, TavilySearchResult } from "./tavily";
@@ -9,10 +9,13 @@ import {
   ImageProvenanceCandidate,
   ImageProvenanceResult,
   ImageProvenanceMatchType,
+  ProvenanceSourceType,
 } from "@/types";
 
 export interface ImageProvenanceSearchParams {
   hasImage?: boolean;
+  hasMedia?: boolean;
+  mediaType?: "image" | "video" | "audio" | "document" | "none";
   filename?: string;
   mimeType?: string;
   claimText?: string;
@@ -28,11 +31,35 @@ export class ImageProvenanceService {
   }
 
   /**
+   * Helper to detect media subtype from mime or filename.
+   */
+  public detectMediaType(params: ImageProvenanceSearchParams): "image" | "video" | "audio" | "document" | "none" {
+    if (params.mediaType) return params.mediaType;
+    const mime = (params.mimeType || "").toLowerCase();
+    const fn = (params.filename || "").toLowerCase();
+
+    if (mime.startsWith("video/") || /\.(mp4|webm|mov|avi|mkv|flv|wmv)$/i.test(fn)) {
+      return "video";
+    }
+    if (mime.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(fn)) {
+      return "image";
+    }
+    if (mime.startsWith("audio/") || /\.(mp3|wav|ogg|m4a|aac)$/i.test(fn)) {
+      return "audio";
+    }
+    if (params.hasImage || params.hasMedia) {
+      return "image";
+    }
+    return "none";
+  }
+
+  /**
    * Generates focused textual search queries grounded in actual media and claim data.
    */
   public generateProvenanceQueries(params: ImageProvenanceSearchParams): string[] {
     const queries: string[] = [];
     const seenQueries = new Set<string>();
+    const mediaType = this.detectMediaType(params);
 
     const addQuery = (q: string) => {
       const trimmed = q.trim().replace(/\s+/g, " ");
@@ -47,11 +74,15 @@ export class ImageProvenanceService {
       const cleanFilename = params.filename
         .replace(/\.[a-zA-Z0-9]{3,4}$/, "")
         .replace(/[-_.]+/g, " ")
-        .replace(/\b(image|img|screenshot|photo|picture|pic|upload|file)\b/gi, "")
+        .replace(/\b(image|img|screenshot|photo|picture|pic|video|vid|clip|footage|upload|file)\b/gi, "")
         .trim();
 
       if (cleanFilename.length >= 4 && !/^\d+$/.test(cleanFilename)) {
-        addQuery(cleanFilename);
+        if (mediaType === "video") {
+          addQuery(`${cleanFilename} video`);
+        } else {
+          addQuery(cleanFilename);
+        }
       }
     }
 
@@ -60,17 +91,29 @@ export class ImageProvenanceService {
       for (const claim of params.atomicClaims) {
         if (claim.entities && claim.entities.length > 0) {
           const entityQuery = claim.entities.slice(0, 3).join(" ");
-          addQuery(entityQuery);
+          if (mediaType === "video") {
+            addQuery(`${entityQuery} video footage`);
+          } else {
+            addQuery(entityQuery);
+          }
         }
         if (claim.text && claim.text.length > 10) {
-          addQuery(claim.text);
+          if (mediaType === "video") {
+            addQuery(`${claim.text} video`);
+          } else {
+            addQuery(claim.text);
+          }
         }
       }
     }
 
     // 3. Main claim text fallback
     if (queries.length === 0 && params.claimText && params.claimText.trim().length > 0) {
-      addQuery(params.claimText.trim());
+      if (mediaType === "video") {
+        addQuery(`${params.claimText.trim()} video`);
+      } else {
+        addQuery(params.claimText.trim());
+      }
     }
 
     // Return at most 3 focused queries to ensure high relevance and rate discipline
@@ -90,10 +133,42 @@ export class ImageProvenanceService {
   }
 
   /**
-   * Determines match type based on search relevance and content evidence
+   * Identifies the provenance candidate's source type (e.g. YouTube video vs Image Host vs Web Publication).
+   */
+  public detectCandidateSourceType(url: string, domain: string, mediaType: string): ProvenanceSourceType {
+    const lowerUrl = url.toLowerCase();
+    const lowerDomain = domain.toLowerCase();
+
+    if (
+      lowerDomain.includes("youtube.com") ||
+      lowerDomain.includes("youtu.be") ||
+      lowerUrl.includes("youtube.com/watch") ||
+      lowerUrl.includes("youtu.be/")
+    ) {
+      return "youtube";
+    }
+
+    if (lowerDomain.includes("vimeo.com") || lowerDomain.includes("dailymotion.com") || lowerDomain.includes("tiktok.com")) {
+      return "video";
+    }
+
+    if (
+      mediaType === "image" ||
+      lowerDomain.includes("imgur.com") ||
+      lowerDomain.includes("flickr.com") ||
+      lowerDomain.includes("pinterest.com")
+    ) {
+      return "image";
+    }
+
+    return "web";
+  }
+
+  /**
+   * Determines match type based on search relevance and content evidence.
+   * Strict Honesty Rule: Never emit EXACT_MATCH.
    */
   public determineMatchType(score: number): ImageProvenanceMatchType {
-    // Honest categorization - never claim EXACT_MATCH in Phase 6B
     if (score >= 0.75) {
       return "POSSIBLE_MATCH";
     }
@@ -104,17 +179,20 @@ export class ImageProvenanceService {
   }
 
   /**
-   * Discovers candidate web sources for an uploaded media artifact.
+   * Discovers candidate web sources for an uploaded media artifact (Image or Video).
    */
   public async discoverProvenance(
     params: ImageProvenanceSearchParams
   ): Promise<ImageProvenanceResult> {
     const discoveredAt = new Date().toISOString();
+    const mediaType = this.detectMediaType(params);
 
     // If no media is present, return skipped state
-    if (!params.hasImage && !params.filename && !params.mimeType) {
+    if (!params.hasImage && !params.hasMedia && !params.filename && !params.mimeType) {
       return {
         hasImage: false,
+        hasMedia: false,
+        mediaType: "none",
         searchStatus: "SKIPPED",
         totalCandidatesFound: 0,
         uniqueDomains: [],
@@ -128,7 +206,9 @@ export class ImageProvenanceService {
 
     if (queries.length === 0) {
       return {
-        hasImage: true,
+        hasImage: mediaType === "image",
+        hasMedia: true,
+        mediaType,
         mediaFilename: params.filename,
         mediaMimeType: params.mimeType,
         searchStatus: "NO_CANDIDATES",
@@ -160,14 +240,18 @@ export class ImageProvenanceService {
 
           // Only keep POSSIBLE_MATCH or RELATED_SOURCE
           if (matchType !== "NO_MATCH") {
+            const domain = this.extractDomain(res.url);
+            const candidateSourceType = this.detectCandidateSourceType(res.url, domain, mediaType);
+
             const candidate: ImageProvenanceCandidate = {
               id: `prov_${candidates.length + 1}`,
               url: res.url,
-              title: res.title || "Web Citation",
-              domain: this.extractDomain(res.url),
+              title: res.title || (candidateSourceType === "youtube" ? "YouTube Video" : "Web Citation"),
+              domain,
               snippet: (res.content || "").slice(0, 300),
               relevanceScore: score,
               matchType,
+              sourceType: candidateSourceType,
               discoveredAt,
               matchedQuery: query,
             };
@@ -176,7 +260,7 @@ export class ImageProvenanceService {
         }
       } catch (err: unknown) {
         const errMessage = err instanceof Error ? err.message : String(err);
-        console.warn(`[ImageProvenance] Query failed for "${query}":`, errMessage);
+        console.warn(`[MediaProvenance] Query failed for "${query}":`, errMessage);
       }
     }
 
@@ -186,7 +270,9 @@ export class ImageProvenanceService {
     const uniqueDomains = Array.from(new Set(candidates.map((c) => c.domain)));
 
     return {
-      hasImage: true,
+      hasImage: mediaType === "image",
+      hasMedia: true,
+      mediaType,
       mediaFilename: params.filename,
       mediaMimeType: params.mimeType,
       searchStatus: candidates.length > 0 ? "SUCCESS" : "NO_CANDIDATES",
@@ -200,3 +286,4 @@ export class ImageProvenanceService {
 }
 
 export const imageProvenanceService = new ImageProvenanceService();
+export const mediaProvenanceService = imageProvenanceService;

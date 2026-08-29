@@ -4,6 +4,7 @@ import React from "react";
 import { ImageProvenanceResult, ImageProvenanceCandidate, ImageProvenanceMatchType } from "@/types";
 import {
   Image as ImageIcon,
+  Video as VideoIcon,
   Globe,
   ExternalLink,
   Shield,
@@ -12,6 +13,7 @@ import {
   AlertCircle,
   Clock,
   Sparkles,
+  Play,
 } from "lucide-react";
 
 interface ImageProvenancePanelProps {
@@ -27,12 +29,19 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
     return null;
   }
 
-  // Helper for match type styling
-  const getMatchBadgeStyle = (matchType: ImageProvenanceMatchType) => {
+  const isVideo =
+    provenance?.mediaType === "video" ||
+    provenance?.mediaMimeType?.startsWith("video/") ||
+    /\.(mp4|webm|mov|avi|mkv)$/i.test(provenance?.mediaFilename || "");
+
+  // Helper for match type styling (Strict Honesty Rule: Never claim EXACT MATCH)
+  const getMatchBadgeStyle = (matchType: ImageProvenanceMatchType, candidateSourceType?: string) => {
+    const isCandidateVideo = candidateSourceType === "youtube" || candidateSourceType === "video";
+
     switch (matchType) {
       case "POSSIBLE_MATCH":
         return {
-          label: "POSSIBLE MATCH",
+          label: isCandidateVideo ? "POSSIBLE VIDEO SOURCE" : "POSSIBLE WEB SOURCE",
           badgeClass: "bg-emerald-950/80 text-emerald-300 border-emerald-700/60",
           icon: <CheckCircle2 className="h-3 w-3 text-emerald-400" />,
         };
@@ -45,7 +54,7 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
       case "NO_MATCH":
       default:
         return {
-          label: "NO MATCH",
+          label: "NO MATCH FOUND",
           badgeClass: "bg-stone-900 text-stone-400 border-stone-700",
           icon: <AlertCircle className="h-3 w-3 text-stone-400" />,
         };
@@ -55,26 +64,28 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
   return (
     <section
       id="image-provenance-panel"
-      aria-label="Web Image Provenance Discovery"
+      aria-label="Web & Media Provenance Discovery"
       className="bg-[#0D1017]/95 border border-[#D4AF37]/25 rounded-xl p-5 shadow-2xl shadow-black/60 relative overflow-hidden my-6"
     >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#D4AF37]/15">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-[#131720] border border-[#D4AF37]/30 text-[#D4AF37] shadow-sm">
-            <ImageIcon className="h-5 w-5" />
+            {isVideo ? <VideoIcon className="h-5 w-5" /> : <ImageIcon className="h-5 w-5" />}
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-[#F8F9FA] tracking-wide">
-                WEB IMAGE PROVENANCE
+                {isVideo ? "MEDIA & VIDEO PROVENANCE" : "WEB IMAGE & MEDIA PROVENANCE"}
               </h3>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#D4AF37]/10 text-[#E2C15C] border border-[#D4AF37]/30 font-semibold uppercase">
-                Multimodal Discovery
+                {isVideo ? "Video / YouTube Discovery" : "Multimodal Discovery"}
               </span>
             </div>
             <p className="text-xs text-[#94A3B8] font-sans mt-0.5">
-              Candidate web sources associated with the uploaded artifact
+              {isVideo
+                ? "Candidate video footage, YouTube clips, and web references for uploaded media"
+                : "Candidate web publications and visual references associated with uploaded media"}
             </p>
           </div>
         </div>
@@ -113,16 +124,18 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
         {isLoading ? (
           <div className="py-12 flex flex-col items-center justify-center gap-3 text-xs font-mono text-[#94A3B8]">
             <Search className="h-6 w-6 text-[#D4AF37] animate-spin" />
-            <p className="text-[#E2C15C] animate-pulse">SEARCHING WEB PROVENANCE...</p>
+            <p className="text-[#E2C15C] animate-pulse">
+              {isVideo ? "SEARCHING VIDEO & YOUTUBE PROVENANCE..." : "SEARCHING WEB PROVENANCE..."}
+            </p>
           </div>
         ) : !provenance || provenance.candidates.length === 0 ? (
           <div className="py-8 px-4 rounded-xl bg-[#08090C] border border-stone-800 text-center space-y-2">
             <Shield className="h-8 w-8 text-[#D4AF37]/60 mx-auto" />
             <h4 className="text-xs font-bold font-mono text-[#F8F9FA] uppercase tracking-wide">
-              NO WEB PROVENANCE CANDIDATES FOUND
+              NO PROVENANCE CANDIDATES FOUND
             </h4>
             <p className="text-[11px] text-[#94A3B8] max-w-md mx-auto leading-relaxed">
-              No matching online publication or visual reference was identified across available web index queries. Absence of candidates does not confirm authenticity or fabrication.
+              No matching online publication, video footage, or visual reference was identified across indexed sources. Absence of candidates does not confirm authenticity or fabrication.
             </p>
           </div>
         ) : (
@@ -145,7 +158,14 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
             {/* Candidate Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
               {provenance.candidates.map((candidate: ImageProvenanceCandidate) => {
-                const style = getMatchBadgeStyle(candidate.matchType);
+                const isCandidateYouTube =
+                  candidate.sourceType === "youtube" ||
+                  candidate.domain.toLowerCase().includes("youtube.com") ||
+                  candidate.domain.toLowerCase().includes("youtu.be") ||
+                  candidate.url.toLowerCase().includes("youtube.com") ||
+                  candidate.url.toLowerCase().includes("youtu.be");
+
+                const style = getMatchBadgeStyle(candidate.matchType, candidate.sourceType);
                 const relevancePct = Math.round(candidate.relevanceScore * 100);
 
                 return (
@@ -164,7 +184,11 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
                         </span>
 
                         <div className="flex items-center gap-1 text-[11px] font-mono text-[#E2C15C] truncate">
-                          <Globe className="h-3 w-3 text-[#D4AF37]" />
+                          {isCandidateYouTube ? (
+                            <VideoIcon className="h-3 w-3 text-rose-400" />
+                          ) : (
+                            <Globe className="h-3 w-3 text-[#D4AF37]" />
+                          )}
                           <span className="truncate">{candidate.domain}</span>
                         </div>
                       </div>
@@ -193,10 +217,23 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
                         href={candidate.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-2.5 py-1 rounded bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] hover:text-white border border-[#D4AF37]/30 transition-colors flex items-center gap-1 font-semibold"
+                        className={`px-2.5 py-1 rounded transition-colors flex items-center gap-1 font-semibold ${
+                          isCandidateYouTube
+                            ? "bg-rose-950/70 hover:bg-rose-900/80 text-rose-200 border border-rose-600/40 hover:border-rose-500"
+                            : "bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] hover:text-white border border-[#D4AF37]/30"
+                        }`}
                       >
-                        <span>OPEN SOURCE</span>
-                        <ExternalLink className="h-3 w-3" />
+                        {isCandidateYouTube ? (
+                          <>
+                            <Play className="h-3 w-3 fill-rose-400 text-rose-400" />
+                            <span>WATCH VIDEO</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>OPEN SOURCE</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </>
+                        )}
                       </a>
                     </div>
                   </div>
@@ -220,7 +257,7 @@ export const ImageProvenancePanel: React.FC<ImageProvenancePanelProps> = ({
         </div>
         <div className="flex items-center gap-1 text-stone-500">
           <Shield className="h-3 w-3" />
-          <span>Web Artifact Search Relevance • Not Reverse-Image Pixel Matching</span>
+          <span>Web & Video Artifact Search Discovery • Contextual Signals (Not Exact Pixel Match)</span>
         </div>
       </div>
     </section>
