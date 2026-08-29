@@ -97,13 +97,13 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
 
     const numClaims = Math.max(claims.length, 1);
     const hasImageProv = provCandidates.length > 0;
-    const claimSpacing = 300;
-    const totalClaimsWidth = numClaims * claimSpacing + (hasImageProv ? 340 : 0);
-    const canvasWidth = Math.max(totalClaimsWidth + 400, 1200);
+    const claimSpacing = 380;
+    const totalClaimsWidth = numClaims * claimSpacing + (hasImageProv ? 420 : 0);
+    const canvasWidth = Math.max(totalClaimsWidth + 500, 1400);
     const centerX = canvasWidth / 2;
 
     // Root Node
-    const rootWidth = 380;
+    const rootWidth = 400;
     const rootHeight = 110;
     const rootX = centerX - rootWidth / 2;
     const rootY = 40;
@@ -115,17 +115,17 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
       y: rootY,
       width: rootWidth,
       height: rootHeight,
-      label: "ORIGINAL CLAIM",
+      label: "TARGET CLAIM",
       title: rawClaimText,
     };
     nodesList.push(rootNode);
 
-    // Atomic Claims Tier (Y = 220)
-    const claimWidth = 260;
-    const claimHeight = 105;
-    const claimY = 220;
+    // Atomic Claims Tier (Y = 240)
+    const claimWidth = 300;
+    const claimHeight = 115;
+    const claimY = 240;
     const startClaimX =
-      centerX - (numClaims * claimSpacing) / 2 + (claimSpacing - claimWidth) / 2 + (hasImageProv ? 120 : 0);
+      centerX - (numClaims * claimSpacing) / 2 + (claimSpacing - claimWidth) / 2 + (hasImageProv ? 140 : 0);
 
     const claimPositions: Record<string, { x: number; y: number; width: number; height: number }> = {};
 

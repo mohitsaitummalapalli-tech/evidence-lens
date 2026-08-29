@@ -140,25 +140,25 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono tracking-wider uppercase text-[#94A3B8] font-bold">
-                  Investigation Synthesis Verdict
+                <span className="text-xs font-sans tracking-normal uppercase text-[#94A3B8] font-bold">
+                  Verification Verdict
                 </span>
-                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${overallConfig.badgeBg}`}>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-sans font-bold uppercase ${overallConfig.badgeBg}`}>
                   {overallConfig.label}
                 </span>
               </div>
-              <h2 className="text-lg sm:text-xl font-bold text-[#F8F9FA] mt-0.5">
+              <h2 className="text-base sm:text-lg font-bold text-[#F8F9FA] mt-1">
                 {overallConfig.description}
               </h2>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-            <span className={`px-2.5 py-1 rounded border font-semibold ${confBadge.color}`}>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className={`px-3 py-1 rounded-full border font-semibold ${confBadge.color}`}>
               {confBadge.label}
             </span>
-            <span className="px-2.5 py-1 rounded bg-[#08090C] border border-stone-800 text-[#94A3B8] flex items-center gap-1 text-[11px]">
-              <Clock className="h-3 w-3 text-[#D4AF37]" />
+            <span className="px-2.5 py-1 rounded-full bg-[#08090C] border border-stone-800 text-[#94A3B8] flex items-center gap-1 text-xs">
+              <Clock className="h-3.5 w-3.5 text-[#E2C15C]" />
               {new Date(verification.verifiedAt).toLocaleTimeString()}
             </span>
           </div>
@@ -166,38 +166,38 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
 
         {/* Synthesis Reasoning Summary & Breakdown */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-1">
-          <div className="lg:col-span-2 space-y-1">
-            <span className="text-[11px] font-mono uppercase text-[#E2C15C] font-semibold flex items-center gap-1">
-              <Scale className="h-3.5 w-3.5 text-[#D4AF37]" />
-              Grounded Synthesis Summary
+          <div className="lg:col-span-2 space-y-1.5">
+            <span className="text-xs font-sans uppercase text-[#E2C15C] font-semibold flex items-center gap-1">
+              <Scale className="h-3.5 w-3.5 text-[#E2C15C]" />
+              Summary Explanation
             </span>
-            <p className="text-xs sm:text-sm text-[#F8F9FA] leading-relaxed">
+            <p className="text-sm text-[#F8F9FA] leading-relaxed">
               {verification.overallSummary}
             </p>
           </div>
 
           {/* Breakdown Scoreboard */}
-          <div className="p-3.5 rounded-xl bg-[#08090C] border border-stone-800 space-y-2 font-mono text-xs shadow-inner">
-            <div className="flex items-center justify-between text-[#94A3B8] text-[11px]">
-              <span>CLAIM RESOLUTION MATRIX</span>
+          <div className="p-3.5 rounded-xl bg-[#08090C] border border-stone-800 space-y-2 text-xs shadow-inner">
+            <div className="flex items-center justify-between text-[#94A3B8] text-xs">
+              <span className="font-medium">Claims Overview</span>
               <span className="text-[#E2C15C] font-bold">{verification.claimBreakdown.total} Total</span>
             </div>
-            <div className="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+            <div className="grid grid-cols-4 gap-1.5 text-center text-xs">
               <div className="p-1.5 rounded-lg bg-emerald-950/60 border border-emerald-800/60 text-emerald-300">
                 <span className="block font-bold">{verification.claimBreakdown.verifiedTrue}</span>
-                <span className="text-[9px]">TRUE</span>
+                <span className="text-[10px]">TRUE</span>
               </div>
               <div className="p-1.5 rounded-lg bg-rose-950/60 border border-rose-800/60 text-rose-300">
                 <span className="block font-bold">{verification.claimBreakdown.refutedFalse}</span>
-                <span className="text-[9px]">FALSE</span>
+                <span className="text-[10px]">FALSE</span>
               </div>
               <div className="p-1.5 rounded-lg bg-amber-950/60 border border-amber-800/60 text-amber-300">
                 <span className="block font-bold">{verification.claimBreakdown.mixed}</span>
-                <span className="text-[9px]">MIXED</span>
+                <span className="text-[10px]">MIXED</span>
               </div>
               <div className="p-1.5 rounded-lg bg-stone-900 border border-stone-800 text-[#94A3B8]">
                 <span className="block font-bold">{verification.claimBreakdown.unverified}</span>
-                <span className="text-[9px]">UNVERIFIED</span>
+                <span className="text-[10px]">UNVERIFIED</span>
               </div>
             </div>
           </div>
@@ -208,13 +208,13 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-stone-800">
           <div className="flex items-center gap-2">
-            <Scale className="h-4 w-4 text-[#D4AF37]" />
-            <h3 className="text-sm font-bold text-[#E2C15C] uppercase font-mono tracking-wider">
-              Atomic Claim Verifications ({verification.claimVerifications.length})
+            <Scale className="h-4 w-4 text-[#E2C15C]" />
+            <h3 className="text-sm font-bold text-[#E2C15C] font-sans">
+              Individual Claims Breakdown ({verification.claimVerifications.length})
             </h3>
           </div>
-          <span className="text-xs font-mono text-[#64748B]">
-            Deterministic Verification
+          <span className="text-xs text-[#64748B]">
+            Grounded Verification
           </span>
         </div>
 

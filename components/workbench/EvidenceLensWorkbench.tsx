@@ -4,9 +4,6 @@ import React, { useState, useMemo } from "react";
 import { ClaimInputSection } from "./ClaimInputSection";
 import { MediaUploadSection } from "./MediaUploadSection";
 import { InvestigationControls } from "./InvestigationControls";
-import { PipelineOverview } from "./PipelineOverview";
-import { WorkspacePlaceholder } from "./WorkspacePlaceholder";
-import { InvestigationResultPanel } from "./InvestigationResultPanel";
 import { ClaimExtractionPanel } from "./ClaimExtractionPanel";
 import { EvidencePanel } from "./EvidencePanel";
 import { VerificationResultPanel } from "./VerificationResultPanel";
@@ -148,6 +145,10 @@ export const EvidenceLensWorkbench: React.FC = () => {
 
   const isFormDisabled = uiState === "SUBMITTING";
 
+  const [activeViewTab, setActiveViewTab] = useState<
+    "ALL" | "WHY_RESULT" | "SOURCES" | "MEDIA" | "CONSENSUS" | "MAP" | "TIMELINE" | "HISTORY"
+  >("ALL");
+
   return (
     <Forensic3DLayer
       verdict={apiResponse?.verification?.overallVerdict}
@@ -155,8 +156,8 @@ export const EvidenceLensWorkbench: React.FC = () => {
     >
       <div className="space-y-6">
         {/* Top Input & Media Ingestion Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <DepthCard floatingPhase={1} enableTilt={false}>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <DepthCard floatingPhase="none" enableTilt={false}>
             <ClaimInputSection
               claimText={claimText}
               setClaimText={(val) => {
@@ -172,7 +173,7 @@ export const EvidenceLensWorkbench: React.FC = () => {
             />
           </DepthCard>
 
-          <DepthCard floatingPhase={2} enableTilt={false}>
+          <DepthCard floatingPhase="none" enableTilt={false}>
             <MediaUploadSection
               media={selectedMedia}
               setMedia={(media) => {
@@ -187,7 +188,7 @@ export const EvidenceLensWorkbench: React.FC = () => {
           </DepthCard>
         </div>
 
-        {/* Control Bar & State Indicators */}
+        {/* Primary Action & State Bar */}
         <DepthCard floatingPhase="none" enableTilt={false}>
           <InvestigationControls
             uiState={uiState}
@@ -198,7 +199,7 @@ export const EvidenceLensWorkbench: React.FC = () => {
           />
         </DepthCard>
 
-        {/* 1. PRIMARY RESULT & VERDICT (Phase 5 / 7A) */}
+        {/* 1. PRIMARY RESULT & VERDICT (Immediate Plain-English Presentation) */}
         {uiState === "INPUT_RECEIVED" && apiResponse?.verification && (
           <DepthCard floatingPhase="none" enableTilt={false}>
             <VerificationResultPanel
@@ -208,83 +209,174 @@ export const EvidenceLensWorkbench: React.FC = () => {
           </DepthCard>
         )}
 
+        {/* Progressive Disclosure Section Navigation (Visible once results are ready) */}
+        {uiState === "INPUT_RECEIVED" && apiResponse && (
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-[#0D1017] border border-stone-800 shadow-lg">
+            <div className="flex flex-wrap items-center gap-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setActiveViewTab("ALL")}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  activeViewTab === "ALL"
+                    ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
+                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                }`}
+              >
+                All Sections
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveViewTab("WHY_RESULT")}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  activeViewTab === "WHY_RESULT"
+                    ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
+                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                }`}
+              >
+                Why this result?
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveViewTab("SOURCES")}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  activeViewTab === "SOURCES"
+                    ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
+                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                }`}
+              >
+                Sources ({apiResponse.evidence?.totalSourcesFound || 0})
+              </button>
+              {apiResponse.imageProvenance && (
+                <button
+                  type="button"
+                  onClick={() => setActiveViewTab("MEDIA")}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                    activeViewTab === "MEDIA"
+                      ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
+                      : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                  }`}
+                >
+                  Media Matches ({apiResponse.imageProvenance.totalCandidatesFound})
+                </button>
+              )}
+              {apiResponse.consensus && (
+                <button
+                  type="button"
+                  onClick={() => setActiveViewTab("CONSENSUS")}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                    activeViewTab === "CONSENSUS"
+                      ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
+                      : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                  }`}
+                >
+                  AI Agreement ({apiResponse.consensus.overallAgreementRate}%)
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setActiveViewTab("MAP")}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  activeViewTab === "MAP"
+                    ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
+                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                }`}
+              >
+                Evidence Map
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveViewTab("TIMELINE")}
+                className={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                  activeViewTab === "TIMELINE"
+                    ? "bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/40 font-semibold shadow-sm"
+                    : "text-[#94A3B8] hover:text-[#F8F9FA] hover:bg-[#131720]/50"
+                }`}
+              >
+                Timeline
+              </button>
+            </div>
+            <span className="text-[11px] text-[#94A3B8] pr-2 hidden sm:inline">
+              Progressive Analysis View
+            </span>
+          </div>
+        )}
+
         {/* 2. MULTI-AI EVIDENCE CONSENSUS (Phase 12) */}
-        {uiState === "INPUT_RECEIVED" && apiResponse?.consensus && (
+        {uiState === "INPUT_RECEIVED" && apiResponse?.consensus && (activeViewTab === "ALL" || activeViewTab === "CONSENSUS") && (
           <DepthCard floatingPhase="none" enableTilt={false}>
             <MultiAIConsensusPanel consensus={apiResponse.consensus} />
           </DepthCard>
         )}
 
         {/* 3. UNIVERSAL WEB & YOUTUBE SOURCES (Phase 4B / 10 / 11) */}
-        {uiState === "INPUT_RECEIVED" && apiResponse?.evidence && (
+        {uiState === "INPUT_RECEIVED" && apiResponse?.evidence && (activeViewTab === "ALL" || activeViewTab === "SOURCES") && (
           <DepthCard floatingPhase="none" enableTilt={false}>
             <EvidencePanel evidence={apiResponse.evidence} />
           </DepthCard>
         )}
 
-        {/* 3. MULTIMODAL MEDIA & IMAGE PROVENANCE (Phase 6B / 10) */}
-        {(uiState === "SUBMITTING" && Boolean(selectedMedia)) || (uiState === "INPUT_RECEIVED" && apiResponse?.imageProvenance) ? (
-          <DepthCard floatingPhase="none" enableTilt={false}>
-            <ImageProvenancePanel
-              provenance={apiResponse?.imageProvenance}
-              isLoading={uiState === "SUBMITTING" && Boolean(selectedMedia)}
-            />
-          </DepthCard>
-        ) : null}
+        {/* 4. MULTIMODAL MEDIA & IMAGE PROVENANCE (Phase 6B / 10) */}
+        {((uiState === "SUBMITTING" && Boolean(selectedMedia)) || (uiState === "INPUT_RECEIVED" && apiResponse?.imageProvenance)) &&
+          (activeViewTab === "ALL" || activeViewTab === "MEDIA") && (
+            <DepthCard floatingPhase="none" enableTilt={false}>
+              <ImageProvenancePanel
+                provenance={apiResponse?.imageProvenance}
+                isLoading={uiState === "SUBMITTING" && Boolean(selectedMedia)}
+              />
+            </DepthCard>
+        )}
 
-        {/* 4. ATOMIC CLAIM DECOMPOSITION (Phase 3) */}
-        {uiState === "INPUT_RECEIVED" && apiResponse?.extraction && (
+        {/* 5. CLAIM DECOMPOSITION (Phase 3) */}
+        {uiState === "INPUT_RECEIVED" && apiResponse?.extraction && (activeViewTab === "ALL" || activeViewTab === "WHY_RESULT") && (
           <DepthCard floatingPhase="none" enableTilt={false}>
             <ClaimExtractionPanel extraction={apiResponse.extraction} />
           </DepthCard>
         )}
 
-        {/* 5. FORENSIC INVESTIGATION LIFECYCLE TIMELINE (Phase 8) */}
-        <DepthCard floatingPhase="none" enableTilt={false}>
-          <InvestigationTimeline
-            uiState={uiState}
-            apiResponse={apiResponse}
-            claimText={claimText}
-            hasMedia={Boolean(selectedMedia)}
-            onInspectClaim={(claimId) => setInspectingClaimId(claimId)}
-            onViewInGraph={() => {
-              const graphEl = document.getElementById("evidence-graph-panel");
-              if (graphEl) {
-                graphEl.scrollIntoView({ behavior: "smooth" });
-              }
-            }}
-          />
-        </DepthCard>
-
-        {/* 6. LIVE FORENSIC EVIDENCE GRAPH */}
-        {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse && (apiResponse.extraction || apiResponse.evidence))) && (
+        {/* 6. INVESTIGATION LIFECYCLE TIMELINE (Phase 8) */}
+        {(activeViewTab === "ALL" || activeViewTab === "TIMELINE") && (
           <DepthCard floatingPhase="none" enableTilt={false}>
-            <EvidenceGraph
-              extraction={apiResponse?.extraction}
-              evidence={apiResponse?.evidence}
-              verification={apiResponse?.verification}
-              imageProvenance={apiResponse?.imageProvenance}
-              originalClaim={claimText.trim() || apiResponse?.input.claim}
-              isInitializing={uiState === "SUBMITTING"}
+            <InvestigationTimeline
+              uiState={uiState}
+              apiResponse={apiResponse}
+              claimText={claimText}
+              hasMedia={Boolean(selectedMedia)}
+              onInspectClaim={(claimId) => setInspectingClaimId(claimId)}
+              onViewInGraph={() => {
+                setActiveViewTab("MAP");
+                const graphEl = document.getElementById("evidence-graph-panel");
+                if (graphEl) {
+                  graphEl.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
             />
           </DepthCard>
         )}
 
-        {/* 7. CONFIDENCE TRAJECTORY COMET GRAPH */}
-        {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse?.verification)) && (
-          <DepthCard floatingPhase="none" enableTilt={false}>
-            <ConfidenceCometGraph
-              verification={apiResponse?.verification}
-              isAnalyzing={uiState === "SUBMITTING"}
-            />
-          </DepthCard>
+        {/* 7. SPACIOUS INTERACTIVE EVIDENCE MAP */}
+        {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse && (apiResponse.extraction || apiResponse.evidence))) &&
+          (activeViewTab === "ALL" || activeViewTab === "MAP") && (
+            <DepthCard floatingPhase="none" enableTilt={false}>
+              <EvidenceGraph
+                extraction={apiResponse?.extraction}
+                evidence={apiResponse?.evidence}
+                verification={apiResponse?.verification}
+                imageProvenance={apiResponse?.imageProvenance}
+                originalClaim={claimText.trim() || apiResponse?.input.claim}
+                isInitializing={uiState === "SUBMITTING"}
+              />
+            </DepthCard>
         )}
 
-        {/* Server Response Diagnostics */}
-        {uiState === "INPUT_RECEIVED" && apiResponse && (
-          <DepthCard floatingPhase="none" enableTilt={false}>
-            <InvestigationResultPanel response={apiResponse} />
-          </DepthCard>
+        {/* 8. CONFIDENCE COMET GRAPH */}
+        {(uiState === "SUBMITTING" || (uiState === "INPUT_RECEIVED" && apiResponse?.verification)) &&
+          (activeViewTab === "ALL" || activeViewTab === "WHY_RESULT") && (
+            <DepthCard floatingPhase="none" enableTilt={false}>
+              <ConfidenceCometGraph
+                verification={apiResponse?.verification}
+                isAnalyzing={uiState === "SUBMITTING"}
+              />
+            </DepthCard>
         )}
 
         {/* Forensic "Why This Verdict?" Inspector Drawer (Phase 7A) */}
@@ -294,7 +386,7 @@ export const EvidenceLensWorkbench: React.FC = () => {
           evidence={apiResponse?.evidence}
           onClose={() => setInspectingClaimId(null)}
           onViewInGraph={() => {
-            // Scroll smoothly to Evidence Graph container
+            setActiveViewTab("MAP");
             const graphEl = document.getElementById("evidence-graph-panel") || document.querySelector(".edges-layer")?.closest("div");
             if (graphEl) {
               graphEl.scrollIntoView({ behavior: "smooth" });
@@ -302,7 +394,7 @@ export const EvidenceLensWorkbench: React.FC = () => {
           }}
         />
 
-        {/* Forensic Investigation History & Comparison Dashboard (Phase 9) */}
+        {/* Investigation History & Comparison Dashboard (Phase 9) */}
         <DepthCard floatingPhase="none" enableTilt={false}>
           <InvestigationHistory
             onOpenInvestigation={handleOpenFromHistory}
@@ -321,20 +413,6 @@ export const EvidenceLensWorkbench: React.FC = () => {
             onOpenInvestigation={handleOpenFromHistory}
           />
         )}
-
-        {/* Investigation Workspace State */}
-        <DepthCard floatingPhase="none" enableTilt={false}>
-          <WorkspacePlaceholder
-            claims={apiResponse?.extraction?.claims || []}
-            evidence={apiResponse?.evidence}
-            verification={apiResponse?.verification}
-          />
-        </DepthCard>
-
-        {/* Pipeline Architecture Reference */}
-        <DepthCard floatingPhase="none" enableTilt={false}>
-          <PipelineOverview />
-        </DepthCard>
       </div>
     </Forensic3DLayer>
   );

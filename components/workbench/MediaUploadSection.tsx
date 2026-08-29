@@ -124,18 +124,18 @@ export const MediaUploadSection: React.FC<MediaUploadSectionProps> = ({
   };
 
   return (
-    <div className="bg-[#0D1017]/90 border border-[#D4AF37]/20 rounded-xl p-5 shadow-xl shadow-black/40 space-y-4 transition-all">
+    <div className="bg-[#0D1017] border border-stone-800 rounded-xl p-5 shadow-xl shadow-black/40 space-y-3.5 transition-all">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-md bg-[#131720] border border-[#D4AF37]/30 text-[#D4AF37]">
+          <div className="p-1.5 rounded-lg bg-[#131720] border border-stone-800 text-[#E2C15C]">
             <UploadCloud className="h-4 w-4" />
           </div>
-          <h2 className="text-sm font-semibold text-[#F8F9FA] tracking-wide uppercase font-mono">
-            2. Multimodal Artifact <span className="text-[#94A3B8] font-normal">(Optional)</span>
+          <h2 className="text-sm font-semibold text-[#F8F9FA] tracking-normal font-sans">
+            Image or Video Upload <span className="text-[#94A3B8] font-normal">(Optional)</span>
           </h2>
         </div>
-        <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-[#131720] text-[#E2C15C] border border-[#D4AF37]/20">
-          Single Image or Video
+        <span className="text-[11px] font-sans px-2.5 py-0.5 rounded-full bg-[#131720] text-[#E2C15C] border border-stone-800">
+          Photo / Video Proof
         </span>
       </div>
 

@@ -4,10 +4,10 @@
 
 export const APP_CONFIG = {
   name: "EvidenceLens",
-  tagline: "Multimodal Evidence Investigation Workbench",
-  description: "A precision workbench for investigative journalists, fact-checkers, and intelligence analysts to deconstruct multimodal claims, map provenance, and verify truth with structured evidence graphs.",
-  version: "1.1.0",
-  phase: "Phase 11: Source Intelligence & Trust Scoring",
+  tagline: "Multimodal Truth Verification & Grounded Evidence Engine",
+  description: "An investigative verification platform to deconstruct claims, verify sources across the open web and video archives, inspect visual provenance, and aggregate multi-AI consensus.",
+  version: "1.2.0",
+  phase: "Phase 13: Professional Universal User Experience",
 };
 
 export const PIPELINE_STAGES = [
