@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { EvidenceItem } from "@/types";
 import { SourceQualityService } from "@/lib/evidence/sourceQuality";
+import { SourceProvenanceBadge } from "./SourceProvenanceBadge";
 import {
   Globe,
   ExternalLink,
@@ -12,6 +13,9 @@ import {
   HelpCircle,
   Video,
   BookOpen,
+  Info,
+  X,
+  ShieldCheck,
 } from "lucide-react";
 
 interface EvidenceCardProps {
@@ -93,6 +97,8 @@ const QUALITY_BADGES: Record<
 };
 
 export const EvidenceCard: React.FC<EvidenceCardProps> = ({ item }) => {
+  const [isInspecting, setIsInspecting] = useState(false);
+
   const quality = sourceQualityService.evaluateSourceQuality(
     item.url,
     item.domain,
@@ -109,7 +115,7 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ item }) => {
   const relevancePct = Math.round((item.relevanceScore ?? 0.8) * 100);
 
   return (
-    <div className="p-4 rounded-lg bg-[#050607] hover:bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] hover:border-[rgba(212,175,90,0.55)] transition-all space-y-3 font-mono">
+    <div className="p-4 rounded-lg bg-[#050607] hover:bg-[#0D0F12] border border-[rgba(212,175,90,0.25)] hover:border-[rgba(212,175,90,0.55)] transition-all space-y-3 font-mono relative">
       {/* Top Header: Source Type + Domain + Quality + Stance */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[rgba(212,175,90,0.18)]">
         <div className="flex items-center gap-2 flex-wrap">
@@ -161,7 +167,19 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ item }) => {
         </p>
       )}
 
-      {/* Footer Metrics & Direct URL Action */}
+      {/* Structured Source Provenance (Retrieved via Tavily • Analyzed by Gemini) */}
+      <SourceProvenanceBadge
+        provenance={{
+          url: item.url,
+          domain: item.domain,
+          sourceType: item.sourceType,
+          retrievalProvider: "Tavily",
+          analysisProviders: ["Gemini"],
+          modelName: "Gemini 2.5 Flash",
+        }}
+      />
+
+      {/* Footer Metrics, Inspection Trigger & Direct URL Action */}
       <div className="pt-2 border-t border-[rgba(212,175,90,0.15)] flex flex-wrap items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-3 text-[11px] text-[#8D949D]">
           <span>
@@ -175,19 +193,127 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ item }) => {
           )}
         </div>
 
-        {/* External Link Action */}
-        {item.url && (
-          <a
-            href={item.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#131519] hover:bg-[#181B20] text-[#D4AF5A] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.35)] transition-all font-semibold"
+        <div className="flex items-center gap-2">
+          {/* Inspect Source Button */}
+          <button
+            type="button"
+            onClick={() => setIsInspecting(true)}
+            className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#050607] hover:bg-[#131519] text-[#D7DADF] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.25)] text-[10px] transition-colors"
+            title="Inspect source forensic record"
           >
-            <span>Open source</span>
-            <ExternalLink className="h-3 w-3" />
-          </a>
-        )}
+            <Info className="h-3 w-3 text-[#D4AF5A]" />
+            <span>Inspect</span>
+          </button>
+
+          {/* External Link Action */}
+          {item.url && (
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#131519] hover:bg-[#181B20] text-[#D4AF5A] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.35)] transition-all font-semibold text-[11px]"
+            >
+              <span>Open source</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
       </div>
+
+      {/* Detailed Forensic Source Inspection Modal/Drawer */}
+      {isInspecting && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-xl bg-[#0D0F12] border border-[rgba(212,175,90,0.45)] p-5 shadow-2xl space-y-4 font-mono text-xs">
+            <div className="flex items-center justify-between pb-3 border-b border-[rgba(212,175,90,0.25)]">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-[#D4AF5A]" />
+                <span className="font-bold text-[#F5F7FA] uppercase tracking-wider">
+                  Source Provenance Dossier
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsInspecting(false)}
+                className="p-1 rounded bg-[#050607] hover:bg-[#131519] text-[#8D949D] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.2)]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[10px] text-[#8D949D] uppercase tracking-wider font-bold">Citation Title</span>
+              <h4 className="text-sm font-bold text-[#F5F7FA] font-sans leading-snug">
+                {item.title}
+              </h4>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              <div className="p-2.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)]">
+                <span className="text-[9px] text-[#8D949D] uppercase font-bold block">Domain</span>
+                <span className="font-bold text-[#D4AF5A]">{item.domain}</span>
+              </div>
+              <div className="p-2.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)]">
+                <span className="text-[9px] text-[#8D949D] uppercase font-bold block">Source Stance</span>
+                <span className={`font-bold ${stanceTheme.text}`}>{stanceTheme.label}</span>
+              </div>
+              <div className="p-2.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)]">
+                <span className="text-[9px] text-[#8D949D] uppercase font-bold block">Relevance Calibrated</span>
+                <span className="font-bold text-[#D7DADF]">{relevancePct}%</span>
+              </div>
+              <div className="p-2.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.2)]">
+                <span className="text-[9px] text-[#8D949D] uppercase font-bold block">Authority Tier</span>
+                <span className="font-bold text-[#D4AF5A]">{quality.tier} ({quality.category || "web"})</span>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] text-[#8D949D] uppercase tracking-wider font-bold">Extracted Context Excerpt</span>
+              <p className="text-xs text-[#D7DADF] font-sans leading-relaxed bg-[#050607] p-3 rounded-lg border border-[rgba(212,175,90,0.18)]">
+                &ldquo;{item.snippet}&rdquo;
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-[10px] text-[#8D949D] uppercase tracking-wider font-bold">Canonical URL</span>
+              <p className="text-[11px] text-[#8D949D] font-mono break-all bg-[#050607] p-2 rounded border border-[rgba(212,175,90,0.15)]">
+                {item.url}
+              </p>
+            </div>
+
+            <SourceProvenanceBadge
+              provenance={{
+                url: item.url,
+                domain: item.domain,
+                sourceType: item.sourceType,
+                retrievalProvider: "Tavily",
+                analysisProviders: ["Gemini"],
+                modelName: "Gemini 2.5 Flash",
+              }}
+            />
+
+            <div className="pt-3 border-t border-[rgba(212,175,90,0.25)] flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setIsInspecting(false)}
+                className="px-3 py-1.5 rounded bg-[#050607] text-[#D7DADF] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.25)] text-xs"
+              >
+                Close Dossier
+              </button>
+              {item.url && (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded bg-[#131519] hover:bg-[#181B20] text-[#D4AF5A] hover:text-[#F5F7FA] border border-[rgba(212,175,90,0.35)] text-xs font-semibold"
+                >
+                  <span>Open Primary Source</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

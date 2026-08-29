@@ -389,7 +389,11 @@ export const EvidenceLensWorkbench: React.FC = () => {
           (activeViewTab === "ALL" || activeViewTab === "WHY_RESULT") && (
             <DepthCard floatingPhase="none" enableTilt={false}>
               <ConfidenceCometGraph
+                extraction={apiResponse?.extraction}
+                evidence={apiResponse?.evidence}
                 verification={apiResponse?.verification}
+                multiAIConsensus={apiResponse?.consensus}
+                imageProvenance={apiResponse?.imageProvenance}
                 isAnalyzing={uiState === "SUBMITTING"}
               />
             </DepthCard>

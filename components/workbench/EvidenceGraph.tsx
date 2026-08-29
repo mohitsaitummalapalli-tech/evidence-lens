@@ -15,6 +15,7 @@ import {
   EvidenceGraphEdge,
   GraphEdgeData,
 } from "./EvidenceGraphEdge";
+import { SourceProvenanceBadge } from "./SourceProvenanceBadge";
 import {
   ZoomIn,
   ZoomOut,
@@ -476,20 +477,33 @@ export const EvidenceGraph: React.FC<EvidenceGraphProps> = ({
             )}
 
             {selectedNode.url && (
-              <div className="pt-2 border-t border-[rgba(212,175,90,0.15)] flex items-center justify-between">
-                <span className="text-[10px] text-[#8D949D] truncate max-w-[180px]">
-                  {selectedNode.domain}
-                </span>
-                <a
-                  href={selectedNode.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-[#D4AF5A] hover:underline flex items-center gap-1 font-semibold"
-                >
-                  <span>Open URL</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
+              <>
+                <SourceProvenanceBadge
+                  provenance={{
+                    url: selectedNode.url,
+                    domain: selectedNode.domain || "web",
+                    sourceType: selectedNode.sourceType,
+                    retrievalProvider: "Tavily",
+                    analysisProviders: ["Gemini"],
+                    modelName: "Gemini 2.5 Flash",
+                  }}
+                  compact={false}
+                />
+                <div className="pt-2 border-t border-[rgba(212,175,90,0.15)] flex items-center justify-between">
+                  <span className="text-[10px] text-[#8D949D] truncate max-w-[180px]">
+                    {selectedNode.domain}
+                  </span>
+                  <a
+                    href={selectedNode.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-[#D4AF5A] hover:underline flex items-center gap-1 font-semibold"
+                  >
+                    <span>Open URL</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              </>
             )}
           </div>
         )}
