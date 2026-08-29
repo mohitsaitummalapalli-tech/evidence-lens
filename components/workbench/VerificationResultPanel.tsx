@@ -11,7 +11,6 @@ import {
   ShieldAlert,
   ShieldX,
   HelpCircle,
-  TrendingUp,
   Layers,
   ChevronRight,
 } from "lucide-react";
@@ -112,7 +111,7 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
         </div>
 
         <span className="text-[11px] text-[#8D949D]">
-          Deterministic Pipeline Synthesis • {new Date(verification.verifiedAt || Date.now()).toLocaleTimeString()}
+          Deterministic Pipeline Synthesis • {verification.verifiedAt ? new Date(verification.verifiedAt).toLocaleTimeString() : "Live Audit"}
         </span>
       </div>
 

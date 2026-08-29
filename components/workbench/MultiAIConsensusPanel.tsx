@@ -16,7 +16,6 @@ import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
-  BookOpen,
   FileCheck2,
   Lock,
 } from "lucide-react";
@@ -103,7 +102,6 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
   evidence,
 }) => {
   const [showSharedEvidence, setShowSharedEvidence] = useState(false);
-  const [expandedModel, setExpandedModel] = useState<string | null>(null);
 
   const majorityVerdictKey = consensus.majorityVerdict || "UNVERIFIED";
   const juryVerdictTheme =
@@ -263,7 +261,6 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
 
               const eTheme = VERDICT_THEMES[mv.overallVerdict] || VERDICT_THEMES.UNVERIFIED;
               const EIcon = eTheme.icon;
-              const isExpanded = expandedModel === mv.provider;
 
               return (
                 <div
