@@ -6,18 +6,22 @@ import {
   EvidenceRetrievalResult,
   ModelJuryVerdict,
 } from "@/types";
+import { GeminiLogo, OpenAILogo, AnthropicLogo } from "./ProviderLogos";
 import {
   ShieldCheck,
   ShieldAlert,
   ShieldX,
   HelpCircle,
-  Cpu,
   Users,
   ChevronDown,
   ChevronUp,
   ExternalLink,
   FileCheck2,
   Lock,
+  Globe,
+  Video,
+  BookOpen,
+  Image as ImageIcon,
 } from "lucide-react";
 
 interface MultiAIConsensusPanelProps {
@@ -27,32 +31,27 @@ interface MultiAIConsensusPanelProps {
 
 const PROVIDER_METADATA: Record<
   string,
-  { name: string; org: string; modelName: string }
+  { name: string; org: string; icon: React.ComponentType<{ className?: string }> }
 > = {
   google: {
-    name: "Gemini 2.5 Flash",
-    org: "Google DeepMind",
-    modelName: "gemini-2.5-flash",
+    name: "Google Gemini",
+    org: "Gemini 2.5 Flash",
+    icon: GeminiLogo,
   },
   openai: {
-    name: "GPT-4o Reasoning",
-    org: "OpenAI",
-    modelName: "gpt-4o",
+    name: "OpenAI GPT",
+    org: "GPT-4o Mini",
+    icon: OpenAILogo,
   },
   anthropic: {
-    name: "Claude 3.7 Sonnet",
-    org: "Anthropic",
-    modelName: "claude-3-7-sonnet",
+    name: "Anthropic Claude",
+    org: "Claude 3.5 Haiku",
+    icon: AnthropicLogo,
   },
   groq: {
-    name: "Llama 3.3 70B",
-    org: "Groq",
-    modelName: "llama-3.3-70b-versatile",
-  },
-  local: {
-    name: "EvidenceLens Engine",
-    org: "On-Premises / Deterministic",
-    modelName: "deterministic-synthesis",
+    name: "Groq Llama",
+    org: "Llama 3.3 70B",
+    icon: Users,
   },
 };
 
@@ -62,38 +61,38 @@ const VERDICT_THEMES: Record<
     label: string;
     badgeBg: string;
     icon: React.ComponentType<{ className?: string }>;
-    barColor: string;
+    text: string;
   }
 > = {
   VERIFIED: {
     label: "VERIFIED TRUE",
     badgeBg: "bg-emerald-950/40 text-emerald-300 border-emerald-700/50",
     icon: ShieldCheck,
-    barColor: "bg-emerald-500",
+    text: "text-emerald-400",
   },
   TRUE: {
     label: "VERIFIED TRUE",
     badgeBg: "bg-emerald-950/40 text-emerald-300 border-emerald-700/50",
     icon: ShieldCheck,
-    barColor: "bg-emerald-500",
+    text: "text-emerald-400",
   },
   FALSE: {
     label: "REFUTED FALSE",
     badgeBg: "bg-rose-950/40 text-rose-300 border-rose-700/50",
     icon: ShieldX,
-    barColor: "bg-rose-500",
+    text: "text-rose-400",
   },
   MIXED: {
     label: "MIXED EVIDENCE",
     badgeBg: "bg-amber-950/40 text-amber-300 border-amber-700/50",
     icon: ShieldAlert,
-    barColor: "bg-amber-500",
+    text: "text-amber-400",
   },
   UNVERIFIED: {
-    label: "UNVERIFIED / INSUFFICIENT",
+    label: "UNVERIFIED",
     badgeBg: "bg-[#131519] text-[#D7DADF] border-[rgba(212,175,90,0.3)]",
     icon: HelpCircle,
-    barColor: "bg-[#8D949D]",
+    text: "text-[#8D949D]",
   },
 };
 
@@ -108,10 +107,15 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
     VERDICT_THEMES[majorityVerdictKey] || VERDICT_THEMES.UNVERIFIED;
   const JuryIcon = juryVerdictTheme.icon;
 
-  const totalModels = consensus.totalModelsParticipating || consensus.participatingModels?.length || 0;
+  const totalModels =
+    consensus.totalModelsParticipating || consensus.participatingModels?.length || 0;
   const agreementRate = consensus.overallAgreementRate || 0;
   const evidenceList = evidence?.allSources || [];
   const modelVerdicts = consensus.modelVerdicts || [];
+  const metrics = consensus.sharedEvidenceSummary;
+
+  // Map sources for quick citation lookup
+  const sourceById = new Map(evidenceList.map((s) => [s.id, s]));
 
   return (
     <div
@@ -127,14 +131,14 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-xs font-bold text-[#F5F7FA] tracking-wider uppercase">
-                AI Evidence Jury & Consensus
+                AI Evidence Jury
               </h2>
               <span className="text-[10px] px-2 py-0.5 rounded bg-[#050607] border border-[rgba(212,175,90,0.3)] text-[#D4AF5A] font-semibold">
-                SHARED EVIDENCE PROTOCOL
+                MULTI-MODEL BATTLE
               </span>
             </div>
             <p className="text-xs text-[#8D949D] font-sans mt-0.5">
-              Independent evaluation across multiple frontier models grounded on the exact same retrieved evidence
+              Independent evaluation across frontier AI models grounded on the exact same retrieved evidence
             </p>
           </div>
         </div>
@@ -154,6 +158,34 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
           )}
         </button>
       </div>
+
+      {/* SHARED EVIDENCE BREAKDOWN BAR */}
+      {metrics && (
+        <div className="p-3 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.25)] flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-[#D4AF5A] font-bold">
+            <Lock className="h-3.5 w-3.5" />
+            <span className="uppercase text-[11px] tracking-wider">Shared Evidence Grounding:</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#D7DADF]">
+            <span className="flex items-center gap-1">
+              <Globe className="h-3 w-3 text-[#D4AF5A]" /> Web: <strong className="text-[#F5F7FA]">{metrics.webSourcesCount}</strong>
+            </span>
+            <span className="flex items-center gap-1">
+              <Video className="h-3 w-3 text-rose-400" /> YouTube: <strong className="text-[#F5F7FA]">{metrics.youtubeSourcesCount}</strong>
+            </span>
+            <span className="flex items-center gap-1">
+              <BookOpen className="h-3 w-3 text-sky-400" /> Academic: <strong className="text-[#F5F7FA]">{metrics.academicSourcesCount}</strong>
+            </span>
+            <span className="flex items-center gap-1">
+              <ImageIcon className="h-3 w-3 text-emerald-400" /> Media: <strong className="text-[#F5F7FA]">{metrics.imageProvenanceCount}</strong>
+            </span>
+            <span className="flex items-center gap-1">
+              Domains: <strong className="text-[#D4AF5A]">{metrics.uniqueDomainsCount}</strong>
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Shared Evidence Inspection Dossier */}
       {showSharedEvidence && (
@@ -175,7 +207,12 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
                 className="p-2.5 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.2)] text-xs flex items-center justify-between gap-2"
               >
                 <div className="space-y-0.5 truncate">
-                  <span className="font-bold text-[#F5F7FA] block truncate">{src.domain}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] px-1 py-0.2 rounded bg-[#050607] border border-[rgba(212,175,90,0.25)] text-[#D4AF5A] font-bold">
+                      {src.id}
+                    </span>
+                    <span className="font-bold text-[#F5F7FA] truncate">{src.domain}</span>
+                  </div>
                   <p className="text-[11px] text-[#D7DADF] truncate font-sans">{src.title}</p>
                 </div>
                 {src.url && (
@@ -205,7 +242,7 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="text-[10px] text-[#D4AF5A] uppercase tracking-wider font-bold">
-                Jury Verdict
+                Jury Result
               </span>
               <span className={`text-xs font-bold px-2 py-0.5 rounded border uppercase ${juryVerdictTheme.badgeBg}`}>
                 {majorityVerdictKey}
@@ -223,7 +260,7 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
             </h3>
 
             <p className="text-xs text-[#D7DADF] font-sans">
-              Agreement status: <strong className="text-[#D4AF5A] uppercase">{consensus.overallConsensusStatus}</strong> ({consensus.agreementCount ?? totalModels} of {totalModels} models agree)
+              Agreement: <strong className="text-[#D4AF5A] uppercase">{consensus.overallConsensusStatus}</strong> ({consensus.agreementCount ?? totalModels} of {totalModels} models agree)
             </p>
           </div>
         </div>
@@ -249,15 +286,24 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
         </div>
       </div>
 
-      {/* Model Evaluation Cards */}
+      {/* Disagreement Callout (if models split/disagreed) */}
+      {consensus.disagreementSummary && consensus.overallConsensusStatus !== "UNANIMOUS" && (
+        <div className="p-3 rounded-lg bg-amber-950/20 border border-amber-500/40 text-xs text-amber-300 flex items-center gap-2">
+          <ShieldAlert className="h-4 w-4 shrink-0 text-amber-400" />
+          <span>{consensus.disagreementSummary}</span>
+        </div>
+      )}
+
+      {/* INDIVIDUAL MODEL CARDS (Gemini • OpenAI • Claude) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {modelVerdicts.length > 0
           ? modelVerdicts.map((mv: ModelJuryVerdict) => {
               const meta = PROVIDER_METADATA[mv.provider] || {
                 name: mv.modelDisplayName || mv.provider,
-                org: "AI Provider",
-                modelName: mv.modelId,
+                org: mv.modelId,
+                icon: Users,
               };
+              const ProviderIcon = meta.icon;
 
               const eTheme = VERDICT_THEMES[mv.overallVerdict] || VERDICT_THEMES.UNVERIFIED;
               const EIcon = eTheme.icon;
@@ -268,18 +314,20 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
                   className="p-4 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.25)] hover:border-[rgba(212,175,90,0.55)] transition-all space-y-3 flex flex-col justify-between"
                 >
                   <div className="space-y-3">
-                    {/* Model Header */}
+                    {/* Model Header with Brand Logo */}
                     <div className="flex items-center justify-between pb-2 border-b border-[rgba(212,175,90,0.18)]">
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <Cpu className="h-3.5 w-3.5 text-[#D4AF5A]" />
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded bg-[#0D0F12] border border-[rgba(212,175,90,0.3)] text-[#D4AF5A]">
+                          <ProviderIcon className="h-4 w-4" />
+                        </div>
+                        <div>
                           <h4 className="font-bold text-xs text-[#F5F7FA]">
                             {meta.name}
                           </h4>
+                          <span className="text-[10px] text-[#8D949D] font-sans">
+                            {meta.org}
+                          </span>
                         </div>
-                        <span className="text-[10px] text-[#8D949D] font-sans">
-                          {meta.org}
-                        </span>
                       </div>
 
                       <span
@@ -290,41 +338,80 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
                       </span>
                     </div>
 
-                    {/* Quantitative Score */}
+                    {/* Quantitative Score & Confidence */}
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-[#8D949D]">Confidence Level:</span>
+                      <span className="text-[#8D949D]">Confidence:</span>
                       <strong className="text-[#D4AF5A]">{mv.overallConfidence} ({mv.quantitativeScore}%)</strong>
                     </div>
 
-                    {/* Claims Evaluated Breakdown */}
+                    {/* Claims Evaluated & Reasoning */}
                     {mv.claimVerdicts && mv.claimVerdicts.length > 0 && (
-                      <div className="space-y-1 pt-1">
-                        <span className="text-[10px] text-[#8D949D] uppercase block">
-                          Claims Evaluated ({mv.claimVerdicts.length}):
+                      <div className="space-y-2 pt-1">
+                        <span className="text-[10px] text-[#8D949D] uppercase block font-bold">
+                          Evaluations ({mv.claimVerdicts.length}):
                         </span>
-                        <div className="space-y-1 max-h-32 overflow-y-auto">
-                          {mv.claimVerdicts.map((cv) => (
-                            <div key={cv.claimId} className="p-2 rounded bg-[#0D0F12] text-[11px] space-y-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-bold text-[#D4AF5A]">{cv.claimId}</span>
-                                <span className="text-[10px] text-[#F5F7FA] font-semibold">{cv.verdict}</span>
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                          {mv.claimVerdicts.map((cv) => {
+                            const cvTheme = VERDICT_THEMES[cv.verdict] || VERDICT_THEMES.UNVERIFIED;
+                            const citedIds = [
+                              ...(cv.supportingEvidenceIds || []),
+                              ...(cv.contradictingEvidenceIds || []),
+                            ];
+
+                            return (
+                              <div key={cv.claimId} className="p-2.5 rounded bg-[#0D0F12] text-[11px] space-y-1.5 border border-[rgba(212,175,90,0.15)]">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-[#D4AF5A]">Claim {cv.claimId}</span>
+                                  <span className={`text-[10px] font-bold ${cvTheme.text}`}>
+                                    {cv.verdict} ({cv.confidence})
+                                  </span>
+                                </div>
+
+                                {cv.reasoning && (
+                                  <p className="text-[#D7DADF] font-sans text-[11px] leading-relaxed">
+                                    {cv.reasoning}
+                                  </p>
+                                )}
+
+                                {/* Citations referenced */}
+                                {citedIds.length > 0 && (
+                                  <div className="pt-1 border-t border-[rgba(212,175,90,0.1)] space-y-1">
+                                    <span className="text-[9px] text-[#8D949D] uppercase font-bold block">
+                                      Citations ({citedIds.length}):
+                                    </span>
+                                    <div className="flex flex-wrap gap-1">
+                                      {citedIds.map((cid) => {
+                                        const src = sourceById.get(cid);
+                                        return (
+                                          <a
+                                            key={cid}
+                                            href={src?.url || "#"}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-1.5 py-0.5 rounded bg-[#050607] hover:bg-[#131519] border border-[rgba(212,175,90,0.25)] text-[10px] text-[#D4AF5A] hover:text-[#F5F7FA] inline-flex items-center gap-1"
+                                            title={src?.title || cid}
+                                          >
+                                            <span>{cid}</span>
+                                            {src?.domain && <span className="text-[#8D949D]">({src.domain})</span>}
+                                            <ExternalLink className="h-2.5 w-2.5" />
+                                          </a>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-                              {cv.reasoning && (
-                                <p className="text-[#D7DADF] font-sans text-[10px] line-clamp-2">
-                                  {cv.reasoning}
-                                </p>
-                              )}
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Valid Evidence References Count */}
+                  {/* Valid Evidence References Count Footer */}
                   <div className="pt-2 border-t border-[rgba(212,175,90,0.15)] flex items-center justify-between text-[10px] text-[#8D949D]">
-                    <span>Valid Citations: {mv.validEvidenceReferencesCount}</span>
-                    <span className="text-[#D4AF5A]">Grounded</span>
+                    <span>Valid Citations: <strong className="text-[#F5F7FA]">{mv.validEvidenceReferencesCount}</strong></span>
+                    <span className="text-[#D4AF5A] font-semibold">Grounded</span>
                   </div>
                 </div>
               );
@@ -335,7 +422,7 @@ export const MultiAIConsensusPanel: React.FC<MultiAIConsensusPanelProps> = ({
                 className="p-4 rounded-lg bg-[#050607] border border-[rgba(212,175,90,0.25)] space-y-2"
               >
                 <div className="flex items-center gap-2">
-                  <Cpu className="h-4 w-4 text-[#D4AF5A]" />
+                  <Users className="h-4 w-4 text-[#D4AF5A]" />
                   <h4 className="font-bold text-xs text-[#F5F7FA]">{pm.displayName}</h4>
                 </div>
                 <span className="text-[10px] text-emerald-400">Juror Active</span>

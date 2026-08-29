@@ -1,13 +1,13 @@
 /**
  * EvidenceLens - Multi-AI Evidence Consensus & Shared Evidence Jury Engine
- * Phase 12 & Phase 14: AI Battle / Shared Evidence Jury Architecture
+ * Phase 12, Phase 14 & Phase 16: Live Real AI Battle / Multi-Model Jury Architecture
  *
  * Core Fairness & Grounding Invariants:
- * 1. All participating models evaluate the EXACT SAME immutable evidence bundle.
- * 2. Models act as judges, NOT independent web searchers.
- * 3. Validation layer strips/rejects any invented evidence IDs not present in the bundle.
- * 4. Deterministic jury aggregation (Unanimous, Majority, Split, Single Model).
- * 5. Disagreement is transparently reported rather than concealed.
+ * 1. All participating models (Gemini, OpenAI, Anthropic) evaluate the EXACT SAME immutable evidence bundle.
+ * 2. Models act as judges, NOT independent web searchers (no external retrieval permitted).
+ * 3. Validation layer strictly filters/rejects any hallucinated evidence IDs not present in the bundle.
+ * 4. Concurrent execution with graceful degradation if one provider fails or times out.
+ * 5. Deterministic jury aggregation (Unanimous, Majority, Split, Single Model) with explicit disagreement reporting.
  */
 
 import { GoogleGenAI, Type } from "@google/genai";
@@ -39,6 +39,39 @@ STRICT GROUNDING PRINCIPLES:
 5. For supportingEvidenceIds and contradictingEvidenceIds, reference ONLY the exact evidence item IDs (e.g., "ev_1", "ev_2") provided in the prompt. Do NOT invent IDs.
 6. Provide a concise 1-2 sentence factual explanation.`;
 
+/**
+ * Helper to safely extract JSON from an LLM response string that might contain markdown fences
+ */
+function cleanAndParseJSON<T>(rawText: string): T | null {
+  if (!rawText) return null;
+  try {
+    // 1. Direct JSON parse
+    return JSON.parse(rawText.trim()) as T;
+  } catch {
+    // 2. Extract from markdown code fence
+    const codeBlockMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+    if (codeBlockMatch && codeBlockMatch[1]) {
+      try {
+        return JSON.parse(codeBlockMatch[1].trim()) as T;
+      } catch {
+        // continue
+      }
+    }
+
+    // 3. Find first { and last }
+    const firstBrace = rawText.indexOf("{");
+    const lastBrace = rawText.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      try {
+        return JSON.parse(rawText.substring(firstBrace, lastBrace + 1)) as T;
+      } catch {
+        // continue
+      }
+    }
+  }
+  return null;
+}
+
 export class MultiAIConsensusEngine {
   /**
    * Discovers which AI providers and models are currently configured and available.
@@ -49,19 +82,10 @@ export class MultiAIConsensusEngine {
 
     const geminiKey = process.env.GEMINI_API_KEY?.trim();
     if (geminiKey) {
-      // Primary Fast Model
       models.push({
         provider: "google",
         modelId: "gemini-2.5-flash",
         displayName: "Google Gemini 2.5 Flash",
-        isAvailable: true,
-      });
-
-      // Secondary Deep Reasoning Model
-      models.push({
-        provider: "google",
-        modelId: "gemini-2.5-pro",
-        displayName: "Google Gemini 2.5 Pro",
         isAvailable: true,
       });
     }
@@ -80,7 +104,7 @@ export class MultiAIConsensusEngine {
     if (anthropicKey) {
       models.push({
         provider: "anthropic",
-        modelId: "claude-3-5-haiku",
+        modelId: "claude-3-5-haiku-20241022",
         displayName: "Anthropic Claude 3.5 Haiku",
         isAvailable: true,
       });
@@ -186,18 +210,17 @@ export class MultiAIConsensusEngine {
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) return null;
 
-    try {
-      const ai = new GoogleGenAI({ apiKey });
-      const validIdsSet = new Set(evidenceItems.map((e) => e.id));
+    const candidateModels = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash", "gemini-2.5-flash"];
+    const validIdsSet = new Set(evidenceItems.map((e) => e.id));
 
-      const evidencePromptBlock = evidenceItems
-        .map(
-          (e) =>
-            `[ID: ${e.id}] | Type: ${e.sourceType || "web"} | Domain: ${e.domain}\nTitle: "${e.title}"\nURL: ${e.url}\nExcerpt: "${e.snippet}"`
-        )
-        .join("\n\n");
+    const evidencePromptBlock = evidenceItems
+      .map(
+        (e) =>
+          `[ID: ${e.id}] | Type: ${e.sourceType || "web"} | Domain: ${e.domain}\nTitle: "${e.title}"\nURL: ${e.url}\nExcerpt: "${e.snippet}"`
+      )
+      .join("\n\n");
 
-      const prompt = `CLAIM TO EVALUATE:
+    const prompt = `CLAIM TO EVALUATE:
 ID: ${claim.id}
 Statement: "${claim.text}"
 
@@ -206,74 +229,89 @@ ${evidencePromptBlock || "(No external sources retrieved for this claim)"}
 
 Evaluate this claim strictly against the shared evidence items above. Return valid JSON.`;
 
-      const response = await ai.models.generateContent({
-        model: modelInfo.modelId,
-        contents: prompt,
-        config: {
-          systemInstruction: JURY_EVALUATION_SYSTEM_INSTRUCTION,
-          temperature: 0.1,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              verdict: {
-                type: Type.STRING,
-                enum: ["TRUE", "FALSE", "MIXED", "UNVERIFIED"],
+    const ai = new GoogleGenAI({ apiKey });
+
+    for (const modelName of candidateModels) {
+      try {
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: prompt,
+          config: {
+            systemInstruction: JURY_EVALUATION_SYSTEM_INSTRUCTION,
+            temperature: 0.1,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                verdict: {
+                  type: Type.STRING,
+                  enum: ["TRUE", "FALSE", "MIXED", "UNVERIFIED"],
+                },
+                stance: {
+                  type: Type.STRING,
+                  enum: ["SUPPORTS", "CONTRADICTS", "INSUFFICIENT", "NEUTRAL"],
+                },
+                confidence: {
+                  type: Type.STRING,
+                  enum: ["HIGH", "MEDIUM", "LOW"],
+                },
+                supportingEvidenceIds: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                },
+                contradictingEvidenceIds: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                },
+                reasoning: {
+                  type: Type.STRING,
+                },
               },
-              stance: {
-                type: Type.STRING,
-                enum: ["SUPPORTS", "CONTRADICTS", "INSUFFICIENT", "NEUTRAL"],
-              },
-              confidence: {
-                type: Type.STRING,
-                enum: ["HIGH", "MEDIUM", "LOW"],
-              },
-              supportingEvidenceIds: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-              },
-              contradictingEvidenceIds: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-              },
-              reasoning: {
-                type: Type.STRING,
-              },
+              required: ["verdict", "stance", "confidence", "reasoning"],
             },
-            required: ["verdict", "stance", "confidence", "reasoning"],
           },
-        },
-      });
+        });
 
-      if (!response.text) return null;
-      const parsed = JSON.parse(response.text);
+        if (!response.text) continue;
+        const parsed = cleanAndParseJSON<{
+          verdict?: "TRUE" | "FALSE" | "MIXED" | "UNVERIFIED";
+          stance?: "SUPPORTS" | "CONTRADICTS" | "INSUFFICIENT" | "NEUTRAL";
+          confidence?: "HIGH" | "MEDIUM" | "LOW";
+          supportingEvidenceIds?: string[];
+          contradictingEvidenceIds?: string[];
+          reasoning?: string;
+        }>(response.text);
 
-      const supporting = this.validateEvidenceReferences(parsed.supportingEvidenceIds, validIdsSet);
-      const contradicting = this.validateEvidenceReferences(parsed.contradictingEvidenceIds, validIdsSet);
+        if (!parsed) continue;
 
-      return {
-        modelId: modelInfo.modelId,
-        provider: modelInfo.provider,
-        modelDisplayName: modelInfo.displayName,
-        claimId: claim.id,
-        verdict: parsed.verdict || "UNVERIFIED",
-        stance: parsed.stance || "INSUFFICIENT",
-        confidence: parsed.confidence || "LOW",
-        reasoning: parsed.reasoning || "Evaluation completed based on supplied shared evidence.",
-        supportingEvidenceIds: supporting.valid,
-        contradictingEvidenceIds: contradicting.valid,
-      };
-    } catch (err: unknown) {
-      console.warn(
-        `[MultiAIConsensus] Model ${modelInfo.modelId} evaluation warning:`,
-        err instanceof Error ? err.message : String(err)
-      );
-      return null;
+        const supporting = this.validateEvidenceReferences(parsed.supportingEvidenceIds, validIdsSet);
+        const contradicting = this.validateEvidenceReferences(parsed.contradictingEvidenceIds, validIdsSet);
+
+        return {
+          modelId: modelName,
+          provider: "google",
+          modelDisplayName: modelInfo.displayName,
+          claimId: claim.id,
+          verdict: parsed.verdict || "UNVERIFIED",
+          stance: parsed.stance || "INSUFFICIENT",
+          confidence: parsed.confidence || "LOW",
+          reasoning: parsed.reasoning || "Evaluation completed based on supplied shared evidence.",
+          supportingEvidenceIds: supporting.valid,
+          contradictingEvidenceIds: contradicting.valid,
+        };
+      } catch (err: unknown) {
+        console.warn(
+          `[MultiAIConsensus] Gemini model ${modelName} candidate error:`,
+          err instanceof Error ? err.message : String(err)
+        );
+      }
     }
+
+    return null;
   }
 
   /**
-   * Evaluates a single claim against evidence using OpenAI (if configured).
+   * Evaluates a single claim against evidence using OpenAI.
    */
   private async evaluateWithOpenAI(
     modelInfo: AIProviderModelInfo,
@@ -308,45 +346,178 @@ Respond ONLY with valid JSON having keys:
 - contradictingEvidenceIds: array of strings (must match provided IDs)
 - reasoning: string`;
 
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: modelInfo.modelId,
-          messages: [
-            { role: "system", content: JURY_EVALUATION_SYSTEM_INSTRUCTION },
-            { role: "user", content: prompt },
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.1,
-        }),
-      });
+      const candidateModels = [modelInfo.modelId, "gpt-4o-mini", "gpt-4o"];
 
-      if (!res.ok) return null;
-      const data = await res.json();
-      const content = data?.choices?.[0]?.message?.content;
-      if (!content) return null;
+      for (const mId of candidateModels) {
+        try {
+          const res = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model: mId,
+              messages: [
+                { role: "system", content: JURY_EVALUATION_SYSTEM_INSTRUCTION },
+                { role: "user", content: prompt },
+              ],
+              response_format: { type: "json_object" },
+              temperature: 0.1,
+            }),
+          });
 
-      const parsed = JSON.parse(content);
-      const supporting = this.validateEvidenceReferences(parsed.supportingEvidenceIds, validIdsSet);
-      const contradicting = this.validateEvidenceReferences(parsed.contradictingEvidenceIds, validIdsSet);
+          if (!res.ok) {
+            console.warn(`[MultiAIConsensus] OpenAI ${mId} status: ${res.status}`);
+            continue;
+          }
 
-      return {
-        modelId: modelInfo.modelId,
-        provider: modelInfo.provider,
-        modelDisplayName: modelInfo.displayName,
-        claimId: claim.id,
-        verdict: parsed.verdict || "UNVERIFIED",
-        stance: parsed.stance || "INSUFFICIENT",
-        confidence: parsed.confidence || "LOW",
-        reasoning: parsed.reasoning || "Evaluation completed based on supplied shared evidence.",
-        supportingEvidenceIds: supporting.valid,
-        contradictingEvidenceIds: contradicting.valid,
-      };
-    } catch {
+          const data = await res.json();
+          const content = data?.choices?.[0]?.message?.content;
+          if (!content) continue;
+
+          const parsed = cleanAndParseJSON<{
+            verdict?: "TRUE" | "FALSE" | "MIXED" | "UNVERIFIED";
+            stance?: "SUPPORTS" | "CONTRADICTS" | "INSUFFICIENT" | "NEUTRAL";
+            confidence?: "HIGH" | "MEDIUM" | "LOW";
+            supportingEvidenceIds?: string[];
+            contradictingEvidenceIds?: string[];
+            reasoning?: string;
+          }>(content);
+
+          if (!parsed) continue;
+
+          const supporting = this.validateEvidenceReferences(parsed.supportingEvidenceIds, validIdsSet);
+          const contradicting = this.validateEvidenceReferences(parsed.contradictingEvidenceIds, validIdsSet);
+
+          return {
+            modelId: mId,
+            provider: "openai",
+            modelDisplayName: "OpenAI " + mId.toUpperCase(),
+            claimId: claim.id,
+            verdict: parsed.verdict || "UNVERIFIED",
+            stance: parsed.stance || "INSUFFICIENT",
+            confidence: parsed.confidence || "LOW",
+            reasoning: parsed.reasoning || "Evaluation completed based on supplied shared evidence.",
+            supportingEvidenceIds: supporting.valid,
+            contradictingEvidenceIds: contradicting.valid,
+          };
+        } catch (mErr) {
+          console.warn(`[MultiAIConsensus] OpenAI ${mId} request error:`, mErr);
+        }
+      }
+
+      return null;
+    } catch (err) {
+      console.warn("[MultiAIConsensus] OpenAI evaluation failed:", err);
+      return null;
+    }
+  }
+
+  /**
+   * Evaluates a single claim against evidence using Anthropic / Claude.
+   */
+  private async evaluateWithAnthropic(
+    modelInfo: AIProviderModelInfo,
+    claim: AtomicClaim,
+    evidenceItems: EvidenceItem[]
+  ): Promise<ModelClaimEvaluation | null> {
+    const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+    if (!apiKey) return null;
+
+    try {
+      const validIdsSet = new Set(evidenceItems.map((e) => e.id));
+
+      const evidencePromptBlock = evidenceItems
+        .map(
+          (e) =>
+            `[ID: ${e.id}] | Type: ${e.sourceType || "web"} | Domain: ${e.domain}\nTitle: "${e.title}"\nURL: ${e.url}\nExcerpt: "${e.snippet}"`
+        )
+        .join("\n\n");
+
+      const prompt = `CLAIM TO EVALUATE:
+ID: ${claim.id}
+Statement: "${claim.text}"
+
+SHARED RETRIEVED EVIDENCE BUNDLE:
+${evidencePromptBlock || "(No external sources retrieved for this claim)"}
+
+Respond ONLY with valid JSON having keys:
+- verdict: "TRUE" | "FALSE" | "MIXED" | "UNVERIFIED"
+- stance: "SUPPORTS" | "CONTRADICTS" | "INSUFFICIENT" | "NEUTRAL"
+- confidence: "HIGH" | "MEDIUM" | "LOW"
+- supportingEvidenceIds: array of strings (must match provided IDs)
+- contradictingEvidenceIds: array of strings (must match provided IDs)
+- reasoning: string`;
+
+      const candidateModels = [
+        modelInfo.modelId,
+        "claude-3-5-haiku-20241022",
+        "claude-3-5-sonnet-20241022",
+        "claude-3-haiku-20240307",
+      ];
+
+      for (const mId of candidateModels) {
+        try {
+          const res = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              model: mId,
+              max_tokens: 1024,
+              system: JURY_EVALUATION_SYSTEM_INSTRUCTION,
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0.1,
+            }),
+          });
+
+          if (!res.ok) {
+            console.warn(`[MultiAIConsensus] Anthropic ${mId} status: ${res.status}`);
+            continue;
+          }
+
+          const data = await res.json();
+          const content = data?.content?.[0]?.text;
+          if (!content) continue;
+
+          const parsed = cleanAndParseJSON<{
+            verdict?: "TRUE" | "FALSE" | "MIXED" | "UNVERIFIED";
+            stance?: "SUPPORTS" | "CONTRADICTS" | "INSUFFICIENT" | "NEUTRAL";
+            confidence?: "HIGH" | "MEDIUM" | "LOW";
+            supportingEvidenceIds?: string[];
+            contradictingEvidenceIds?: string[];
+            reasoning?: string;
+          }>(content);
+
+          if (!parsed) continue;
+
+          const supporting = this.validateEvidenceReferences(parsed.supportingEvidenceIds, validIdsSet);
+          const contradicting = this.validateEvidenceReferences(parsed.contradictingEvidenceIds, validIdsSet);
+
+          return {
+            modelId: mId,
+            provider: "anthropic",
+            modelDisplayName: "Anthropic Claude",
+            claimId: claim.id,
+            verdict: parsed.verdict || "UNVERIFIED",
+            stance: parsed.stance || "INSUFFICIENT",
+            confidence: parsed.confidence || "LOW",
+            reasoning: parsed.reasoning || "Evaluation completed based on supplied shared evidence.",
+            supportingEvidenceIds: supporting.valid,
+            contradictingEvidenceIds: contradicting.valid,
+          };
+        } catch (mErr) {
+          console.warn(`[MultiAIConsensus] Anthropic ${mId} request error:`, mErr);
+        }
+      }
+
+      return null;
+    } catch (err) {
+      console.warn("[MultiAIConsensus] Anthropic evaluation failed:", err);
       return null;
     }
   }
@@ -455,7 +626,7 @@ Respond ONLY with valid JSON having keys:
       const modelClaimEvals: ModelClaimEvaluation[] = [];
 
       for (const cc of claimsConsensus) {
-        const matchingEval = cc.evaluations.find((e) => e.modelId === model.modelId);
+        const matchingEval = cc.evaluations.find((e) => e.modelId === model.modelId || e.provider === model.provider);
         if (matchingEval) {
           modelClaimEvals.push(matchingEval);
         }
@@ -508,7 +679,6 @@ Respond ONLY with valid JSON having keys:
         overallConfidence = "MEDIUM";
       }
 
-      // Calibrate realistic quantitative score
       let quantitativeScore = 75;
       if (overallVerdict === "VERIFIED") {
         quantitativeScore = overallConfidence === "HIGH" ? 92 : 82;
@@ -578,7 +748,6 @@ Respond ONLY with valid JSON having keys:
       };
     }
 
-    // Map evidence items by claimId
     const evidenceByClaim = new Map<string, EvidenceItem[]>();
     for (const bundle of bundles) {
       evidenceByClaim.set(bundle.claimId, bundle.sources);
@@ -596,6 +765,8 @@ Respond ONLY with valid JSON having keys:
           return this.evaluateWithGemini(modelInfo, claim, evidenceItems);
         } else if (modelInfo.provider === "openai") {
           return this.evaluateWithOpenAI(modelInfo, claim, evidenceItems);
+        } else if (modelInfo.provider === "anthropic") {
+          return this.evaluateWithAnthropic(modelInfo, claim, evidenceItems);
         }
         return null;
       });
@@ -607,6 +778,7 @@ Respond ONLY with valid JSON having keys:
         if (res.status === "fulfilled" && res.value !== null) {
           validEvaluations.push(res.value);
           modelsActuallyResponded.add(res.value.modelId);
+          modelsActuallyResponded.add(res.value.provider);
         }
       }
 
@@ -615,8 +787,8 @@ Respond ONLY with valid JSON having keys:
     }
 
     // Filter participating models to only those that actually responded
-    const participatingModels = availableModels.filter((m) =>
-      modelsActuallyResponded.has(m.modelId)
+    const participatingModels = availableModels.filter(
+      (m) => modelsActuallyResponded.has(m.modelId) || modelsActuallyResponded.has(m.provider)
     );
 
     // Compute model-level jury verdicts
@@ -643,7 +815,6 @@ Respond ONLY with valid JSON having keys:
       agreementCount = 1;
       disagreementCount = 0;
     } else {
-      // Tally model-level overall verdicts
       const overallCounts: Record<string, number> = { VERIFIED: 0, FALSE: 0, MIXED: 0, UNVERIFIED: 0 };
       for (const mv of modelVerdicts) {
         overallCounts[mv.overallVerdict] = (overallCounts[mv.overallVerdict] || 0) + 1;
@@ -662,15 +833,13 @@ Respond ONLY with valid JSON having keys:
 
       if (agreementCount === participatingModels.length) {
         overallConsensusStatus = "UNANIMOUS";
-        disagreementSummary = "All models reached unanimous agreement.";
+        disagreementSummary = `All ${participatingModels.length} participating models reached unanimous agreement on verdict ${majorityVerdict}.`;
       } else if (agreementCount > participatingModels.length / 2) {
         overallConsensusStatus = "MAJORITY";
-        disagreementSummary = `${disagreementCount} ${
-          disagreementCount === 1 ? "model" : "models"
-        } disagreed with the majority verdict.`;
+        disagreementSummary = `${agreementCount} of ${participatingModels.length} models agreed on ${majorityVerdict}. (${disagreementCount} model disagreed).`;
       } else {
         overallConsensusStatus = "SPLIT";
-        disagreementSummary = "Models are evenly split across differing verdicts.";
+        disagreementSummary = "Models are split with no clear majority verdict.";
       }
 
       const highConfCount = modelVerdicts.filter((m) => m.overallConfidence === "HIGH").length;
@@ -681,7 +850,6 @@ Respond ONLY with valid JSON having keys:
       }
     }
 
-    // Overall claim-level agreement percentage
     let totalClaimAgreements = 0;
     let totalClaimVotes = 0;
     for (const c of claimConsensusList) {
