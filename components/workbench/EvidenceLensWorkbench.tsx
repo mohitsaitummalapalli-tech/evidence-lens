@@ -15,12 +15,16 @@ import { ConfidenceCometGraph } from "./ConfidenceCometGraph";
 import { ImageProvenancePanel } from "./ImageProvenancePanel";
 import { VerdictInspector } from "./VerdictInspector";
 import { InvestigationTimeline } from "./InvestigationTimeline";
+import { InvestigationHistory } from "./InvestigationHistory";
+import { InvestigationComparison } from "./InvestigationComparison";
 import { Forensic3DLayer } from "./Forensic3DLayer";
 import { DepthCard } from "./DepthCard";
+import { saveInvestigationToHistory } from "@/lib/history/storage";
 import { INPUT_VALIDATION } from "@/lib/constants";
 import { 
   InvestigationInputResponse, 
   InvestigationUIState, 
+  InvestigationHistoryRecord,
   UploadedMediaPreview 
 } from "@/types";
 
@@ -33,6 +37,11 @@ export const EvidenceLensWorkbench: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [inspectingClaimId, setInspectingClaimId] = useState<string | null>(null);
+  const [historyUpdatedTimestamp, setHistoryUpdatedTimestamp] = useState<number>(0);
+  const [comparingRecords, setComparingRecords] = useState<{
+    recordA: InvestigationHistoryRecord;
+    recordB: InvestigationHistoryRecord;
+  } | null>(null);
 
   // Compute validation state
   const hasValidInput = useMemo(() => {
@@ -78,8 +87,13 @@ export const EvidenceLensWorkbench: React.FC = () => {
         throw new Error(data.error || `HTTP ${res.status}: Failed to process investigation request.`);
       }
 
-      setApiResponse(data as InvestigationInputResponse);
+      const responseObj = data as InvestigationInputResponse;
+      setApiResponse(responseObj);
       setStatusState("INPUT_RECEIVED");
+
+      // Save to client-side investigation history
+      saveInvestigationToHistory(responseObj);
+      setHistoryUpdatedTimestamp(Date.now());
     } catch (err: unknown) {
       console.error("Investigation submit error:", err);
       const msg = err instanceof Error ? err.message : "An unexpected network error occurred.";
@@ -98,6 +112,37 @@ export const EvidenceLensWorkbench: React.FC = () => {
     setApiResponse(null);
     setErrorMessage(null);
     setStatusState(null);
+  };
+
+  const handleOpenFromHistory = (record: InvestigationHistoryRecord) => {
+    if (record.fullResponse) {
+      setApiResponse(record.fullResponse);
+      setClaimText(record.targetClaim);
+      setContextText(record.contextUrl || "");
+      setStatusState("INPUT_RECEIVED");
+      setErrorMessage(null);
+
+      // Smooth scroll up to the Investigation Timeline / Results
+      const timelineEl = document.getElementById("investigation-timeline-panel") || document.getElementById("verification-result-panel");
+      if (timelineEl) {
+        timelineEl.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
+  const handleCompareFromHistory = (
+    recordA: InvestigationHistoryRecord,
+    recordB: InvestigationHistoryRecord
+  ) => {
+    setComparingRecords({ recordA, recordB });
+  };
+
+  const handleSwapComparingSides = () => {
+    if (!comparingRecords) return;
+    setComparingRecords({
+      recordA: comparingRecords.recordB,
+      recordB: comparingRecords.recordA,
+    });
   };
 
   const isFormDisabled = uiState === "SUBMITTING";
@@ -241,12 +286,32 @@ export const EvidenceLensWorkbench: React.FC = () => {
           onClose={() => setInspectingClaimId(null)}
           onViewInGraph={() => {
             // Scroll smoothly to Evidence Graph container
-            const graphEl = document.querySelector(".edges-layer")?.closest("div");
+            const graphEl = document.getElementById("evidence-graph-panel") || document.querySelector(".edges-layer")?.closest("div");
             if (graphEl) {
               graphEl.scrollIntoView({ behavior: "smooth" });
             }
           }}
         />
+
+        {/* Forensic Investigation History & Comparison Dashboard (Phase 9) */}
+        <DepthCard floatingPhase="none" enableTilt={false}>
+          <InvestigationHistory
+            onOpenInvestigation={handleOpenFromHistory}
+            onCompareInvestigations={handleCompareFromHistory}
+            lastUpdatedTimestamp={historyUpdatedTimestamp}
+          />
+        </DepthCard>
+
+        {/* Forensic Side-by-Side Comparison Modal (Phase 9) */}
+        {comparingRecords && (
+          <InvestigationComparison
+            investigationA={comparingRecords.recordA}
+            investigationB={comparingRecords.recordB}
+            onClose={() => setComparingRecords(null)}
+            onSwap={handleSwapComparingSides}
+            onOpenInvestigation={handleOpenFromHistory}
+          />
+        )}
 
         {/* Investigation Workspace State */}
         <DepthCard floatingPhase="none" enableTilt={false}>

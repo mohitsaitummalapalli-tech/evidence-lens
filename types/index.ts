@@ -7,3 +7,4 @@ export * from "./evidence";
 export * from "./investigation";
 export * from "./verification";
 export * from "./imageProvenance";
+export * from "./history";
