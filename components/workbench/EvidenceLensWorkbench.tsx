@@ -260,7 +260,7 @@ export const EvidenceLensWorkbench: React.FC = () => {
                   Media Matches ({apiResponse.imageProvenance.totalCandidatesFound})
                 </button>
               )}
-              {apiResponse.consensus && (
+              {(apiResponse.consensus || apiResponse.multiAIConsensus) && (
                 <button
                   type="button"
                   onClick={() => setActiveViewTab("CONSENSUS")}
@@ -270,7 +270,7 @@ export const EvidenceLensWorkbench: React.FC = () => {
                       : "text-[#D7DADF] hover:text-[#F5F7FA] hover:bg-[#131519]"
                   }`}
                 >
-                  AI Jury ({apiResponse.consensus.overallAgreementRate}%)
+                  AI Jury ({(apiResponse.consensus || apiResponse.multiAIConsensus)?.overallAgreementRate ?? 100}%)
                 </button>
               )}
               <button
