@@ -6,6 +6,7 @@
 import { AtomicClaim, ClaimEvidenceBundle, EvidenceItem, EvidenceRetrievalResult } from "@/types";
 import { tavilyClient } from "./tavily";
 import { geminiService, StanceEvaluationItem } from "../ai/gemini";
+import { sourceQualityService } from "./sourceQuality";
 
 export class EvidenceRetrievalService {
   /**
@@ -145,6 +146,7 @@ export class EvidenceRetrievalService {
             const evidenceId = `ev_${claim.id}_${resIdx + 1}`;
             const domain = this.extractDomain(cleanUrl);
             const sourceType = this.detectSourceType(cleanUrl, domain);
+            const qualityProfile = sourceQualityService.evaluateSourceQuality(cleanUrl, domain, sourceType);
 
             const item: EvidenceItem = {
               id: evidenceId,
@@ -157,6 +159,8 @@ export class EvidenceRetrievalService {
               relevanceScore: typeof res.score === "number" ? res.score : undefined,
               stance: "UNCERTAIN", // Initial stance is UNCERTAIN as required
               sourceType,
+              sourceQuality: qualityProfile.tier,
+              qualityReason: qualityProfile.reason,
               retrievedAt,
             };
 

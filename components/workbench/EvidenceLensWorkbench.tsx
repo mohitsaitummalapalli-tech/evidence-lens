@@ -17,6 +17,7 @@ import { VerdictInspector } from "./VerdictInspector";
 import { InvestigationTimeline } from "./InvestigationTimeline";
 import { InvestigationHistory } from "./InvestigationHistory";
 import { InvestigationComparison } from "./InvestigationComparison";
+import { MultiAIConsensusPanel } from "./MultiAIConsensusPanel";
 import { Forensic3DLayer } from "./Forensic3DLayer";
 import { DepthCard } from "./DepthCard";
 import { saveInvestigationToHistory } from "@/lib/history/storage";
@@ -207,7 +208,14 @@ export const EvidenceLensWorkbench: React.FC = () => {
           </DepthCard>
         )}
 
-        {/* 2. UNIVERSAL WEB & YOUTUBE SOURCES (Phase 4B / 10) */}
+        {/* 2. MULTI-AI EVIDENCE CONSENSUS (Phase 12) */}
+        {uiState === "INPUT_RECEIVED" && apiResponse?.consensus && (
+          <DepthCard floatingPhase="none" enableTilt={false}>
+            <MultiAIConsensusPanel consensus={apiResponse.consensus} />
+          </DepthCard>
+        )}
+
+        {/* 3. UNIVERSAL WEB & YOUTUBE SOURCES (Phase 4B / 10 / 11) */}
         {uiState === "INPUT_RECEIVED" && apiResponse?.evidence && (
           <DepthCard floatingPhase="none" enableTilt={false}>
             <EvidencePanel evidence={apiResponse.evidence} />

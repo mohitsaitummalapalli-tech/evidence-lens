@@ -18,6 +18,40 @@ export type EvidenceStance = "SUPPORTS" | "CONTRADICTS" | "MIXED" | "INSUFFICIEN
 
 export type EvidenceSourceType = "web" | "youtube" | "academic" | "social" | "video_portal" | "other";
 
+export type SourceQualityTier = "HIGH" | "MEDIUM" | "LOW";
+
+export interface SourceQualityProfile {
+  tier: SourceQualityTier;
+  reason: string;
+  category: "institutional" | "academic" | "news_factcheck" | "reference" | "video_portal" | "social_forum" | "general_web";
+}
+
+export type EvidenceConsensusBalance = "SUPPORTING" | "CONTRADICTING" | "MIXED" | "INSUFFICIENT" | "NEUTRAL";
+
+export interface EvidenceConsensusSummary {
+  supportingCount: number;
+  contradictingCount: number;
+  neutralCount: number;
+  totalCount: number;
+  balance: EvidenceConsensusBalance;
+  supportPercentage: number;
+  contradictPercentage: number;
+  neutralPercentage: number;
+}
+
+export interface SourceDiversitySummary {
+  totalSources: number;
+  webCount: number;
+  youtubeCount: number;
+  academicCount: number;
+  socialCount: number;
+  otherCount: number;
+  uniqueDomainCount: number;
+  uniqueDomains: string[];
+  isMultiDomain: boolean;
+  diversityLevel: "HIGH" | "MODERATE" | "LOW";
+}
+
 export interface EvidenceItem {
   id: string;
   claimId: string;
@@ -31,6 +65,8 @@ export interface EvidenceItem {
   stance: EvidenceStance;
   stanceExplanation?: string;
   sourceType?: EvidenceSourceType;
+  sourceQuality?: SourceQualityTier;
+  qualityReason?: string;
   channelOrAuthor?: string;
   retrievedAt: string;
 }

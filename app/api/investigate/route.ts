@@ -4,6 +4,7 @@ import { geminiService } from "@/lib/ai/gemini";
 import { evidenceRetrievalService } from "@/lib/evidence/retrieval";
 import { verificationReasoningService } from "@/lib/verification/reasoning";
 import { imageProvenanceService } from "@/lib/evidence/imageProvenance";
+import { multiAIConsensusEngine } from "@/lib/ai/consensusEngine";
 import {
   AtomicClaim,
   ClaimExtractionResult,
@@ -11,6 +12,7 @@ import {
   InvestigationInputResponse,
   InvestigationVerificationResult,
   ImageProvenanceResult,
+  MultiAIConsensusResult,
 } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -268,6 +270,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Step 5: Multi-AI Evidence Consensus Engine (Phase 12)
+    let consensusResult: MultiAIConsensusResult | undefined = undefined;
+    try {
+      consensusResult = await multiAIConsensusEngine.evaluateConsensus(
+        extractionResult.claims,
+        evidenceResult.bundles
+      );
+    } catch (err: unknown) {
+      console.warn("[API] Multi-AI consensus engine error:", err);
+    }
+
     const sessionId = `inv_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
     const timestamp = new Date().toISOString();
 
@@ -298,7 +311,8 @@ export async function POST(req: NextRequest) {
       evidence: evidenceResult,
       verification: verificationResult,
       imageProvenance: imageProvenanceResult,
-      nextStage: "Phase 6: Multi-Dimensional Provenance & Integrity Graph",
+      consensus: consensusResult,
+      nextStage: "Phase 12: Multi-AI Evidence Consensus Engine",
     };
 
     return NextResponse.json(responseData, { status: 200 });

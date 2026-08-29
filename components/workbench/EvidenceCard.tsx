@@ -1,5 +1,5 @@
 import React from "react";
-import { EvidenceItem, EvidenceStance } from "@/types";
+import { EvidenceItem, EvidenceStance, SourceQualityTier } from "@/types";
 import {
   Globe,
   Calendar,
@@ -9,10 +9,14 @@ import {
   MinusCircle,
   HelpCircle,
   Quote,
-  Sparkles,
   Target,
   Video,
-  Play
+  Play,
+  ShieldCheck,
+  ShieldAlert,
+  Shield,
+  BookOpen,
+  Info
 } from "lucide-react";
 
 interface EvidenceCardProps {
@@ -25,45 +29,72 @@ const STANCE_CONFIG: Record<
 > = {
   SUPPORTS: {
     label: "SUPPORTS CLAIM",
-    bg: "bg-emerald-950/60",
+    bg: "bg-emerald-950/70",
     text: "text-emerald-300",
-    border: "border-emerald-700/50",
+    border: "border-emerald-700/60",
     icon: CheckCircle2,
   },
   CONTRADICTS: {
     label: "CONTRADICTS",
-    bg: "bg-rose-950/60",
+    bg: "bg-rose-950/70",
     text: "text-rose-300",
-    border: "border-rose-700/50",
+    border: "border-rose-700/60",
     icon: XCircle,
   },
   MIXED: {
     label: "MIXED EVIDENCE",
-    bg: "bg-purple-950/60",
+    bg: "bg-purple-950/70",
     text: "text-purple-300",
-    border: "border-purple-700/50",
+    border: "border-purple-700/60",
     icon: MinusCircle,
   },
   INSUFFICIENT: {
     label: "INSUFFICIENT",
-    bg: "bg-amber-950/60",
+    bg: "bg-amber-950/70",
     text: "text-amber-300",
-    border: "border-amber-700/50",
+    border: "border-amber-700/60",
     icon: HelpCircle,
   },
   NEUTRAL: {
     label: "NEUTRAL / TOPICAL",
-    bg: "bg-stone-900/80",
+    bg: "bg-stone-900/90",
     text: "text-[#C2C9D6]",
-    border: "border-stone-700/50",
+    border: "border-stone-700/60",
     icon: MinusCircle,
   },
   UNCERTAIN: {
     label: "UNCERTAIN / UNVERIFIED",
-    bg: "bg-amber-950/40",
+    bg: "bg-amber-950/50",
+    text: "text-amber-300",
+    border: "border-amber-700/50",
+    icon: HelpCircle,
+  },
+};
+
+const QUALITY_CONFIG: Record<
+  SourceQualityTier,
+  { label: string; bg: string; text: string; border: string; icon: React.ComponentType<{ className?: string }> }
+> = {
+  HIGH: {
+    label: "HIGH QUALITY SOURCE",
+    bg: "bg-cyan-950/60",
+    text: "text-cyan-300",
+    border: "border-cyan-700/50",
+    icon: ShieldCheck,
+  },
+  MEDIUM: {
+    label: "MEDIUM QUALITY SOURCE",
+    bg: "bg-stone-900/80",
+    text: "text-[#CBD5E1]",
+    border: "border-stone-700/50",
+    icon: Shield,
+  },
+  LOW: {
+    label: "COMMUNITY / SOCIAL SOURCE",
+    bg: "bg-amber-950/50",
     text: "text-amber-300",
     border: "border-amber-700/40",
-    icon: HelpCircle,
+    icon: ShieldAlert,
   },
 };
 
@@ -71,12 +102,23 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
   const stanceInfo = STANCE_CONFIG[evidence.stance] || STANCE_CONFIG.UNCERTAIN;
   const StanceIcon = stanceInfo.icon;
 
+  const qualityTier = evidence.sourceQuality || "MEDIUM";
+  const qualityInfo = QUALITY_CONFIG[qualityTier] || QUALITY_CONFIG.MEDIUM;
+  const QualityIcon = qualityInfo.icon;
+
   const isYouTube =
     evidence.sourceType === "youtube" ||
     evidence.domain.toLowerCase().includes("youtube.com") ||
     evidence.domain.toLowerCase().includes("youtu.be") ||
     evidence.url.toLowerCase().includes("youtube.com") ||
     evidence.url.toLowerCase().includes("youtu.be");
+
+  const isAcademic =
+    evidence.sourceType === "academic" ||
+    evidence.domain.toLowerCase().includes("arxiv.org") ||
+    evidence.domain.toLowerCase().includes("nature.com") ||
+    evidence.domain.toLowerCase().includes("sciencedirect.com") ||
+    evidence.domain.toLowerCase().endsWith(".edu");
 
   const isVideoPortal =
     evidence.sourceType === "video_portal" ||
@@ -89,44 +131,55 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
       : null;
 
   return (
-    <div className="bg-[#08090C] border border-[#D4AF37]/20 hover:border-[#D4AF37]/45 rounded-xl p-4.5 space-y-3.5 transition-all shadow-md flex flex-col justify-between group">
+    <div className="bg-[#08090C] border border-stone-800 hover:border-[#D4AF37]/40 rounded-xl p-4.5 space-y-3.5 transition-all shadow-md flex flex-col justify-between group">
       <div className="space-y-3">
-        {/* Header: Linked Claim Badge + Stance Pill (AI Interpretation) */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-stone-800">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-[#131720] border border-[#D4AF37]/40 text-[#E2C15C] font-mono font-bold text-[11px] flex items-center gap-1 shadow-sm">
-              Linked: {evidence.claimId}
+        {/* Top Header: Linked Claim ID + Source Type Badge + Stance Pill */}
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-stone-800/80">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="px-2 py-0.5 rounded bg-[#131720] border border-[#D4AF37]/35 text-[#E2C15C] font-mono font-bold text-[11px] flex items-center gap-1 shadow-sm">
+              Claim {evidence.claimId}
             </span>
+
+            {/* Source Type Tag */}
             {isYouTube ? (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950/70 text-rose-300 border border-rose-600/40 font-bold flex items-center gap-1">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-950/70 text-rose-300 border border-rose-600/40 font-semibold flex items-center gap-1">
                 <Video className="h-3 w-3 text-rose-400" />
                 YOUTUBE
               </span>
+            ) : isAcademic ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-950/70 text-blue-300 border border-blue-600/40 font-semibold flex items-center gap-1">
+                <BookOpen className="h-3 w-3 text-blue-400" />
+                ACADEMIC
+              </span>
             ) : isVideoPortal ? (
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950/70 text-purple-300 border border-purple-600/40 font-bold flex items-center gap-1">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950/70 text-purple-300 border border-purple-600/40 font-semibold flex items-center gap-1">
                 <Video className="h-3 w-3 text-purple-400" />
                 VIDEO
               </span>
-            ) : null}
+            ) : (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#131720] text-[#94A3B8] border border-stone-800 font-semibold flex items-center gap-1">
+                <Globe className="h-3 w-3 text-[#D4AF37]" />
+                WEB
+              </span>
+            )}
+
+            {/* Evidence Relevance */}
             {relevancePercentage !== null && (
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#131720] text-[#94A3B8] border border-stone-800 flex items-center gap-1">
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#131720] text-[#94A3B8] border border-stone-800 flex items-center gap-1" title="Search relevance score">
                 <Target className="h-3 w-3 text-[#D4AF37]" />
                 {relevancePercentage}% rel
               </span>
             )}
           </div>
 
+          {/* Stance Pill */}
           <div className="flex items-center gap-1.5">
             <span
               className={`text-[10px] font-mono font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 border ${stanceInfo.bg} ${stanceInfo.text} ${stanceInfo.border}`}
-              title="AI Stance Grounding Interpretation"
+              title="Stance: Relation between evidence and claim"
             >
               <StanceIcon className="h-3 w-3 shrink-0" />
               {stanceInfo.label}
-            </span>
-            <span className="text-[9px] font-mono text-[#E2C15C] bg-[#131720] px-1.5 py-0.5 rounded border border-[#D4AF37]/30 flex items-center gap-0.5" title="Classified by Gemini AI">
-              <Sparkles className="h-2.5 w-2.5 text-[#D4AF37]" />
-              AI
             </span>
           </div>
         </div>
@@ -157,25 +210,41 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
           </div>
         </div>
 
+        {/* Source Quality & Trust Intelligence Bar */}
+        <div className="bg-[#10141D] border border-stone-800 rounded-lg p-2.5 flex items-start gap-2 text-[11px] font-mono">
+          <QualityIcon className={`h-4 w-4 shrink-0 mt-0.5 ${qualityInfo.text}`} />
+          <div className="space-y-0.5 flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className={`text-[10px] font-bold ${qualityInfo.text}`}>
+                {qualityInfo.label}
+              </span>
+              <span className="text-[9px] text-stone-500 uppercase">Deterministic Trust Signal</span>
+            </div>
+            <p className="text-[11px] text-[#94A3B8] font-sans leading-tight">
+              {evidence.qualityReason || "General web domain indexed by search provider."}
+            </p>
+          </div>
+        </div>
+
         {/* Retrieved Raw Snippet */}
-        <div className="bg-[#050608] border border-stone-800 rounded-lg p-3 space-y-1 relative shadow-inner">
+        <div className="bg-[#050608] border border-stone-800/80 rounded-lg p-3 space-y-1 relative shadow-inner">
           <div className="flex items-center justify-between text-[10px] font-mono text-[#64748B] pb-1 border-b border-stone-900">
             <span className="flex items-center gap-1 text-[#94A3B8] font-semibold">
               <Quote className="h-3 w-3 text-[#D4AF37]" />
-              {isYouTube ? "VIDEO EXCERPT & DESCRIPTION" : "RETRIEVED CITATION EXCERPT"}
+              {isYouTube ? "VIDEO EXCERPT / DESCRIPTION" : "CITATION EXCERPT"}
             </span>
-            <span>{isYouTube ? "YouTube Video" : "Web Source"}</span>
+            <span>{isYouTube ? "YouTube Video" : "Web Citation"}</span>
           </div>
           <p className="text-xs text-[#C2C9D6] font-sans leading-relaxed line-clamp-4 pt-1">
             {evidence.snippet || "No textual excerpt available from provider."}
           </p>
         </div>
 
-        {/* Stance Explanation (AI interpretation) */}
+        {/* Stance Explanation */}
         {evidence.stanceExplanation && (
-          <div className="text-[11px] text-[#94A3B8] font-mono italic px-2 bg-[#131720] p-2 rounded-lg border border-stone-800 flex items-start gap-1.5">
-            <Sparkles className="h-3 w-3 text-[#D4AF37] shrink-0 mt-0.5" />
-            <span>AI Interpretation: {evidence.stanceExplanation}</span>
+          <div className="text-[11px] text-[#94A3B8] font-sans px-2.5 py-1.5 bg-[#131720] rounded-lg border border-stone-800 flex items-start gap-1.5 leading-relaxed">
+            <Info className="h-3.5 w-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
+            <span>Reasoning: {evidence.stanceExplanation}</span>
           </div>
         )}
       </div>
@@ -183,17 +252,17 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
       {/* Footer: Open External Source / Watch Video */}
       <div className="pt-3 border-t border-stone-900 flex items-center justify-between text-xs">
         <span className="text-[10px] font-mono text-[#64748B]">
-          Source ID: {evidence.id}
+          ID: {evidence.id}
         </span>
 
         <a
           href={evidence.url}
           target="_blank"
           rel="noopener noreferrer"
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono text-xs font-bold border transition-all shadow-sm ${
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg font-mono text-xs font-semibold border transition-all shadow-sm ${
             isYouTube
               ? "bg-rose-950/70 hover:bg-rose-900/80 text-rose-200 border-rose-600/40 hover:border-rose-500"
-              : "bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] hover:text-white border-[#D4AF37]/20 hover:border-[#D4AF37]/50"
+              : "bg-[#131720] hover:bg-[#1C2230] text-[#E2C15C] hover:text-white border-stone-800 hover:border-[#D4AF37]/50"
           }`}
         >
           {isYouTube ? (

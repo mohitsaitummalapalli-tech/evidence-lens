@@ -18,7 +18,6 @@ import {
   Clock,
   Info,
   Scale,
-  Sparkles,
 } from "lucide-react";
 
 interface VerificationResultPanelProps {
@@ -209,13 +208,13 @@ export const VerificationResultPanel: React.FC<VerificationResultPanelProps> = (
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-stone-800">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[#D4AF37]" />
+            <Scale className="h-4 w-4 text-[#D4AF37]" />
             <h3 className="text-sm font-bold text-[#E2C15C] uppercase font-mono tracking-wider">
               Atomic Claim Verifications ({verification.claimVerifications.length})
             </h3>
           </div>
           <span className="text-xs font-mono text-[#64748B]">
-            Phase 5 Deterministic Verification
+            Deterministic Verification
           </span>
         </div>
 

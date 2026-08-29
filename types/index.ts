@@ -8,3 +8,4 @@ export * from "./investigation";
 export * from "./verification";
 export * from "./imageProvenance";
 export * from "./history";
+export * from "./consensus";
